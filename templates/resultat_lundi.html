@@ -9,35 +9,43 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* BODY FULL SCREEN ET CONTENU CENTRÉ */
 body {
     background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
     color:#fff;
     font-family:'Poppins',sans-serif;
     text-align:center;
-    padding:50px;
     margin:0;
+    padding:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
 }
 
+/* TITRE ET MESSAGE */
 h2 { font-size:24px; margin-bottom:20px; }
-p { font-size:16px; }
-
-.flash {
+p.flash {
+    font-size:16px;
     margin-top:20px;
-    padding:10px;
+    padding:10px 15px;
     border-radius:10px;
     background: rgba(0,255,150,0.2);
     color:#0a0;
     display:inline-block;
 }
 
-/* HORAIRES TRENDSTAR */
+/* CARTE HORAIRES */
 .schedule-card {
     margin-top:25px;
-    background:linear-gradient(to bottom right,#ffe5d3,#ffdcd2);
+    background: linear-gradient(to bottom right,#ffe5d3,#ffdcd2);
     border-radius:20px;
     padding:20px;
     border:1px solid rgba(255,255,255,0.4);
     color:#444;
+    width:90%;
+    max-width:400px;
 }
 
 .schedule-card h3 {
