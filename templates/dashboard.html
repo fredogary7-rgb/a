@@ -114,6 +114,47 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     font-size:16px;
     cursor:pointer;
 }
+/* REFERRAL BOX (en bas) */
+.ref-box {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    margin-top: 25px;
+}
+
+.ref-link-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ref-link {
+    background: #ffffff;
+    color: #333;
+    padding: 10px;
+    border-radius: 8px;
+    word-break: break-all;
+    font-weight: 600;
+    min-width: 250px;
+    text-align: center;
+}
+
+.copy-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #ff7a00;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.copy-btn:hover {
+    background: #ffb35a;
 </style>  </head>  <body>  <div class="overlay" id="overlay"></div>  <!-- SIDEBAR -->  <div class="sidebar" id="sidebar">  
     <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>  
     <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>  <!-- Nos chaînes -->  
@@ -210,6 +251,18 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     </div>  
 </div>  
 
+    <!-- REFERRAL LINK -->
+    <div class="ref-box">
+        <p>Votre lien de parrainage :</p>
+        <div class="ref-link-container">
+            <div class="ref-link" id="refLink">{{ referral_link }}</div>
+            <button class="copy-btn" onclick="copyReferral()">Copier</button>
+        </div>
+    </div>
+
+</div>
+
+
 <!-- HORAIRE TRENDSTAR -->  
 <div class="schedule-card">  
     <h3>Horaire LuminaStar</h3>  
@@ -273,6 +326,15 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 <footer>2026 © LuminaStar by Nina Academy</footer>
 
 </div>  <script>  
+function copyReferral() {
+    const refLink = document.getElementById("refLink").textContent;
+    navigator.clipboard.writeText(refLink).then(() => {
+        alert("Lien de parrainage copié !");
+    }).catch(err => {
+        console.error("Erreur copie :", err);
+    });
+}
+
 const sidebar = document.getElementById("sidebar");  
 const overlay = document.getElementById("overlay");  
 const menuToggle = document.getElementById("menuToggle");  

@@ -1,4 +1,4 @@
-
+import sys
 import os
 import re
 import uuid
@@ -17,9 +17,6 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "ma_cle_ultra_secrete"
 
 # ─── ENV VARIABLES ───────────────────────────────────────
-load_dotenv()
-MONEYFUSION_API_KEY = os.getenv("MONEYFUSION_API_KEY")
-MONEYFUSION_API_URL = os.getenv("MONEYFUSION_API_URL")
 
 # ─── UPLOAD CONFIG ───────────────────────────────────────
 # Dossiers pour les uploads
@@ -342,6 +339,9 @@ def calculer_montant_points(user):
 # Vérification des investissements
 # -----------------------
 
+
+
+
 @app.cli.command("init-db")
 def init_db():
     db.create_all()
@@ -469,7 +469,6 @@ def logout_page():
     return redirect(url_for("connexion_page"))
 
 
-
 def get_global_stats():
     total_users = db.session.query(func.count(User.id)).scalar() or 0
     total_deposits = db.session.query(func.sum(Depot.montant)).filter(Depot.statut=="valide").scalar() or 0
@@ -519,7 +518,6 @@ def dashboard_bloque():
 
     return render_template("dashboard_bloque.html", user=user)
 
-
 @app.route("/dashboard")
 def dashboard_page():
     user_id = session.get("user_id")
@@ -527,11 +525,16 @@ def dashboard_page():
         flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
         return redirect(url_for("connexion_page"))
 
+    # On récupère l'utilisateur AVANT d'utiliser user.username
     user = User.query.get(user_id)
     if not user:
         session.clear()
         flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
+
+    # Génération du lien de parrainage
+    referral_code = user.username
+    referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
     # 🔒 Bloque l'accès si premier dépôt pas encore validé
     if user.premier_depot is False:
@@ -545,13 +548,16 @@ def dashboard_page():
     return render_template(
         "dashboard.html",
         user=user,
-        points=user.points or 0,              # ← Ajout de la ligne pour les points
+        points=user.points or 0,
         revenu_cumule=revenu_cumule,
         total_users=total_users,
-        total_withdrawn_user = user.total_retrait or 0,
+        total_withdrawn_user=user.total_retrait or 0,
         total_deposits=total_deposits,
+        referral_code=referral_code,
+        referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
