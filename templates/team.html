@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parrainage - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    color: #fff;
+}
+
+/* TOPBAR */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.topbar h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* SIDEBAR */
+.sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    width: 260px;
+    background: rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(12px);
+    transition: 0.4s;
+    padding-top: 80px;
+    z-index: 999;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.sidebar a {
+    display: block;
+    padding: 14px 25px;
+    font-size: 15px;
+    color: #fff;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.sidebar a i {
+    margin-right: 12px;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* MAIN CONTENT */
+.main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* STAT CARDS */
+.stat-card {
+    padding: 20px;
+    border-radius: 15px;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.orange-box { background: linear-gradient(to right, #ff7a00, #ffb35a); }
+.green-box  { background: linear-gradient(to right, #1dd75f, #65ff3f); }
+.blue-box   { background: linear-gradient(to right, #07184d, #15306b); }
+
+.stat-title {
+    font-size: 15px;
+    opacity: 0.9;
+}
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+/* REFERRAL BOX (en bas) */
+.ref-box {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    margin-top: 25px;
+}
+
+.ref-link-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ref-link {
+    background: #ffffff;
+    color: #333;
+    padding: 10px;
+    border-radius: 8px;
+    word-break: break-all;
+    font-weight: 600;
+    min-width: 250px;
+    text-align: center;
+}
+
+.copy-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #ff7a00;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.copy-btn:hover {
+    background: #ffb35a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle"><i class="fa fa-bars"></i></div>
+    <h2>👥</h2>
+</div>
+
+<div class="main">
+
+    <!-- LEVEL 1 -->
+    <div class="stat-card orange-box">
+        <div class="stat-title">Filleuls Niveau 1</div>
+        <div class="stat-value">{{ stats.level1 }}</div>
+    </div>
+
+    <!-- LEVEL 2 -->
+    <div class="stat-card green-box">
+        <div class="stat-title">Filleuls Niveau 2</div>
+        <div class="stat-value">{{ stats.level2 }}</div>
+    </div>
+
+    <!-- LEVEL 3 -->
+    <div class="stat-card blue-box">
+        <div class="stat-title">Filleuls Niveau 3</div>
+        <div class="stat-value">{{ stats.level3 }}</div>
+    </div>
+
+    <!-- TOTAL COMMISSIONS -->
+    <div class="stat-card orange-box">
+        <div class="stat-title">Commissions Totales</div>
+        <div class="stat-value">{{ stats.commissions_total }} XOF</div>
+    </div>
+
+
+    <!-- REFERRAL LINK -->
+    <div class="ref-box">
+        <p>Votre lien de parrainage :</p>
+        <div class="ref-link-container">
+            <div class="ref-link" id="refLink">{{ referral_link }}</div>
+            <button class="copy-btn" onclick="copyReferral()">Copier</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function copyReferral() {
+    const refLink = document.getElementById("refLink").textContent;
+    navigator.clipboard.writeText(refLink).then(() => {
+        alert("Lien de parrainage copié !");
+    }).catch(err => {
+        console.error("Erreur copie :", err);
+    });
+}
+
+// SIDEBAR TOGGLE
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.querySelector(".topbar .menu-toggle");
+
+if(menuToggle){
+    menuToggle.onclick = () => {
+        sidebar.classList.add("active");
+        overlay.classList.add("active");
+    };
+}
+
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+</script>
+
+</body>
+</html>

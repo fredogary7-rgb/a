@@ -1,0 +1,162 @@
+<!DOCTYPE html> <html lang="fr"> <head> <meta charset="UTF-8"> <meta 
+name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Profil - LuminaStar</title> <link 
+href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" 
+rel="stylesheet"> <link rel="stylesheet" 
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"> 
+<style> body {
+    font-family: 'Poppins', sans-serif;  
+    background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);  
+    color: #fff;  
+    min-height: 100vh;  
+    margin: 0;  
+    padding: 0;  
+}  
+.topbar {  
+    display: flex;  
+    justify-content: space-between;  
+    align-items: center;  
+    padding: 15px;  
+    background: rgba(255,255,255,0.15);  
+    backdrop-filter: blur(15px);  
+    border-bottom: 1px solid rgba(255,255,255,0.25);  
+    position: sticky;  
+    top: 0;  
+    z-index: 1000;  
+}  
+.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }  
+.topbar .user { font-weight:600; font-size:16px; }  
+  
+.sidebar {  
+    position: fixed;  
+    left:-260px;  
+    top:0;  
+    height:100%;  
+    width:260px;  
+    background: rgba(255,255,255,0.20);  
+    backdrop-filter: blur(12px);  
+    transition:0.4s;  
+    padding-top:80px;  
+    z-index:999;  
+    border-right:1px solid rgba(255,255,255,0.25);  
+}  
+.sidebar.active { left:0; }  
+.sidebar a { display:block; padding:14px 25px; font-size:15px; color:#fff; text-decoration:none; transition:0.3s;}  
+.sidebar a i { margin-right:12px; }  
+.sidebar a:hover { background: rgba(255,255,255,0.25); }  
+  
+.overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.45); opacity:0; visibility:hidden; transition:0.3s; z-index:998;}  
+.overlay.active { opacity:1; visibility:visible; }  
+  
+.main { padding:20px; }  
+  
+/* Profile Box */  
+.profile-card {  
+    background: rgba(255,255,255,0.25);  
+    padding:20px;  
+    border-radius:20px;  
+    margin-bottom:20px;  
+    backdrop-filter: blur(12px);  
+}  
+  
+.profile-card img {  
+    width:120px;  
+    height:120px;  
+    border-radius:50%;  
+    object-fit:cover;  
+    border:3px solid #fff;  
+    margin-bottom:10px;  
+}  
+  
+.profile-card h2 { font-size:20px; font-weight:700; margin-bottom:5px; }  
+.profile-card p { font-size:14px; opacity:0.9; margin-bottom:10px; }  
+  
+/* Buttons */  
+.btn { display:inline-block; padding:10px 20px; border-radius:12px; background:#ff7a00; color:#fff; font-weight:600; text-decoration:none; cursor:pointer; transition:0.3s;}  
+.btn:hover { background:#ffb35a; }  
+  
+/* Info Grid */  
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px; }  
+.info-item { background: rgba(255,255,255,0.25); padding:15px; border-radius:15px; }  
+.info-item h4 { font-size:14px; font-weight:600; margin-bottom:5px; opacity:0.9; }  
+.info-item p { font-size:14px; font-weight:500; }  
+  
+/* FOOTER */  
+footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }  
+</style>  </head>  <body>  
+<div class="overlay" id="overlay"></div>  <div class="sidebar" id="sidebar">  
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>  
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>  
+</div>  <div class="topbar">  
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>  
+    <div class="user">{{ user.username }}</div>  
+</div>  <div class="main">  <!-- Profile Card -->  
+<div class="fa fa-profil" style="text-align:center;">  
+    <h2>{{ user.username }}</h2>  
+    <p>{{ user.membership or 'Membre' }}</p>  
+
+    <!-- Upload form -->  
+    <form method="POST" enctype="multipart/form-data">  
+        <input type="file" name="profile_photo" accept="image/*">  
+        <button type="submit" class="btn">Télécharger une photo</button>  
+    </form>  
+</div>  
+
+<!-- Compte Résumé -->  
+<div class="info-grid">  
+    <div class="info-item">  
+        <h4>Solde du compte</h4>  
+        <p>XOF {{ user.solde_total }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Total Downlines</h4>  
+        <p>{{ team_total or 0 }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Téléphone</h4>  
+        <p>{{ user.phone }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Nom d'utilisateur</h4>  
+        <p>{{ user.username }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Adresse email</h4>  
+        <p>{{ user.email }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Pays</h4>  
+        <p>{{ user.country or 'N/A' }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Parrain</h4>  
+        <p>{{ user.parrain or 'Aucun' }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Date d'adhésion</h4>  
+        <p>{{ user.date_creation.strftime('%d %B %Y à %Hh%M') }}</p>  
+    </div>  
+    <div class="info-item">  
+        <h4>Adhésion</h4>  
+        <p>{{ user.membership or 'Membre' }}</p>  
+    </div>  
+</div>
+
+</div>  <footer>  
+    2026 © LuminaStar by Nina Academy  
+</footer>  <script>  
+const sidebar = document.getElementById("sidebar");  
+const overlay = document.getElementById("overlay");  
+const menuToggle = document.getElementById("menuToggle");  
+  
+menuToggle.onclick = () => {  
+    sidebar.classList.add("active");  
+    overlay.classList.add("active");  
+};  
+  
+overlay.onclick = () => {  
+    sidebar.classList.remove("active");  
+    overlay.classList.remove("active");  
+};  
+</script>  </body>  
+</html>

@@ -1,0 +1,146 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retrait - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body { font-family:'Poppins',sans-serif; background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); color:#fff; margin:0; padding:0; }
+.main { max-width:600px; margin:30px auto; padding:20px; background:rgba(0,0,0,0.4); border-radius:20px; }
+h2 { font-size:22px; margin-bottom:15px; }
+p { font-size:14px; line-height:1.5; margin-bottom:20px; }
+label { display:block; margin-bottom:8px; font-weight:600; }
+input, select, button { width:100%; padding:12px 15px; border-radius:10px; border:none; margin-bottom:15px; font-size:14px; }
+input, select { background:rgba(255,255,255,0.9); color:#333; }
+button { background:linear-gradient(to right,#1dd75f,#65ff3f); color:#fff; font-weight:600; cursor:pointer; transition:0.3s; }
+button:hover { opacity:0.9; }
+footer { text-align:center; margin-top:20px; opacity:0.8; font-size:13px; }
+
+.flash{
+  margin-bottom:15px;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:13px;
+}
+.flash.success{ background:rgba(0,255,150,.25); }
+.flash.danger{ background:rgba(255,50,50,.30); }
+
+/* HORAIRES TRENDSTAR */
+.schedule-card { margin-top:25px; background:linear-gradient(to bottom right,#ffe5d3,#ffdcd2); border-radius:20px; padding:20px; border:1px solid rgba(255,255,255,0.4); color:#444;}
+.schedule-card h3 { font-size:18px; font-weight:700; margin-bottom:15px; }
+.schedule-item { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.65); border-radius:14px; padding:12px 15px; margin-bottom:12px;}
+.schedule-left { display:flex; align-items:center; gap:12px; }
+.schedule-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+.icon-gray { background:#9e9e9e; } .icon-tiktok { background:#ff2d55; } .icon-youtube { background:#ff0000; } .icon-ads { background:#ffb300; } .icon-instagram { background:#8a3ab9; }
+.schedule-text strong { display:block; font-size:14px; font-weight:600; }
+.schedule-text span { font-size:12px; opacity:0.8; }
+.schedule-day { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; background:rgba(255,255,255,0.8);}
+.day-monday { color:#555; } .day-tuesday { color:#ff2d55; } .day-wednesday { color:#ff0000; } .day-thursday { color:#ffb300; } .day-friday { color:#8a3ab9; }
+</style>
+</head>
+<body>
+
+<!-- SYSTÈME DE MESSAGE -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="main">
+    <h2>Retirer les fonds du portefeuille</h2>
+
+    <p>
+        <strong>Avis important :</strong><br>
+        Veuillez vérifier que le numéro <b>{{ user.phone }}</b> est bien le vôtre avant tout retrait.<br>
+        En cas d’erreur, contactez immédiatement l’administrateur.
+    </p>
+
+    <form method="POST">
+
+        <label for="payment_method">Sélectionnez le mode de paiement</label>
+        <select name="payment_method" id="payment_method" required>
+            <option value="" disabled selected>Choisissez un mode de paiement</option>
+            <option value="mtn">MTN Mobile Money</option>
+            <option value="moov">Moov Money</option>
+            <option value="TMoney">TMoney</option>
+            <option value="Nita">Nita</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Momo Cameroun">Momo Cameroun</option>
+            <option value="Momo CI">Momo Côte d’Ivoire</option>
+            <option value="Airtel Money">Airtel Money</option>
+        </select>
+
+        <label for="montant">Saisissez le montant</label>
+        <input type="number" name="montant" id="montant" min="1" max="{{ user.solde_revenu }}" placeholder="Montant à retirer (XOF)" required>
+
+        <button type="submit">Demande de fonds</button>
+    </form>
+</div>
+
+<!-- HORAIRE TRENDSTAR -->
+<div class="schedule-card">
+    <h3>Horaire LuminaStar</h3>
+
+    <div class="schedule-item">
+        <div class="schedule-left">
+            <div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
+            <div class="schedule-text">
+                <strong>Questions de culture générale</strong>
+                <span>8h00</span>
+            </div>                                                                                            </div>
+        <div class="schedule-day day-monday">Lundi</div>
+    </div>
+
+    <div class="schedule-item">
+        <div class="schedule-left">
+            <div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
+            <div class="schedule-text">
+                <strong>Vidéos TikTok</strong>
+                <span>8h00</span>
+            </div>
+        </div>
+        <div class="schedule-day day-tuesday">Mardi</div>
+    </div>
+
+    <div class="schedule-item">
+        <div class="schedule-left">
+            <div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
+            <div class="schedule-text">
+                <strong>Vidéos YouTube</strong>
+                <span>8h00</span>
+            </div>
+        </div>
+        <div class="schedule-day day-wednesday">Mercredi</div>
+    </div>                                                                                            
+    <div class="schedule-item">
+        <div class="schedule-left">
+            <div class="schedule-icon icon-ads"><i class="fa fa-bullhorn"></i></div>
+            <div class="schedule-text">
+                <strong>Clics publicitaires</strong>
+                <span>8h00</span>
+            </div>
+        </div>
+        <div class="schedule-day day-thursday">Jeudi</div>
+    </div>
+
+    <div class="schedule-item">
+        <div class="schedule-left">
+            <div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
+            <div class="schedule-text">
+                <strong>Vidéos Instagram</strong>
+                <span>8h00</span>
+            </div>
+        </div>
+        <div class="schedule-day day-friday">Vendredi</div>
+    </div>
+</div>
+
+<footer>2026 © LuminaStar by Nina Academy</footer>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tâches Vidéo - TrendStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* RESET */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif;}
+body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:100vh; color:#fff; overflow-x:hidden; }
+
+/* TOPBAR */
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(255,255,255,0.15); backdrop-filter:blur(15px); border-bottom:1px solid rgba(255,255,255,0.25); position:sticky; top:0; z-index:1000;}
+.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }
+.topbar .user { font-weight:600; font-size:16px; }
+
+/* SIDEBAR */
+.sidebar { position:fixed; left:-260px; top:0; height:100%; width:260px; background:rgba(255,255,255,0.20); backdrop-filter:blur(12px); transition:0.4s; padding-top:80px; z-index:999; border-right:1px solid rgba(255,255,255,0.25);}
+.sidebar.active { left:0; }
+.sidebar a { display:block; padding:14px 25px; font-size:15px; color:#fff; text-decoration:none; transition:0.3s;}
+.sidebar a i { margin-right:12px; }
+.sidebar a:hover { background: rgba(255,255,255,0.25);}
+
+/* OVERLAY */
+.overlay { position:fixed; top:0; left:0; height:100%; width:100%; background:rgba(0,0,0,0.45); opacity:0; visibility:hidden; transition:0.3s; z-index:998;}
+.overlay.active { opacity:1; visibility:visible; }
+
+/* MAIN */
+.main { padding:20px; }
+
+/* VIDEO TASK BOX */
+.video-box { background: rgba(255,255,255,0.25); border-radius:15px; padding:15px; margin-bottom:20px; backdrop-filter:blur(10px); box-shadow:0 6px 18px rgba(0,0,0,0.2);}
+.video-box h3 { font-size:18px; font-weight:700; margin-bottom:10px; }
+.video-box p { font-size:14px; opacity:0.9; margin-bottom:10px; }
+
+/* VIDEO BUTTON */
+.watch-btn { background:#ff7a00; color:#fff; border:none; padding:10px 15px; border-radius:10px; font-weight:600; cursor:pointer; transition:0.3s; }
+.watch-btn:hover { background:#ffb35a; }
+
+/* POINTS BOX */
+.points-box { background:#fff; color:#333; border-radius:12px; padding:12px; font-weight:600; margin-bottom:15px; text-align:center; }
+
+/* FOOTER */
+footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="#"><i class="fa fa-wallet"></i> Revenus</a>
+    <a href="/team"><i class="fa fa-users"></i> Parrainages</a>
+    <a href="/tasks/videos"><i class="fa fa-video"></i> Tâches Vidéo</a>
+    <a href="#"><i class="fa fa-user"></i> Profil</a>
+    <a href="#"><i class="fa fa-money-bill"></i> Retrait</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div class="user">{{ user.username }}</div>
+</div>
+
+<div class="main">
+    <div class="video-box">
+        <h3>Centre Vidéo</h3>
+        <p>Gagnez de l'argent en regardant des vidéos. Chaque vidéo = 10 points. Maximum 3 vidéos/jour.</p>
+    </div>
+
+    <div class="points-box">
+        Points actuels : {{ points }}
+    </div>
+
+    {% for video in videos %}
+    <div class="video-box">
+        <div>{{ video.titre }}</div>
+        <form method="POST" action="{{ url_for('watch_video', video_id=video.id) }}">
+            <button type="submit" class="watch-btn">Regarder la vidéo (+10 points)</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+
+<footer>
+    2026 © TrendStar — GreatTech Management
+</footer>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+
+menuToggle.onclick = () => {
+    sidebar.classList.add("active");
+    overlay.classList.add("active");
+};
+
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+</script>
+</body>
+</html>

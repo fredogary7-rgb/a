@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click du jeudi - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* RESET */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+
+/* BODY CENTRÉ PERFECT */
+body {
+    background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
+    min-height:100vh;
+    color:#fff;
+    overflow-x:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:0;
+}
+
+/* CONTAINER CENTRALISÉ */
+.page-wrapper {
+    width:100%;
+    max-width:600px;
+    padding:20px;
+}
+
+/* TOPBAR */
+.topbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px;
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(15px);
+    border-bottom:1px solid rgba(255,255,255,0.25);
+    border-radius:15px;
+    margin-bottom:25px;
+}
+.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }
+
+/* SIDEBAR */
+.sidebar {
+    position:fixed; left:-260px; top:0; width:260px; height:100%;
+    background:rgba(255,255,255,0.20);
+    backdrop-filter:blur(12px);
+    padding-top:80px;
+    border-right:1px solid rgba(255,255,255,0.25);
+    transition:0.4s;
+    z-index:999;
+}
+.sidebar.active { left:0; }
+.sidebar a { padding:14px 25px; display:block; color:#fff; font-size:15px; text-decoration:none; }
+.sidebar a:hover { background:rgba(255,255,255,0.25); }
+
+/* OVERLAY */
+.overlay {
+    position:fixed; top:0; left:0; height:100%; width:100%;
+    background:rgba(0,0,0,0.45);
+    opacity:0; visibility:hidden;
+    transition:0.3s;
+    z-index:998;
+}
+.overlay.active { opacity:1; visibility:visible; }
+
+/* CLICK BOX */
+.click-box {
+    background:rgba(0,0,0,0.4);
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
+}
+.click-box h2 { margin-bottom:15px; font-size:24px; }
+.click-box p { margin-bottom:25px; font-size:16px; }
+
+/* BUTTONS */
+.click-box button {
+    padding:15px 30px;
+    font-size:16px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:linear-gradient(to right,#1dd75f,#65ff3f);
+    color:#fff;
+    margin:0 15px;
+    transition:0.3s;
+}
+.click-box button:hover { opacity:0.9; }
+
+/* FOOTER */
+footer {
+    margin-top:25px;
+    text-align:center;
+    font-size:13px;
+    opacity:0.8;
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="page-wrapper">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    </div>
+
+    <!-- CLICK BOX -->
+    <div class="click-box">
+        <h2>Click du jeudi</h2>
+        <p>Cliquez sur les deux boutons pour gagner <strong>20 points</strong> !</p>
+
+        <form method="POST" id="clickForm">
+            <input type="hidden" name="clicks" id="clicks" value="0">
+            <button type="button" class="click-btn">Bouton 1</button>
+            <button type="button" class="click-btn">Bouton 2</button>
+        </form>
+    </div>
+
+    <footer>
+        2026 © LuminaStar by Nina Academy
+    </footer>
+
+</div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+const btns = document.querySelectorAll(".click-btn");
+const hiddenInput = document.getElementById("clicks");
+
+// SIDEBAR
+menuToggle.onclick = () => {
+    sidebar.classList.add("active");
+    overlay.classList.add("active");
+};
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+
+// CLICK LOGIC
+let clicks = 0;
+btns.forEach(btn => {
+    btn.onclick = () => {
+        clicks++;
+        hiddenInput.value = clicks;
+
+        if(clicks >= 2){
+            alert("Félicitations ! Vous avez gagné 20 points.");
+            document.getElementById("clickForm").submit();
+        } else {
+            alert("Cliquez sur l'autre bouton pour gagner les points !");
+        }
+    };
+});
+</script>
+
+</body>
+</html>

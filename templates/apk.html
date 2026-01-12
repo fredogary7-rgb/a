@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Applications Premium - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* RESET */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+body {
+    background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+/* CARD INFO */
+.info-box {
+    background: rgba(255,255,255,0.20);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.info-box h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.info-box p {
+    font-size: 14px;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+/* APP CARD */
+.app-card {
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    padding: 18px;
+    margin-bottom: 15px;
+    border-radius: 20px;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+}
+
+.app-card h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.app-card p {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 10px;
+}
+
+.btn-download {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #07184d;
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.btn-download:hover {
+    background: #15306b;
+}
+
+/* OFFICIAL LINKS */
+.link-row {
+    margin-top: 10px;
+}
+
+.link-row a {
+    margin-right: 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* FOOTER */
+footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="info-box">
+    <h2>Applications Premium et Moyens Officiels pour les Obtenir</h2>
+    <p>
+        Ci-dessous vous trouverez les applications que nous avons rendues disponibles au téléchargement.  
+        Toutes proviennent de sources fiables. Nous rappelons que les versions modifiées sont illégales  
+        et dangereuses pour votre appareil.
+    </p>
+</div>
+
+{% for file in apk_files %}
+<div class="app-card">
+    <h3><i class="fa fa-robot"></i> {{ file }}</h3>
+    <p>Fichier APK disponible en téléchargement direct depuis LuminaStar.</p>
+
+    <a class="btn-download" href="/static/uploads/apps/{{ file }}" download>
+        <i class="fa fa-download"></i> Télécharger
+    </a>
+</div>
+{% endfor %}
+
+<div class="info-box">
+    <h2>Sources Officielles</h2>
+
+    <div class="app-card">
+        <h3>🎬 CapCut</h3>
+        <p>Éditeur vidéo populaire avec options premium.</p>
+        <div class="link-row">
+            <a href="https://play.google.com" target="_blank">Google Play</a>
+            <a href="https://apps.apple.com" target="_blank">App Store</a>
+        </div>
+    </div>
+
+    <div class="app-card">
+        <h3>💬 Telegram Premium</h3>
+        <p>Version officielle avec options premium intégrées.</p>
+        <div class="link-row">
+            <a href="https://telegram.org" target="_blank">Site officiel</a>
+        </div>
+    </div>
+
+    <div class="app-card">
+        <h3>🎥 Netflix</h3>
+        <p>Abonnements premium disponibles exclusivement via le site officiel.</p>
+        <div class="link-row">
+            <a href="https://netflix.com" target="_blank">Site officiel</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    2026 © LuminaStar by Nina Academy
+</footer>
+
+</body>
+</html>

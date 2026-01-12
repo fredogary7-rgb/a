@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vidéos YouTube - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* Styles identiques à avant */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:100vh; color:#fff; overflow-x:hidden; }
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(255,255,255,0.15); backdrop-filter:blur(15px); border-bottom:1px solid rgba(255,255,255,0.25); position:sticky; top:0; z-index:1000;}
+.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }
+.sidebar { position:fixed; left:-260px; top:0; height:100%; width:260px; background:rgba(255,255,255,0.20); backdrop-filter:blur(12px); transition:0.4s; padding-top:80px; z-index:999; border-right:1px solid rgba(255,255,255,0.25);}
+.sidebar.active { left:0; }
+.sidebar a { display:block; padding:14px 25px; font-size:15px; color:#fff; text-decoration:none; transition:0.3s;}
+.sidebar a:hover { background: rgba(255,255,255,0.25); }
+.overlay { position:fixed; top:0; left:0; height:100%; width:100%; background:rgba(0,0,0,0.45); opacity:0; visibility:hidden; transition:0.3s; z-index:998;}
+.overlay.active { opacity:1; visibility:visible; }
+.main { padding:20px; }
+.welcome-holder { background: linear-gradient(to bottom right, #ffe5d3, #ffdcd2); padding:20px; border-radius:20px; color:#444; margin-bottom:25px; border:1px solid rgba(255,255,255,0.4);}
+.welcome-holder h2 { font-size:20px; font-weight:700; margin-bottom:10px;}
+.welcome-holder p { font-size:14px; }
+.video-container { margin-top:25px; text-align:center; }
+.video-container iframe { width:100%; max-width:700px; height:400px; border-radius:15px; border:none; }
+.no-video { font-size:20px; font-weight:600; padding:50px 20px; opacity:0.7; text-align:center; }
+footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>
+    <a href="/profile"><i class="fa fa-user"></i> Profil</a>
+    <a href="/apk"><i class="fa fa-th"></i> Apk Premium</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+</div>
+
+<div class="main">
+    <div class="welcome-holder">
+        <h2>Vidéos YouTube</h2>
+        <p>Équilibre YouTube : <strong>{{ user.points_youtube }} pts</strong></p>
+    </div>
+
+    <div class="video-container">
+        {% if today == 2 and user.last_youtube_date != current_date %}
+            <div id="videoBox">
+                <div id="player"></div>
+            </div>
+
+            <div id="successMessage" class="no-video" style="display:none;">
+                🎉 20 points ajoutés ! Vidéo complétée. Revenez mercredi prochain !
+            </div>
+
+        {% elif today == 2 %}
+            <div class="no-video">
+                🎉 Vous avez déjà regardé la vidéo d’aujourd’hui.<br>
+                Revenez mercredi prochain !
+            </div>
+
+        {% else %}
+            <div class="no-video">
+                La vidéo sera disponible mercredi.<br>
+                Revenez ce jour-là pour gagner 20 points !
+            </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        2026 © LuminaStar by Nina Academy
+    </footer>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+
+menuToggle.onclick = () => {
+    sidebar.classList.add("active");
+    overlay.classList.add("active");
+};
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+
+{% if today == 2 and user.last_youtube_date != current_date %}
+let player;
+
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+        height: '400',
+        width: '700',
+        videoId: 'TON_VIDEO_ID_ICI',  // Remplace par ton ID YouTube
+        playerVars: { 'autoplay': 1, 'controls': 0 },
+        events: { 'onStateChange': onPlayerStateChange }
+    });
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        fetch("/youtube/complete")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("videoBox").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+        });
+    }
+}
+{% endif %}
+</script>
+
+</body>
+</html>

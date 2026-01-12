@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cours E-commerce - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:100vh; padding:20px; color:#fff; }
+
+.info-box {
+    background: rgba(255,255,255,0.20);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.info-box h2 { font-size:22px; font-weight:700; margin-bottom:10px; }
+.info-box p { font-size:14px; opacity:0.9; line-height:1.6; }
+
+.app-card {
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    padding:18px;
+    margin-bottom:15px;
+    border-radius:20px;
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.35);
+}
+
+.app-card h3 { font-size:18px; margin-bottom:8px; }
+.app-card p { font-size:13px; opacity:0.85; margin-bottom:10px; }
+
+.video-container {
+    margin-bottom:15px;
+    border-radius:15px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.3);
+}
+
+video { width:100%; border-radius:15px; }
+
+.btn-download {
+    display:inline-block;
+    padding:10px 20px;
+    background:#07184d;
+    color:#fff;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+}
+
+.btn-download:hover { background:#15306b; }
+
+footer { margin-top:40px; text-align:center; font-size:13px; opacity:0.8; }
+</style>
+</head>
+
+<body>
+
+<div class="info-box">
+    <h2>Cours de formation E-commerce</h2>
+    <p>Apprenez l'e-commerce grâce aux vidéos, tutoriels et PDF soigneusement sélectionnés par LuminaStar pour vous permettre de vendre avec succès et confiance.</p>
+</div>
+
+<div class="app-card">
+    <h3>🎥 Tutoriels vidéo</h3>
+    <p>3 vidéos pour apprendre le e-commerce étape par étape.</p>
+
+    <div class="video-container">
+        <video controls>
+            <source src="{{ url_for('static', filename='videos/ecom.mp4') }}" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="video-container">
+        <video controls>
+            <source src="{{ url_for('static', filename='videos/ecom1.mp4') }}" type="video/mp4">
+        </video>
+    </div>
+
+    <p>De nouveaux tutoriels sont ajoutés chaque mois.</p>
+</div>
+
+<div class="app-card">
+    <h3>📚 PDF et livres numériques</h3>
+    <p>Apprenez les bases et stratégies à votre rythme.</p>
+    <a class="btn-download" href="{{ url_for('static', filename='pdfs/ecom.pdf') }}" download>
+        <i class="fa fa-download"></i> Télécharger PDF
+    </a>
+</div>
+
+    <video controls>
+        <source src="{{ url_for('static', filename='videos/ecom2.mp4') }}" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture de vidéo.
+    </video>
+
+<div class="app-card">
+    <h3>✅ Leçons terminées</h3>
+    <p>Continuez sur cette lancée !</p>
+</div>
+
+<footer>
+    2026 © LuminaStar by Nina Academy
+</footer>
+
+</body>
+</html>

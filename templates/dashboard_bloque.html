@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compte Inactif - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* {margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body {background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);min-height:100vh;color:#fff;overflow-x:hidden;}
+.topbar {display:flex;justify-content:space-between;align-items:center;padding:15px;background:rgba(255,255,255,0.15);backdrop-filter:blur(15px);border-bottom:1px solid rgba(255,255,255,0.25);position:sticky;top:0;z-index:1000;}
+.topbar .menu-toggle {font-size:24px;cursor:pointer;color:#fff;}
+.topbar .user {font-weight:600;font-size:16px;}
+.sidebar {position:fixed;left:-260px;top:0;height:100%;width:260px;background:rgba(255,255,255,0.20);backdrop-filter:blur(12px);transition:.4s;padding-top:80px;z-index:999;border-right:1px solid rgba(255,255,255,0.25);}
+.sidebar.active {left:0;}
+.sidebar a {display:block;padding:14px 25px;font-size:15px;color:#fff;text-decoration:none;transition:.3s;}
+.sidebar a i {margin-right:12px;}
+.sidebar a:hover {background:rgba(255,255,255,0.25);}
+.overlay {position:fixed;top:0;left:0;height:100%;width:100%;background:rgba(0,0,0,0.45);opacity:0;visibility:hidden;transition:.3s;z-index:998;}
+.overlay.active {opacity:1;visibility:visible;}
+.main {padding:20px;}
+.block {background:rgba(255,255,255,0.25);border-radius:20px;padding:20px;margin-bottom:25px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.35);}
+.block h2 {font-size:20px;font-weight:700;margin-bottom:12px;}
+.block p {font-size:14px;margin-bottom:12px;}
+.info-item {margin-bottom:8px;font-size:15px;}
+.info-item span {font-weight:600;}
+.payment-section {background:rgba(255,255,255,0.30);border-radius:18px;padding:18px;margin-top:15px;}
+.payment-section .label {font-weight:600;font-size:14px;}
+.payment-section .value, .payment-section input, .payment-section select {background:#fff;color:#333;padding:10px 12px;border-radius:10px;margin-top:5px;font-size:15px;font-weight:600;border:none;width:100%;}
+.pay-btn {margin-top:15px;width:100%;background:#ff7a00;color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;cursor:pointer;font-size:17px;transition:.3s;}
+.pay-btn:hover {background:#ffb35a;}
+footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
+</style>
+</head>
+
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/dashboard_bloque" style="background:rgba(255,255,255,0.25);"><i class="fa fa-lock"></i> Compte inactif</a>
+    <a href="#"><i class="fa fa-wallet"></i> Compte recharge</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div class="user">{{ user.username }}</div>
+</div>
+
+<div class="main">
+
+    <div class="block">
+        <h2>Compte inactif</h2>
+        <p>Veuillez vous abonner pour accéder à votre compte.</p>
+        <p>Suivez la procédure de dépôt. Utilisez le numéro ci-dessous :</p>
+        <h2 style="font-size:26px;color:#fff;"><b>{{ user.phone }}</b></h2>
+        <div class="info-item"><span>Nom :</span> {{ user.username }}</div>
+        <div class="info-item"><span>Email :</span> {{ user.email }}</div>
+    </div>
+
+    <div class="block">
+        <h2>Effectuer un dépôt</h2>
+        <!-- Formulaire de dépôt -->
+        <form method="POST" action="{{ url_for('dashboard_bloque') }}">
+            <div class="payment-section">
+                <div class="label">Nom complet</div>
+                <input type="text" name="fullname" class="value" value="{{ user.username }}" required>
+
+                <div class="label" style="margin-top:15px;">Numéro de compte / portefeuille</div>
+                <input type="text" name="phone" class="value" value="{{ user.phone }}" readonly>
+
+                <div class="label" style="margin-top:15px;">Montant</div>
+                <input type="number" name="montant" class="value" value="3800" required>
+
+                <div class="label" style="margin-top:15px;">Pays</div>
+                <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
+
+                <div class="label" style="margin-top:15px;">Canal de paiement</div>
+                <select name="operator" class="value" required>
+                    <option value="MTN Mobile Money">MTN Mobile Money</option>
+                    <option value="MoMo Cameroun">MoMo Cameroun</option>
+                    <option value="Moov Money">Moov Money</option>
+                    <option value="Airtel Money">Airtel Money</option>
+                    <option value="Orange Money">Orange Money</option>
+                    <option value="Yas Togo">Yas Togo</option>
+                    <option value="Nita">Nita</option>
+                    <option value="Wave">Wave</option>
+                </select>
+
+                <button type="submit" class="pay-btn">Effectuer le paiement</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>
+        2026 © LuminaStar by Nina Academy
+    </footer>
+</div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+
+menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
+overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
+</script>
+
+</body>
+</html>

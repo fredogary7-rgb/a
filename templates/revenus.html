@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenus - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* RESET */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:100vh; color:#fff; overflow-x:hidden; }
+
+/* TOPBAR */
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(255,255,255,0.15); backdrop-filter:blur(15px); border-bottom:1px solid rgba(255,255,255,0.25); position:sticky; top:0; z-index:1000;}
+.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }
+.topbar .user { font-weight:600; font-size:16px; }
+
+/* SIDEBAR */
+.sidebar { position:fixed; left:-260px; top:0; height:100%; width:260px; background:rgba(255,255,255,0.20); backdrop-filter:blur(12px); transition:0.4s; padding-top:80px; z-index:999; border-right:1px solid rgba(255,255,255,0.25);}
+.sidebar.active { left:0; }
+.sidebar a { display:block; padding:14px 25px; font-size:15px; color:#fff; text-decoration:none; transition:0.3s;}
+.sidebar a i { margin-right:12px; }
+.sidebar a:hover { background: rgba(255,255,255,0.25); }
+
+/* OVERLAY */
+.overlay { position:fixed; top:0; left:0; height:100%; width:100%; background:rgba(0,0,0,0.45); opacity:0; visibility:hidden; transition:0.3s; z-index:998;}
+.overlay.active { opacity:1; visibility:visible; }
+
+/* MAIN */
+.main { padding:20px; }
+
+/* WELCOME BOX */
+.welcome-holder { background: linear-gradient(to bottom right, #ffe5d3, #ffdcd2); padding:20px; border-radius:20px; color:#444; margin-bottom:25px; border:1px solid rgba(255,255,255,0.4);}
+.welcome-holder h2 { font-size:20px; font-weight:700; margin-bottom:10px;}
+.welcome-holder p { font-size:14px; line-height:1.5;}
+
+/* STAT BOXES */
+.stat-box { margin-top:15px; display:flex; justify-content:space-between; border-radius:15px; padding:18px 25px; color:#fff; font-weight:600; font-size:18px; }
+.stat-box div { flex:1; margin-right:10px; }
+.stat-box div:last-child { margin-right:0; }
+.stat-amount { font-size:24px; font-weight:700; margin-top:8px; display:flex; align-items:center; gap:8px; }
+.orange-box { background: linear-gradient(to right, #ff7a00, #ffb35a); }
+.green-box { background: linear-gradient(to right, #1dd75f, #65ff3f); }
+.blue-box { background: linear-gradient(to right, #07184d, #15306b); }
+.stat-title { font-size:15px; opacity:0.9; display:flex; align-items:center; gap:8px; }
+
+/* ICONS BOX */
+.icon-circle { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; background:rgba(255,255,255,0.25); }
+
+/* FOOTER */
+footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px;}
+</style>
+</head>
+
+<body>
+<div class="overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <a href="/dashboard"><i class="fa fa-home"></i> Dashboard</a>
+    <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>
+    <a href="/profile"><i class="fa fa-user"></i> Profil</a>
+    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div class="user">{{ user.username }}</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+    <div class="welcome-holder">
+        <h2>Mes revenus liés aux produits</h2>
+        <p>Voici vos points accumulés sur différentes activités et le total de votre équipe.</p>
+    </div>
+
+    <!-- Points par catégorie -->
+    <div class="stat-box green-box">
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fab fa-youtube"></i></span> Équilibre YouTube</div>
+            <div class="stat-amount">{{ points_youtube }} pts</div>
+        </div>
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fab fa-tiktok"></i></span> Équilibre TikTok</div>
+            <div class="stat-amount">{{ points_tiktok }} pts</div>
+        </div>
+    </div>
+
+    <div class="stat-box green-box">
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fa fa-gift"></i></span> Spin & Win Balance</div>
+            <div class="stat-amount">{{ points_spin }} pts</div>
+        </div>
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fab fa-instagram"></i></span> Équilibre Instagram</div>
+            <div class="stat-amount">{{ points_instagram }} pts</div>
+        </div>
+    </div>
+
+    <div class="stat-box green-box">
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fa fa-bullhorn"></i></span> Équilibre publicitaire</div>
+            <div class="stat-amount">{{ points_ads }} pts</div>
+        </div>
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fa fa-gamepad"></i></span> Équilibre du jeu</div>
+            <div class="stat-amount">{{ points_games }} pts</div>
+        </div>
+    </div>
+
+    <!-- Total équipe et commissions -->
+    <div class="stat-box blue-box">
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fa fa-users"></i></span> Total de votre équipe</div>
+            <div class="stat-amount">{{ team_total }} membres</div>
+        </div>
+        <div>
+            <div class="stat-title"><span class="icon-circle"><i class="fa fa-hand-holding-dollar"></i></span> Commission totale</div>
+            <div class="stat-amount">{{ total_commission }} XOF</div>
+        </div>
+    </div>
+
+    <!-- HORAIRES TRENDSTAR (exemple si tu veux afficher les horaires) -->
+    <div class="schedule-card">
+        <h3>Horaire LuminaStar</h3>
+
+        <div class="schedule-item">
+            <div class="schedule-left">
+                <div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
+                <div class="schedule-text">
+                    <strong>Vidéos TikTok</strong>
+                    <span>Mardi</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="schedule-left">
+                <div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
+                <div class="schedule-text">
+                    <strong>Vidéos YouTube</strong>
+                    <span>Mercredi</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="schedule-item">
+            <div class="schedule-left">
+                <div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
+                <div class="schedule-text">
+                    <strong>Vidéos Instagram</strong>
+                    <span>Vendredi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>2026 © LuminaStar by Nina Academy</footer>
+</div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuToggle = document.getElementById("menuToggle");
+
+menuToggle.onclick = () => {
+    sidebar.classList.add("active");
+    overlay.classList.add("active");
+};
+
+overlay.onclick = () => {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+};
+</script>
+</body>
+</html>

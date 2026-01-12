@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formation Forex - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* RESET */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body {
+    background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
+    min-height:100vh;
+    padding:20px;
+    color:#fff;
+}
+
+/* CARD INFO */
+.info-box {
+    background: rgba(255,255,255,0.20);
+    backdrop-filter: blur(12px);
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:25px;
+    border:1px solid rgba(255,255,255,0.3);
+}
+.info-box h2 {
+    font-size:22px;
+    font-weight:700;
+    margin-bottom:10px;
+}
+.info-box p {
+    font-size:14px;
+    opacity:0.9;
+    line-height:1.6;
+}
+
+/* COURSE CARDS */
+.course-card {
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    padding:18px;
+    margin-bottom:15px;
+    border-radius:20px;
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.35);
+}
+.course-card h3 {
+    font-size:18px;
+    margin-bottom:8px;
+}
+.course-card p {
+    font-size:13px;
+    opacity:0.85;
+    margin-bottom:10px;
+}
+
+/* VIDEO PLAYER */
+video {
+    width:100%;
+    max-height:350px;
+    border-radius:15px;
+    margin-bottom:12px;
+}
+
+/* DOWNLOAD BUTTON */
+.btn-download {
+    display:inline-block;
+    padding:10px 20px;
+    background:#07184d;
+    color:#fff;
+    border-radius:12px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+}
+.btn-download:hover { background:#15306b; }
+
+/* LESSON STATS */
+.lesson-stats {
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    margin-bottom:15px;
+}
+.lesson-box {
+    background: rgba(255,255,255,0.15);
+    padding:15px;
+    border-radius:15px;
+    width:30%;
+    min-width:120px;
+    margin-bottom:10px;
+}
+.lesson-box h4 {
+    font-size:16px;
+    margin-bottom:5px;
+}
+.lesson-box p { font-size:14px; opacity:0.9; }
+
+/* FOOTER */
+footer {
+    margin-top:40px;
+    text-align:center;
+    font-size:13px;
+    opacity:0.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="info-box">
+    <h2>Cours de formation Forex</h2>
+    <p>
+        Maîtrisez le trading Forex grâce aux leçons, tutoriels vidéo et ressources soigneusement sélectionnés par LuminaStar,
+        conçus pour vous aider à trader avec confiance et rentabilité.
+    </p>
+</div>
+
+<div class="lesson-stats">
+    <div class="lesson-box">
+        <h4>🎥 Tutoriels vidéo</h4>
+        <p>3 vidéos disponibles</p>
+        <p>De nouveaux tutoriels sont ajoutés chaque mois.</p>
+    </div>
+    <div class="lesson-box">
+        <h4>📚 Livres numériques et PDF</h4>
+        <p>3 livres</p>
+        <p>Apprenez la théorie et les stratégies à votre propre rythme.</p>
+    </div>
+    <div class="lesson-box">
+        <h4>✅ Leçons terminées</h4>
+        <p>7 leçons</p>
+        <p>Continuez sur cette lancée !</p>
+    </div>
+</div>
+
+<div class="course-card">
+    <h3>🌍 Principes fondamentaux du trading Forex</h3>
+    <p>Apprenez les paires de devises, la lecture des graphiques et la psychologie du trading.
+       Ce cours, idéal pour les débutants, vous permettra de poser des bases solides pour votre parcours de trading.</p>
+    <p><strong>Débutant • 12 modules • 6 heures</strong></p>
+</div>
+
+<div class="course-card">
+    <h3>🎬 Tutoriels vidéo</h3>
+
+    <video controls>
+        <source src="{{ url_for('static', filename='videos/trade.mp4') }}" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture de vidéo.
+    </video>
+
+    <video controls>
+        <source src="{{ url_for('static', filename='videos/trade1.mp4') }}" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture de vidéo.
+    </video>
+</div>
+
+<div class="course-card">
+    <h3>📚 PDF & Livres numériques</h3>
+    <p>Apprenez à votre rythme grâce à nos ressources PDF :</p>
+    <a class="btn-download" href="{{ url_for('static', filename='pdfs/tr.pdf') }}" download>
+        <i class="fa fa-download"></i> Télécharger le PDF
+    </a>
+</div>
+
+    <video controls>
+        <source src="{{ url_for('static', filename='videos/trade2.mp4') }}" type="video/mp4">
+        Votre navigateur ne supporte pas la lecture de vidéo.
+    </video>
+
+<div class="course-card">
+    <h3>💡 Modules principaux</h3>
+    <div class="course-card">
+        <h4>Introduction au Forex</h4>
+        <p>Comprendre le fonctionnement des marchés des changes et leurs principes fondamentaux.</p>
+    </div>
+    <div class="course-card">
+        <h4>Analyse technique</h4>
+        <p>Apprenez à lire les graphiques, les modèles et les indicateurs.</p>
+    </div>
+    <div class="course-card">
+        <h4>Gestion des risques</h4>
+        <p>Protégez votre capital grâce à des stratégies de trading intelligentes.</p>
+    </div>
+</div>
+
+<footer>
+    2026 © LuminaStar by Nina Academy
+</footer>
+
+</body>
+</html>

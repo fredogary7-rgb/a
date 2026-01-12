@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roue de la Fortune</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
+    min-height:100vh;
+    font-family:'Poppins',sans-serif;
+    color:#fff;
+    text-align:center;
+    padding:20px;
+}
+
+.wheel-card{
+    background:rgba(255,255,255,0.25);
+    backdrop-filter:blur(10px);
+    border-radius:20px;
+    padding:20px;
+    max-width:400px;
+    margin:0 auto 20px;
+}
+
+.pointer{
+    width:0;
+    height:0;
+    border-left:18px solid transparent;
+    border-right:18px solid transparent;
+    border-bottom:32px solid black;
+    margin:10px auto;
+}
+
+.wheel-container{
+    position:relative;
+    width:320px;
+    height:320px;
+    margin:0 auto;
+}
+
+#wheel{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    border:8px solid black;
+    position:relative;
+    transition:transform 5s cubic-bezier(0.1,0.8,0.3,1);
+}
+
+.labels{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+}
+
+.label{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform-origin:0 0;
+    font-weight:700;
+    font-size:14px;
+    color:#000;
+}
+
+#spinBtn{
+    position:absolute;
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    background:#ffcc00;
+    border:6px solid black;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:700;
+    cursor:pointer;
+    z-index:5;
+}
+
+#spinBtn.disabled{
+    opacity:.5;
+    pointer-events:none;
+}
+
+footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
+</style>
+</head>
+
+<body>
+
+<div class="wheel-card">
+    <h2>🎡 Roue de la Fortune</h2>
+    <p>Tentez de gagner une récompense TrendStar !</p>
+</div>
+
+<div class="pointer"></div>
+
+<div class="wheel-container">
+    <div id="wheel"></div>
+    <div class="labels" id="labels"></div>
+    <div id="spinBtn">Spin</div>
+</div>
+
+<footer>2026 © LuminaStar by Nina Academy <footer>
+
+<script>
+const values = [0,50,80,130,150,180,200,220,250,300,340,460];
+const segments = values.length;
+const angle = 360 / segments;
+
+const wheel = document.getElementById("wheel");
+const labels = document.getElementById("labels");
+const btn = document.getElementById("spinBtn");
+
+/* ===== CONIC GRADIENT (CERCLE PARFAIT) ===== */
+let gradient = [];
+for(let i=0;i<segments;i++){
+    const color = i % 2 === 0 ? "#ffffff" : "#ff0000";
+    gradient.push(`${color} ${i*angle}deg ${(i+1)*angle}deg`);
+}
+wheel.style.background = `conic-gradient(${gradient.join(",")})`;
+
+/* ===== TEXTE BIEN POSITIONNÉ ===== */
+values.forEach((val,i)=>{
+    const label = document.createElement("div");
+    label.className = "label";
+    const rotation = i*angle + angle/2;
+    label.style.transform =
+        `rotate(${rotation}deg) translate(120px) rotate(90deg)`;
+    label.innerText = val;
+    labels.appendChild(label);
+});
+
+/* ===== LOGIQUE SPIN ===== */
+let alreadyPlayed = false; // backend ici si besoin
+
+if(alreadyPlayed){
+    btn.classList.add("disabled");
+    btn.textContent="Déjà joué";
+}
+
+btn.addEventListener("click",()=>{
+    btn.classList.add("disabled");
+
+    fetch("/wheel/spin",{method:"POST"})
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.status==="error"){
+            alert(data.message);
+            return;
+        }
+
+        const reward = data.reward;
+        const index = values.indexOf(reward);
+
+        const spinAngle =
+            360*5 +
+            (360 - index*angle - angle/2);
+
+        wheel.style.transform = `rotate(${spinAngle}deg)`;
+
+        setTimeout(()=>{
+            alert("🎉 Vous avez gagné : "+reward+" XOF !");
+        },5200);
+    });
+});
+</script>
+
+</body>
+</html>

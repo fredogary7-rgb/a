@@ -1,0 +1,14 @@
+# Ignorer tous les fichiers vidéos lourds
+/static/videos/*.mp4
+/static/uploads/apps/*.apk
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Flask / migrations
+migrations/__pycache__/
+
+# Autres dossiers temporaires
+/static/uploads/

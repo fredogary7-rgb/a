@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion - LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Roboto',sans-serif;
+}
+
+/* ===== Background ===== */
+body{
+    min-height:100vh;
+    background:linear-gradient(120deg,#6a11cb,#2575fc);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:15px;
+}
+
+/* ===== Card ===== */
+.login-card{
+    width:100%;
+    max-width:420px;
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 20px 40px rgba(0,0,0,.2);
+    animation:fadeUp .8s ease;
+}
+
+/* ===== Header ===== */
+.login-header{
+    background:linear-gradient(120deg,#6a11cb,#2575fc);
+    padding:25px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#fff;
+}
+
+.login-header img{
+    width:40px;
+    height:40px;
+}
+
+.login-header h1{
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:1px;
+}
+
+/* ===== Body ===== */
+.login-body{
+    padding:30px 25px;
+}
+
+.login-body h2{
+    text-align:center;
+    font-size:20px;
+    margin-bottom:8px;
+    color:#333;
+}
+
+.login-body p{
+    text-align:center;
+    font-size:14px;
+    color:#777;
+    margin-bottom:25px;
+}
+
+/* ===== Inputs ===== */
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    font-size:14px;
+    font-weight:500;
+    color:#555;
+    margin-bottom:6px;
+    display:block;
+}
+
+.input-wrapper{
+    position:relative;
+}
+
+.input-wrapper input{
+    width:100%;
+    padding:13px 45px 13px 15px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    font-size:14px;
+    outline:none;
+    transition:.3s;
+}
+
+.input-wrapper input:focus{
+    border-color:#2575fc;
+    box-shadow:0 0 0 3px rgba(37,117,252,.15);
+}
+
+.input-wrapper i{
+    position:absolute;
+    right:15px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#999;
+    cursor:pointer;
+}
+
+/* ===== Options ===== */
+.options{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    font-size:14px;
+}
+
+.options label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#555;
+}
+
+.options a{
+    text-decoration:none;
+    color:#2575fc;
+    font-weight:500;
+}
+
+/* ===== Button ===== */
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(120deg,#6a11cb,#2575fc);
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
+
+/* ===== Footer ===== */
+.footer-text{
+    text-align:center;
+    margin-top:18px;
+    font-size:14px;
+    color:#666;
+}
+
+.footer-text a{
+    color:#2575fc;
+    font-weight:600;
+    text-decoration:none;
+}
+
+
+    .flash{
+      margin-bottom:15px;
+      padding:10px 12px;
+      border-radius:8px;
+      font-size:13px;
+    }
+    .flash.success{ background:rgba(0,255,150,.2); }
+    .flash.danger{ background:rgba(255,80,80,.25); }
+    .flash.warning{ background:rgba(255,180,0,.25); }
+
+/* ===== Anim ===== */
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(20px);}
+    to{opacity:1;transform:translateY(0);}
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+
+    <!-- Header -->
+    <div class="login-header">
+        <img src="{{ url_for('static', filename='images/lu.jpg') }}" alt="LuminaStar">
+        <h1>LuminaStar</h1>
+    </div>
+
+    <!-- Body -->
+    <div class="login-body">
+
+        <h2>Se connecter</h2>
+        <p>
+            Saisissez votre adresse e-mail ou votre nom d'utilisateur et votre mot de passe
+            pour accéder au tableau de bord.
+        </p>
+
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+        <form method="POST" action="{{ url_for('connexion_page') }}">
+
+            <div class="form-group">
+                <label>Nom d'utilisateur / Adresse e-mail</label>
+                <div class="input-wrapper">
+                    <input type="text" name="username" placeholder="Saisissez votre adresse e-mail ou nom d'utilisateur" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <div class="input-wrapper">
+                    <input type="password" name="password" id="password" placeholder="Saisissez votre mot de passe" required>
+                    <i class="fa fa-eye" onclick="togglePassword()"></i>
+                </div>
+            </div>
+
+            <div class="options">
+                <label>
+                    <input type="checkbox" name="remember">
+                    Souviens-toi de moi
+                </label>
+                <a href="#">Mot de passe oublié ?</a>
+            </div>
+
+            <button type="submit">Se connecter</button>
+
+        </form>
+
+        <div class="footer-text">
+            Vous n'avez pas de compte ?
+            <a href="{{ url_for('inscription_page') }}">Inscrivez-vous</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function togglePassword(){
+    const pwd = document.getElementById("password");
+    pwd.type = pwd.type === "password" ? "text" : "password";
+}
+</script>
+
+</body>
+</html>

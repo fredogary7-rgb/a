@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes retraits - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body { font-family:'Poppins',sans-serif; background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); color:#fff; margin:0; padding:20px; }
+h2 { text-align:center; font-size:24px; margin-bottom:20px; }
+.table-box { background:rgba(0,0,0,0.35); padding:20px; border-radius:15px; backdrop-filter:blur(10px); }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { padding:12px 10px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.2); font-size:14px; }
+th { font-weight:600; opacity:.9; }
+.status { padding:5px 8px; border-radius:6px; font-size:12px; text-align:center; display:inline-block; min-width:90px; }
+.status.wait { background:#ffb200; color:#fff; }
+.status.ok { background:#1dd75f; color:#fff; }
+.status.no { background:#ff4f4f; color:#fff; }
+footer { text-align:center; margin-top:25px; font-size:13px; opacity:.8; }
+</style>
+</head>
+
+<body>
+
+<h2><i class="fa fa-history"></i> Historique de mes retraits</h2>
+
+<div class="table-box">
+    <table>
+        <tr>
+            <th>Montant</th>
+            <th>Méthode</th>
+            <th>Date</th>
+            <th>Statut</th>
+        </tr>
+
+        {% for r in retraits %}
+        <tr>
+            <td>{{ r.montant }} XOF</td>
+            <td>{{ r.payment_method }}</td>
+            <td>{{ r.date.strftime('%d/%m/%Y %H:%M') }}</td>
+
+            <td>
+                {% if r.statut == "validé" %}
+                    <span class="status ok">Validé</span>
+                {% elif r.statut == "refusé" %}
+                    <span class="status no">Refusé</span>
+                {% else %}
+                    <span class="status wait">En attente</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+
+        {% if retraits|length == 0 %}
+        <tr>
+            <td colspan="4" style="text-align:center; padding:20px; opacity:.8;">
+                Aucun retrait effectué pour le moment.
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<footer>2026 © LuminaStar by Nina Academy</footer>
+
+</body>
+</html>
