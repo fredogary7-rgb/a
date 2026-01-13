@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nous - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* RESET */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body { 
+    background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); 
+    min-height:100vh; 
+    color:#fff; 
+    display:flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    padding:20px; 
+}
+
+/* WRAPPER */
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* CONTAINER */
+.contact-container {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(15px);
+    padding: 40px 30px;
+    border-radius: 25px;
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    margin-bottom: 30px; /* espace avec le footer */
+}
+
+/* TITLE */
+.contact-container h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+/* DESCRIPTION */
+.contact-container p {
+    font-size: 16px;
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+/* EMAIL BUTTON */
+.email-btn {
+    display: inline-block;
+    background: linear-gradient(to right, #ff7a00, #ffb35a);
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s;
+}
+.email-btn:hover {
+    background: linear-gradient(to right, #ffb35a, #ff7a00);
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+}
+</style>
+</head>
+<body>
+<div class="contact-container">
+        <h1>Nous Contactez</h1>
+
+
+<div class="wrapper">
+    <div class="contact-container">
+        <h1>Contacter le service LuminaStar</h1>
+        <p>Vous pouvez nous contacter facilement via email. Notre équipe vous répondra rapidement pour toutes vos questions ou demandes.</p>
+        <a href="mailto:leaderkedboy@gmail.com" class="email-btn"><i class="fa fa-envelope"></i> Envoyer un email</a>
+    </div>
+
+    <footer>2026 © LuminaStar by Nina Academy</footer>
+</div>
+
+</body>
+</html>

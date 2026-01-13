@@ -42,14 +42,6 @@ footer { text-align:center; margin-top:20px; opacity:0.8; font-size:13px; }
 </head>
 <body>
 
-<!-- SYSTÈME DE MESSAGE -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="flash {{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
 
 <div class="main">
     <h2>Retirer les fonds du portefeuille</h2>

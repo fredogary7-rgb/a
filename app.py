@@ -545,6 +545,11 @@ def dashboard_page():
 
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
+    stats = {
+        "commissions_total": float(user.solde_revenu or 0)
+    }
+
+
     return render_template(
         "dashboard.html",
         user=user,
@@ -555,7 +560,8 @@ def dashboard_page():
         total_deposits=total_deposits,
         referral_code=referral_code,
         referral_link=referral_link,
-        total_withdrawn=total_withdrawn
+        total_withdrawn=total_withdrawn,
+        stats=stats
     )
 
 # ===== Décorateur admin =====
@@ -1139,7 +1145,6 @@ def refuser_retrait(retrait_id):
     flash("Retrait refusé et montant recrédité à l’utilisateur.", "warning")
     return redirect("/admin/retraits")
 
-
 @app.route("/retrait", methods=["GET", "POST"])
 @login_required
 def retrait_page():
@@ -1152,6 +1157,7 @@ def retrait_page():
         montant = float(request.form.get("montant", 0))
         payment_method = request.form.get("payment_method")
 
+        # Vérification du montant
         if montant <= 0:
             flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1162,30 +1168,32 @@ def retrait_page():
 
         montant_total = montant + FRAIS
 
-        if montant_total > user.solde_revenu:
-            flash("Solde insuffisant pour couvrir le retrait + les frais.", "danger")
+        # Vérifier que le solde parrainage est suffisant
+        if montant_total > (user.solde_parrainage or 0):
+            flash("Solde parrainage insuffisant pour ce retrait + les frais.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # Créer la demande de retrait
+        # Enregistrer la demande
         nouveau_retrait = Retrait(
-            phone=user.phone,
+            user_id=user.id,
             montant=montant,
+            frais=FRAIS,
+            montant_total=montant_total,
             payment_method=payment_method,
-            statut="en_attente"
+            statut="en_attente",
+            phone=user.phone
         )
         db.session.add(nouveau_retrait)
 
-        # Déduire le montant + frais du solde revenu
-        user.solde_revenu -= montant_total
+        # Déduire du solde parrainage
+        user.solde_parrainage -= montant_total
+
         db.session.commit()
 
-        flash(f"Votre demande de {montant} XOF a été soumise. Frais appliqués : {FRAIS} XOF.", "success")
+        flash(f"Votre demande de {montant} XOF a été soumise avec succès. Frais appliqués : {FRAIS} XOF.", "success")
         return redirect(url_for("dashboard_page"))
 
     return render_template("retrait.html", user=user)
-
-from datetime import date
-from flask import render_template, request
 
 @app.route("/taches/questions-lundi", methods=["GET", "POST"])
 @login_required  # ton décorateur perso
