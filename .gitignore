@@ -1,6 +1,7 @@
 # Ignorer toutes les vidéos
 /static/videos/*.mp4
 !static/videos/tik.mp4
+
 # Ignorer tous les APK sauf chat et Netflix
 /static/uploads/apps/*.apk
 !static/uploads/apps/chat.apk
