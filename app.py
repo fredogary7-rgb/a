@@ -792,6 +792,11 @@ def nous_page():
 def trade():
     return render_template("trade.html")
 
+from flask import send_from_directory
+
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory(".", "sitemap.xml")
 
 from flask import request, redirect, url_for, flash
 import os
