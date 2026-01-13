@@ -1,6 +1,10 @@
-# Ignorer tous les fichiers vidéos lourds
+# Ignorer toutes les vidéos
 /static/videos/*.mp4
+!static/videos/tik.mp4
+# Ignorer tous les APK sauf chat et Netflix
 /static/uploads/apps/*.apk
+!static/uploads/apps/chat.apk
+!static/uploads/apps/Netflix.apk
 
 # Python cache
 __pycache__/
@@ -11,5 +15,5 @@ __pycache__/
 migrations/__pycache__/
 
 # Autres dossiers temporaires
-/static/uploads/
+/static/uploads/profiles/
 internal_uploads/
