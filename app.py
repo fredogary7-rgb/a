@@ -26,7 +26,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # Initialisation
 os.makedirs(UPLOAD_FOLDER_PROFILE, exist_ok=True)
-os.makedirs(UPLOAD_FOLDER_VLOGS, exist_ok=True)
 
 # Configuration dans Flask
 app.config['UPLOAD_FOLDER_PROFILE'] = UPLOAD_FOLDER_PROFILE
@@ -770,8 +769,12 @@ from flask import render_template
 def apk_page():
     apk_folder = app.config['UPLOAD_FOLDER_APPS']  # "static/uploads/apps"
     files = os.listdir(apk_folder)
+    
+    # Filtrer uniquement .apk
     apk_files = [f for f in files if f.endswith(".apk")]
-    return render_template("apk.html", apk_files=files)
+    
+    # Passer la bonne liste au template
+    return render_template("apk.html", apk_files=apk_files)
 
 from datetime import date  # <-- IMPORT OBLIGATOIRE
 
