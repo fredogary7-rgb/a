@@ -117,7 +117,7 @@ footer {
     <h3><i class="fa fa-robot"></i> {{ file }}</h3>
     <p>Fichier APK disponible en téléchargement direct depuis LuminaStar.</p>
 
-    <a class="btn-download" href="/static/uploads/apps/{{ file }}" download>
+    <a class="btn-download" href="{{ url_for('static', filename='uploads/apps/' + file) }}" download>
         <i class="fa fa-download"></i> Télécharger
     </a>
 </div>
