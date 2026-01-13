@@ -765,17 +765,13 @@ def whatsapp_number():
 # ===============================
 # WEBHOOK MONEYFUSION
 from flask import render_template
-
 @app.route("/apk")
 @login_required
 def apk_page():
-    apk_folder = app.config['UPLOAD_FOLDER_APPS']
+    apk_folder = app.config['UPLOAD_FOLDER_APPS']  # "static/uploads/apps"
     files = os.listdir(apk_folder)
-
-    # Filtrer uniquement les .apk et nettoyer les noms
-    apk_files = sorted({f.strip() for f in files if f.lower().endswith(".apk")})
-
-    return render_template("apk.html", apk_files=apk_files)
+    apk_files = [f for f in files if f.endswith(".apk")]
+    return render_template("apk.html", apk_files=files)
 
 from datetime import date  # <-- IMPORT OBLIGATOIRE
 
