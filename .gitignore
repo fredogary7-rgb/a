@@ -12,3 +12,4 @@ migrations/__pycache__/
 
 # Autres dossiers temporaires
 /static/uploads/
+internal_uploads/
