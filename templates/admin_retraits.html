@@ -1,4 +1,4 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -23,7 +23,7 @@ button:hover { opacity:0.85; }
 
 .flash { margin-bottom:15px; padding:10px; border-radius:6px; }
 .flash.success { background:rgba(40,167,69,0.2); }
-.flash.error { background:rgba(220,53,69,0.2); }
+.flash.danger { background:rgba(220,53,69,0.2); }
 
 </style>
 </head>
@@ -46,9 +46,12 @@ button:hover { opacity:0.85; }
         <th>ID</th>
         <th>Utilisateur</th>
         <th>Montant</th>
+        <th>Frais</th>
         <th>Moyen</th>
         <th>Numéro</th>
+        <th>Pays</th>
         <th>Date</th>
+        <th>Statut</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -57,17 +60,20 @@ button:hover { opacity:0.85; }
       {% for r in retraits %}
       <tr>
         <td>{{ r.id }}</td>
-        <td>{{ r.user.username }}</td>
+        <td>{{ r.phone_user.username if r.phone_user else r.phone }}</td>
         <td>{{ r.montant }} XOF</td>
+        <td>{{ r.frais }} XOF</td>
         <td>{{ r.payment_method }}</td>
-        <td>{{ r.user.phone }}</td>
-        <td>{{ r.date_created.strftime("%d/%m/%Y") }}</td>
+        <td>{{ r.phone }}</td>
+        <td>{{ r.pays }}</td>
+        <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
+        <td>{{ r.statut }}</td>
 
         <td>
-          <a href="/admin/retrait/valider/{{ r.id }}">
+          <a href="/admin/retraits/valider/{{ r.id }}">
             <button class="valider">Valider</button>
           </a>
-          <a href="/admin/retrait/refuser/{{ r.id }}">
+          <a href="/admin/retraits/refuser/{{ r.id }}">
             <button class="refuser">Refuser</button>
           </a>
         </td>

@@ -1,4 +1,4 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -68,7 +68,7 @@ footer { text-align:center; margin-top:20px; opacity:0.8; font-size:13px; }
         </select>
 
         <label for="montant">Saisissez le montant</label>
-        <input type="number" name="montant" id="montant" min="1" max="{{ user.solde_revenu }}" placeholder="Montant à retirer (XOF)" required>
+        <input type="number" name="montant" id="montant" min="1" max="{{ stats.commissions_total }}" placeholder="Montant à retirer (XOF)" required>
 
         <button type="submit">Demande de fonds</button>
     </form>

@@ -196,6 +196,9 @@ class Retrait(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     payment_method = db.Column(db.String(50))
 
+    pays = db.Column(db.String(50), nullable=True)
+    frais = db.Column(db.Float, default=0.0)
+
 class Staking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     phone = db.Column(db.String(30), nullable=False)
@@ -245,34 +248,46 @@ class RetraitPoints(db.Model):
     user = db.relationship('User', backref=db.backref('retraits_points', lazy='dynamic'))
 
 def donner_commission(parrain_username, montant_depot):
-    """Crée la commission pour le parrain et remplit son solde_revenu selon le niveau."""
+    """Crée la commission et remplit solde_revenu, solde_parrainage et commission_total selon les niveaux."""
+    
     if not parrain_username:
-        return  # pas de parrain, rien à faire
+        return
 
     parrain = User.query.filter_by(username=parrain_username).first()
     if not parrain:
         return
 
-    # Niveau 1
+    # --- NIVEAU 1 ---
     commission_niveau1 = 1700
+
     parrain.solde_revenu = (parrain.solde_revenu or 0) + commission_niveau1
+    parrain.solde_parrainage = (parrain.solde_parrainage or 0) + commission_niveau1
+    parrain.commission_total = (parrain.commission_total or 0) + commission_niveau1
 
     db.session.commit()
 
-    # 🔹 Vérifier le parrain du parrain (niveau 2)
+    # --- NIVEAU 2 ---
     if parrain.parrain:
         parrain2 = User.query.filter_by(username=parrain.parrain).first()
         if parrain2:
             commission_niveau2 = 700
+
             parrain2.solde_revenu = (parrain2.solde_revenu or 0) + commission_niveau2
+            parrain2.solde_parrainage = (parrain2.solde_parrainage or 0) + commission_niveau2
+            parrain2.commission_total = (parrain2.commission_total or 0) + commission_niveau2
+
             db.session.commit()
 
-            # 🔹 Vérifier le parrain du parrain du parrain (niveau 3)
+            # --- NIVEAU 3 ---
             if parrain2.parrain:
                 parrain3 = User.query.filter_by(username=parrain2.parrain).first()
                 if parrain3:
                     commission_niveau3 = 300
+
                     parrain3.solde_revenu = (parrain3.solde_revenu or 0) + commission_niveau3
+                    parrain3.solde_parrainage = (parrain3.solde_parrainage or 0) + commission_niveau3
+                    parrain3.commission_total = (parrain3.commission_total or 0) + commission_niveau3
+
                     db.session.commit()
 # -----------------------
 # Traductions
@@ -382,12 +397,17 @@ def inscription_page():
             flash("Ce nom d'utilisateur existe déjà.", "danger")
             return redirect(url_for("inscription_page", ref=ref_code))
 
-        # 5️⃣ numéro unique
+        # 5️⃣ email unique  (AJOUT ESSENTIEL)
+        if User.query.filter_by(email=email).first():
+            flash("Cet email est déjà utilisé.", "danger")
+            return redirect(url_for("inscription_page", ref=ref_code))
+
+        # 6️⃣ numéro unique
         if User.query.filter_by(phone=phone).first():
             flash("Ce numéro est déjà enregistré.", "danger")
             return redirect(url_for("inscription_page", ref=ref_code))
 
-        # 6️⃣ parrain basé sur username
+        # 7️⃣ parrain basé sur username
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
@@ -395,7 +415,7 @@ def inscription_page():
                 flash("Code parrain invalide.", "danger")
                 return redirect(url_for("inscription_page", ref=ref_code))
 
-        # 7️⃣ création
+        # 8️⃣ création
         try:
             new_user = User(
                 uid=str(uuid.uuid4()),
@@ -404,7 +424,7 @@ def inscription_page():
                 phone=phone,
                 country=country,
                 password=generate_password_hash(password),
-                parrain=parrain_user.username if parrain_user else None,  # 👈 IMPORTANT
+                parrain=parrain_user.username if parrain_user else None,
                 solde_total=0,
                 solde_depot=0,
                 solde_revenu=0,
@@ -524,14 +544,12 @@ def dashboard_page():
         flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
         return redirect(url_for("connexion_page"))
 
-    # On récupère l'utilisateur AVANT d'utiliser user.username
     user = User.query.get(user_id)
     if not user:
         session.clear()
         flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
 
-    # Génération du lien de parrainage
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
@@ -548,21 +566,20 @@ def dashboard_page():
         "commissions_total": float(user.solde_revenu or 0)
     }
 
-
     return render_template(
         "dashboard.html",
         user=user,
         points=user.points or 0,
         revenu_cumule=revenu_cumule,
+        solde_parrainage=user.solde_parrainage or 0,   # <- ajouté ici
+        solde_revenu=user.solde_revenu or 0,           # <- ajouté aussi si tu veux l’afficher
         total_users=total_users,
         total_withdrawn_user=user.total_retrait or 0,
         total_deposits=total_deposits,
         referral_code=referral_code,
         referral_link=referral_link,
-        total_withdrawn=total_withdrawn,
-        stats=stats
+        total_withdrawn=total_withdrawn
     )
-
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
@@ -683,6 +700,13 @@ from flask import send_from_directory
 def download_contact():
     return send_from_directory('static/files', 'con.vcf', as_attachment=True)
 
+from flask import Flask, render_template
+
+
+# Route pour la page About
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 @app.route("/mes-retraits")
 @login_required
@@ -839,6 +863,62 @@ def profile_page():
         profile_pic=profile_pic,
         team_total=team_total
     )
+
+@app.route("/retrait", methods=["GET", "POST"])
+@login_required
+def retrait_page():
+    user = get_logged_in_user()
+
+    MIN_RETRAIT = 500
+    FRAIS = 10
+
+    # Stats pour le template : afficher le solde parrainage
+    stats = {
+        "commissions_total": float(user.solde_parrainage or 0)
+    }
+
+    if request.method == "POST":
+        montant = float(request.form.get("montant", 0))
+        payment_method = request.form.get("payment_method")
+
+        # Vérification du montant
+        if montant <= 0:
+            flash("Veuillez saisir un montant valide.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        if montant < MIN_RETRAIT:
+            flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # Montant total incluant les frais
+        montant_total = montant + FRAIS
+
+        # Vérifier que le solde parrainage est suffisant
+        if montant_total > stats["commissions_total"]:
+            flash("Solde parrainage insuffisant pour ce retrait + les frais.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # Enregistrer la demande
+        nouveau_retrait = Retrait(
+            montant=montant,
+            frais=FRAIS,
+            payment_method=payment_method,
+            statut="en_attente",
+            phone=user.phone,
+            pays=user.country
+        )
+        db.session.add(nouveau_retrait)
+
+        # Déduire du solde parrainage (commission)
+        user.solde_parrainage -= montant_total
+
+        db.session.commit()
+
+        flash(f"Votre demande de {montant} XOF a été soumise avec succès. Frais appliqués : {FRAIS} XOF.", "success")
+        return redirect(url_for("dashboard_page"))
+
+    # Passer stats au template
+    return render_template("retrait.html", user=user, stats=stats)
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs
@@ -1096,108 +1176,73 @@ def rejeter_depot(depot_id):
     flash("Dépôt rejeté avec succès.", "danger")
     return redirect(url_for("admin_deposits"))
 
+# Page affichage des retraits
 @app.route("/admin/retraits")
+@login_required
 def admin_retraits():
+    # 🔒 Vérifie que l'utilisateur est admin
+
+    # Récupération des retraits les plus récents
     retraits = Retrait.query.order_by(Retrait.date.desc()).all()
     return render_template("admin_retraits.html", retraits=retraits)
 
 
+# Valider un retrait
 @app.route("/admin/retraits/valider/<int:retrait_id>")
+@login_required
 def valider_retrait(retrait_id):
+    user_admin = get_logged_in_user()
+
     retrait = Retrait.query.get_or_404(retrait_id)
     user = User.query.filter_by(phone=retrait.phone).first()
 
     if not user:
         flash("Utilisateur introuvable.", "danger")
-        return redirect("/admin/retraits")
+        return redirect(url_for("admin_retraits"))
 
     if retrait.statut == "validé":
-        flash("Ce retrait est déjà validé.", "info")
-        return redirect("/admin/retraits")
+        flash("Ce retrait a déjà été validé.", "info")
+        return redirect(url_for("admin_retraits"))
 
     # ✅ Mettre à jour le statut du retrait
     retrait.statut = "validé"
 
-    # ✅ Ajouter le montant au total_retrait de l'utilisateur
-    user.total_retrait += retrait.montant
+    # 💰 Ajouter le montant + frais au total_retrait
+    user.total_retrait += retrait.montant + (retrait.frais or 0)
 
     db.session.commit()
 
     flash("Retrait validé avec succès !", "success")
-    return redirect("/admin/retraits")
+    return redirect(url_for("admin_retraits"))
 
 
+# Refuser un retrait
 @app.route("/admin/retraits/refuser/<int:retrait_id>")
+@login_required
 def refuser_retrait(retrait_id):
+    user_admin = get_logged_in_user()
+
     retrait = Retrait.query.get_or_404(retrait_id)
     user = User.query.filter_by(phone=retrait.phone).first()
 
     if not user:
         flash("Utilisateur introuvable.", "danger")
-        return redirect("/admin/retraits")
+        return redirect(url_for("admin_retraits"))
 
     if retrait.statut == "refusé":
-        return redirect("/admin/retraits")
+        flash("Ce retrait a déjà été refusé.", "info")
+        return redirect(url_for("admin_retraits"))
 
-    montant = retrait.montant
-
-    # 💰 Recréditer le montant sur le solde revenu
-    user.solde_revenu += montant
+    # 💰 Recréditer le montant + frais sur le solde revenu
+    user.solde_parrainage += (retrait.montant + (retrait.frais or 0))
     retrait.statut = "refusé"
+
     db.session.commit()
 
     flash("Retrait refusé et montant recrédité à l’utilisateur.", "warning")
-    return redirect("/admin/retraits")
+    return redirect(url_for("admin_retraits"))
 
-@app.route("/retrait", methods=["GET", "POST"])
-@login_required
-def retrait_page():
-    user = get_logged_in_user()
 
-    MIN_RETRAIT = 4000
-    FRAIS = 500
-
-    if request.method == "POST":
-        montant = float(request.form.get("montant", 0))
-        payment_method = request.form.get("payment_method")
-
-        # Vérification du montant
-        if montant <= 0:
-            flash("Veuillez saisir un montant valide.", "danger")
-            return redirect(url_for("retrait_page"))
-
-        if montant < MIN_RETRAIT:
-            flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
-            return redirect(url_for("retrait_page"))
-
-        montant_total = montant + FRAIS
-
-        # Vérifier que le solde parrainage est suffisant
-        if montant_total > (user.solde_parrainage or 0):
-            flash("Solde parrainage insuffisant pour ce retrait + les frais.", "danger")
-            return redirect(url_for("retrait_page"))
-
-        # Enregistrer la demande
-        nouveau_retrait = Retrait(
-            user_id=user.id,
-            montant=montant,
-            frais=FRAIS,
-            montant_total=montant_total,
-            payment_method=payment_method,
-            statut="en_attente",
-            phone=user.phone
-        )
-        db.session.add(nouveau_retrait)
-
-        # Déduire du solde parrainage
-        user.solde_parrainage -= montant_total
-
-        db.session.commit()
-
-        flash(f"Votre demande de {montant} XOF a été soumise avec succès. Frais appliqués : {FRAIS} XOF.", "success")
-        return redirect(url_for("dashboard_page"))
-
-    return render_template("retrait.html", user=user)
 
 @app.route("/taches/questions-lundi", methods=["GET", "POST"])
 @login_required  # ton décorateur perso
