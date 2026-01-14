@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Parrainage - LuminaStar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family:'Poppins',sans-serif; background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); color:#fff; padding:20px; }
+table { width:100%; border-collapse:collapse; margin-top:20px; background:rgba(255,255,255,0.1); border-radius:10px; }
+th, td { padding:12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.2); }
+input, select, button { padding:5px 10px; border-radius:5px; border:none; }
+button { background:#fff; color:#ff758c; cursor:pointer; }
+#searchBox { width:100%; max-width:300px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<h2>Admin Parrainage</h2>
+
+<!-- Barre de recherche -->
+<input type="text" id="searchBox" placeholder="Rechercher un utilisateur ou parrain...">
+
+<table id="usersTable">
+    <tr>
+        <th>Utilisateur</th>
+        <th>Parrain actuel</th>
+        <th>Modifier</th>
+    </tr>
+    {% for user in users %}
+    <tr>
+        <form method="POST">
+            <td>{{ user.username }}</td>
+            <td>{{ user.parrain or "-" }}</td>
+            <td>
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="text" name="parrain" placeholder="Nouveau parrain">
+                <button type="submit">Mettre à jour</button>
+            </td>
+        </form>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+// Filtrage dynamique côté client
+const searchBox = document.getElementById('searchBox');
+const table = document.getElementById('usersTable');
+
+searchBox.addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < rows.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        const username = rows[i].cells[0].innerText.toLowerCase();
+        const parrain = rows[i].cells[1].innerText.toLowerCase();
+        if (username.includes(filter) || parrain.includes(filter)) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+});
+</script>
+
+</body>
+</html>

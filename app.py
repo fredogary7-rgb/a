@@ -128,7 +128,7 @@ class User(db.Model):
     points_ads = db.Column(db.Integer, default=0)
     points_spin = db.Column(db.Integer, default=0)
     points_games = db.Column(db.Integer, default=0)
-
+    last_youtube_date = db.Column(db.String(10), default=None)
     last_tiktok_date = db.Column(db.String(20), default=None)
     last_login = db.Column(db.DateTime, nullable=True)
     login_count = db.Column(db.Integer, default=0)
@@ -592,7 +592,41 @@ def admin_required(f):
 from datetime import date
 from flask import request, session, flash, redirect, url_for, render_template
 
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        # Vérifie l'utilisateur admin
+        user = User.query.filter_by(username=username, is_admin=True).first()
+        if user and check_password_hash(user.password, password):
+            session["admin_id"] = user.id
+            return redirect(url_for("admin_parrainage"))
+        else:
+            flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
+            return redirect(url_for("admin_login"))
+    return render_template("admin_login.html")
 
+# --- Page admin parrainage ---
+@app.route("/admin/parrainage", methods=["GET", "POST"])
+def admin_parrainage():
+    if "admin_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    users = User.query.all()
+
+    if request.method == "POST":
+        user_id = request.form.get("user_id")
+        nouveau_parrain = request.form.get("parrain")
+        user = User.query.get(user_id)
+
+        if user:
+            user.parrain = nouveau_parrain
+            db.session.commit()
+            flash(f"Le parrain de {user.username} a été mis à jour.", "success")
+        return redirect(url_for("admin_parrainage"))
+
+    return render_template("admin_parrainage.html", users=users)
 # ===== Dashboard admin =====
 @app.route("/admin")
 @login_required
@@ -960,7 +994,12 @@ def revenus_page():
     return render_template(
         "revenus.html",
         user=user,
-        total_points=total_points,
+        points_youtube=user.points_youtube,
+        points_tiktok=user.points_tiktok,
+        points_instagram=user.points_instagram,
+        points_ads=user.points_ads,
+        points_spin=user.points_spin,
+        points_games=user.points_games,
         team_total=team_total,
         total_commission=total_commission
     )
