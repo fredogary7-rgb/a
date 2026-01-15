@@ -128,6 +128,7 @@ class User(db.Model):
     points_ads = db.Column(db.Integer, default=0)
     points_spin = db.Column(db.Integer, default=0)
     points_games = db.Column(db.Integer, default=0)
+    last_instagram_date = db.Column(db.String(10), default=None)
     last_youtube_date = db.Column(db.String(10), default=None)
     last_tiktok_date = db.Column(db.String(20), default=None)
     last_login = db.Column(db.DateTime, nullable=True)
@@ -589,8 +590,61 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-from datetime import date
-from flask import request, session, flash, redirect, url_for, render_template
+# app.py
+from flask import redirect, request
+from urllib.parse import urlencode
+import config
+
+@app.route("/payer", methods=["GET"])
+def payer():
+    params = {
+        "amount": 3800,
+        "description": "Achat produit",
+        "callback": "https://tondomaine.com/success"
+    }
+    
+    url = "https://bkapay.com/api-pay/pk_live_70778994-74de-46ad-9752-f7d5244988a5?" + urlencode(params)
+    return redirect(url)
+
+@app.route("/success")
+def success():
+    status = request.args.get("status")
+    transactionId = request.args.get("transactionId")
+    amount = request.args.get("amount")
+
+    if status == "success":
+        return f"Paiement réussi ! Transaction ID: {transactionId}, Montant: {amount} XOF"
+    else:
+        return "Paiement échoué"
+
+import hmac
+import hashlib
+import json
+import config
+import hmac, hashlib, json
+
+WEBHOOK_SECRET = "TON_SECRET_WEBHOOK_Ici"
+
+@app.route("/webhook/bkapay", methods=["POST"])
+def webhook_bkapay():
+    signature = request.headers.get("X-BKApay-Signature")
+    payload = request.data
+
+    expected = hmac.new(
+        WEBHOOK_SECRET.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+
+    if signature != expected:
+        return {"error": "signature invalide"}, 401
+
+    data = request.json
+    if data["event"] == "payment.completed":
+        # ici tu actives l'abonnement ou crédite le compte
+        print("Paiement validé :", data)
+
+    return {"received": True}
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
