@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-   <url>
-      <loc>https://lumina-stars.com/inscription</loc>
-      <priority>1.0</priority>
-   </url>
-   <url>
-      <loc>https://lumina-stars.com/about</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://lumina-stars.com/contact</loc>
-      <priority>0.8</priority>
-   </url>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <url>
+    <loc>https://lumina-stars.com/inscription</loc>
+    <priority>1.0</priority>
+
+    <image:image>
+      <image:loc>https://lumina-stars.com/static/images/lu.jpg</image:loc>
+      <image:title>LuminaStar – Inscription</image:title>
+      <image:caption>Inscription gratuite sur la plateforme LuminaStar</image:caption>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://lumina-stars.com/about</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://lumina-stars.com/contact</loc>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

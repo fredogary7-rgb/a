@@ -51,7 +51,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     </div>
 
     <div class="video-container">
-        {% if today == 3 and user.last_instagram_date != current_date %}
+        {% if today == 4 and user.last_instagram_date != current_date %}
             <div id="videoBox">
                 <video id="instagramVideo" autoplay>
                     <source src="{{ url_for('static', filename='videos/tik.mp4') }}" type="video/mp4">
@@ -60,18 +60,18 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
             </div>
 
             <div id="successMessage" class="no-video" style="display:none;">
-                🎉 20 points ajoutés ! Vidéo complétée. Revenez jeudi prochain !
+                🎉 20 points ajoutés ! Vidéo complétée. Revenez vendredi prochain !
             </div>
 
-        {% elif today == 3 %}
+        {% elif today == 4 %}
             <div class="no-video">
                 🎉 Vous avez déjà regardé la vidéo d’aujourd’hui.<br>
-                Revenez jeudi prochain !
+                Revenez vendredi prochain !
             </div>
 
         {% else %}
             <div class="no-video">
-                La vidéo sera disponible jeudi.<br>
+                La vidéo sera disponible vendredi.<br>
                 Revenez ce jour-là pour gagner 20 points !
             </div>
         {% endif %}
@@ -96,7 +96,7 @@ overlay.onclick = () => {
     overlay.classList.remove("active");
 };
 
-{% if today == 3 and user.last_instagram_date != current_date %}
+{% if today == 4 and user.last_instagram_date != current_date %}
 let video = document.getElementById("instagramVideo");
 
 video.currentTime = 0;

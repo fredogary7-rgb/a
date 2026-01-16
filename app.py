@@ -1483,7 +1483,7 @@ def instagram_complete():
     today = datetime.today().weekday()  # jeudi = 3
     current_date = datetime.today().strftime("%Y-%m-%d")
 
-    if today != 3:
+    if today != 4:
         return jsonify({"status": "error", "message": "La vidéo n’est disponible que le jeudi."})
 
     if user.last_instagram_date != current_date:
