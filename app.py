@@ -495,13 +495,12 @@ def get_global_stats():
     total_withdrawn = db.session.query(func.sum(User.total_retrait)).scalar() or 0  # ← On utilise maintenant total_retrait
     return total_users, total_deposits, total_withdrawn
 
-
 @app.route("/dashboard_bloque", methods=["GET", "POST"])
 @login_required
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    # Si le premier dépôt a été validé → on débloque l'accès
+    # Si le premier dépôt a déjà été validé → accès au dashboard
     if user.premier_depot is True:
         return redirect(url_for("dashboard_page"))
 
@@ -514,11 +513,11 @@ def dashboard_bloque():
             flash("Tous les champs sont requis.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        if montant < 3800:
+        if montant < 3000:
             flash("Le montant minimum est de 3000 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # Création du dépôt
+        # Création du dépôt en statut "pending"
         depot = Depot(
             user_name=user.username,
             phone=user.phone,
@@ -530,10 +529,22 @@ def dashboard_bloque():
         db.session.add(depot)
         db.session.commit()
 
-        flash("Votre dépôt a été créé avec succès et est en attente de validation.", "success")
+        flash("Redirection vers la page de paiement…", "info")
 
-        # 🔹 Redirection vers le lien de paiement
-        payment_link = f"https://payin.moneyfusion.net/payment/69650c69013a0771971bf1a9/3800/Kedboy"
+        # 🔹 Construction du lien BKApay
+        CLE_PUBLIQUE = "pk_live_VOTRE_CLE_PUBLIQUE"
+
+        callback_url = "https://tonsite.com/paiement-retour"  # À remplacer !
+        description = "Premier Depot"
+
+        payment_link = (
+            f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}"
+            f"?amount={montant}"
+            f"&description={description}"
+            f"&callback={callback_url}"
+            f"&externalReference={user.id}"
+        )
+
         return redirect(payment_link)
 
     return render_template("dashboard_bloque.html", user=user)
@@ -591,60 +602,99 @@ def admin_required(f):
     return decorated
 
 # app.py
-from flask import redirect, request
+from flask import redirect, request, url_for, flash
 from urllib.parse import urlencode
-import config
 
-@app.route("/payer", methods=["GET"])
-def payer():
+CLE_PUBLIQUE = "pk_live_TA_CLE_PUBLIQUE"
+
+@app.route("/payer/<int:montant>")
+@login_required
+def payer(montant):
+
+    callback_url = url_for("paiement_retour", _external=True)
+
     params = {
-        "amount": 3800,
-        "description": "Achat produit",
-        "callback": "https://tondomaine.com/success"
+        "amount": montant,
+        "description": f"Depot utilisateur {current_user.id}",
+        "callback": callback_url,
+        "externalReference": current_user.id  # Important pour le webhook
     }
-    
-    url = "https://bkapay.com/api-pay/pk_live_70778994-74de-46ad-9752-f7d5244988a5?" + urlencode(params)
+
+    url = f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}?" + urlencode(params)
     return redirect(url)
 
-@app.route("/success")
-def success():
-    status = request.args.get("status")
-    transactionId = request.args.get("transactionId")
-    amount = request.args.get("amount")
+
+@app.route("/bkapay/callback", methods=["POST"])
+def bkapay_callback():
+    data = request.json
+
+    status = data.get("status")
+    user_id = data.get("user_id")
+    amount = data.get("amount")
+
+    user = User.query.get(user_id)
 
     if status == "success":
-        return f"Paiement réussi ! Transaction ID: {transactionId}, Montant: {amount} XOF"
+        user.solde += amount
+        db.session.commit()
+        return "OK", 200
+
     else:
-        return "Paiement échoué"
+        return "FAILED", 200
 
-import hmac
-import hashlib
-import json
-import config
-import hmac, hashlib, json
+@app.route("/paiement-retour")
+@login_required
+def paiement_retour():
+    status = request.args.get("status")
 
-WEBHOOK_SECRET = "TON_SECRET_WEBHOOK_Ici"
+    if status == "success":
+        flash("Paiement reçu, vérification automatique en cours...", "info")
+        return redirect(url_for("dashboard_page"))
 
-@app.route("/webhook/bkapay", methods=["POST"])
+    else:
+        flash("Paiement annulé ou échoué.", "danger")
+        return redirect(url_for("dashboard_bloque"))
+
+
+@app.route("/webhook-bkapay", methods=["POST"])
 def webhook_bkapay():
+    import hmac, hashlib
+    
+    secret = "TON_WEBHOOK_SECRET"
+
     signature = request.headers.get("X-BKApay-Signature")
     payload = request.data
 
-    expected = hmac.new(
-        WEBHOOK_SECRET.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
+    # Vérification de la signature
+    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
     if signature != expected:
-        return {"error": "signature invalide"}, 401
+        return {"error": "invalid-signature"}, 401
 
     data = request.json
-    if data["event"] == "payment.completed":
-        # ici tu actives l'abonnement ou crédite le compte
-        print("Paiement validé :", data)
 
-    return {"received": True}
+    if data["status"] == "completed":
+        user_id = int(data["externalReference"])
+        amount = float(data["amount"])
+        transaction_id = data["transactionId"]
+
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "user not found"}, 404
+
+        user.solde_total += amount
+        user.solde_depot += amount
+        user.premier_depot = True
+
+        # Mise à jour d’un dépôt en attente
+        depot = Depot.query.filter_by(user_id=user_id, statut="pending").first()
+        if depot:
+            depot.statut = "valide"
+            depot.transaction_id = transaction_id
+
+        db.session.commit()
+
+    return {"received": True}, 200
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
