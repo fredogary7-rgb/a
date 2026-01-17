@@ -363,6 +363,22 @@ def init_db():
     print("✅ Base de données initialisée avec succès !")
 
 
+from flask import request, redirect, render_template
+from datetime import datetime
+
+# Date de lancement
+LAUNCH_DATE = datetime(2026, 1, 24)
+
+@app.before_request
+def site_coming_soon():
+    # Exclure certaines routes (admin, static, etc.)
+    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/connexion"):
+        return
+
+    # Si date actuelle < date de lancement, afficher page "Coming Soon"
+    if datetime.today() < LAUNCH_DATE:
+        return render_template("coming_soon.html")
+
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
 
@@ -496,13 +512,20 @@ def get_global_stats():
     total_withdrawn = db.session.query(func.sum(User.total_retrait)).scalar() or 0  # ← On utilise maintenant total_retrait
     return total_users, total_deposits, total_withdrawn
 
+
+CLE_PUBLIQUE = "pk_live_70778994-74de-46ad-9752-f7d5244988a5"
+WEBHOOK_SECRET = "cs_dc98f66eff084ed1993f51650ebbd8e4"
+
+# --------------------------------------
+# 1️⃣ Page dashboard_bloque (initiation paiement)
+# --------------------------------------
 @app.route("/dashboard_bloque", methods=["GET", "POST"])
 @login_required
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    # Si le premier dépôt a déjà été validé → accès au dashboard
-    if user.premier_depot is True:
+    # Si le premier dépôt est validé → on débloque
+    if user.premier_depot:
         return redirect(url_for("dashboard_page"))
 
     if request.method == "POST":
@@ -514,11 +537,11 @@ def dashboard_bloque():
             flash("Tous les champs sont requis.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        if montant < 3000:
-            flash("Le montant minimum est de 3000 FCFA.", "danger")
+        if montant < 3800:
+            flash("Le montant minimum est de 3800 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # Création du dépôt en statut "pending"
+        # Création du dépôt pending
         depot = Depot(
             user_name=user.username,
             phone=user.phone,
@@ -530,23 +553,15 @@ def dashboard_bloque():
         db.session.add(depot)
         db.session.commit()
 
-        flash("Redirection vers la page de paiement…", "info")
-
-        # 🔹 Construction du lien BKApay
-        CLE_PUBLIQUE = "pk_live_70778994-74de-46ad-9752-f7d5244988a5"
-
-        callback_url = "https://lumina-stars.com/paiement-retour"  # À remplacer !
-        description = "Premier Depot"
-
-        payment_link = (
-            f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}"
-            f"?amount={montant}"
-            f"&description={description}"
-            f"&callback={callback_url}"
-            f"&externalReference={user.id}"
-        )
-
-        return redirect(payment_link)
+        # Redirection vers BKApay
+        callback_url = url_for("paiement_retour", _external=True)
+        params = {
+            "amount": montant,
+            "description": f"Dépôt utilisateur {user.username}",
+            "callback": callback_url
+        }
+        payment_url = f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}?" + urlencode(params)
+        return redirect(payment_url)
 
     return render_template("dashboard_bloque.html", user=user)
 
@@ -625,86 +640,54 @@ def payer(montant):
     return redirect(url)
 
 
-@app.route("/bkapay/callback", methods=["POST"])
-def bkapay_callback():
-    data = request.json
-
-    status = data.get("status")
-    user_id = data.get("user_id")
-    amount = data.get("amount")
-
-    user = User.query.get(user_id)
-
-    if status == "success":
-        user.solde += amount
-        db.session.commit()
-        return "OK", 200
-
-    else:
-        return "FAILED", 200
-
 @app.route("/paiement-retour")
-@login_required
 def paiement_retour():
-    # BKApay redirige avec GET params
     status = request.args.get("status")
     transaction_id = request.args.get("transactionId")
-    amount = request.args.get("amount", type=float)
+    amount = request.args.get("amount")
 
     if status == "success":
-        # Trouver le dépôt correspondant
-        depot = Depot.query.filter_by(user_name=current_user.username, statut="pending").first()
-        if depot:
-            depot.statut = "valide"
-            depot.transaction_id = transaction_id
-            current_user.solde_total += amount
-            current_user.solde_depot += amount
-            current_user.premier_depot = True
-            db.session.commit()
-
-        flash("Paiement reçu et confirmé !", "success")
         return redirect(url_for("dashboard_page"))
 
-    else:
-        flash("Paiement annulé ou échoué.", "danger")
-        return redirect(url_for("dashboard_bloque"))
+    return redirect(url_for("dashboard_bloque"))
 
+# --------------------------------------
+# 3️⃣ Webhook BKApay (POST JSON sécurisé)
+# --------------------------------------
 @app.route("/webhook-bkapay", methods=["POST"])
 def webhook_bkapay():
     import hmac, hashlib
 
-    secret = "TON_WEBHOOK_SECRET"
+    WEBHOOK_SECRET = "cs_dc98f66eff084ed1993f51650ebbd8e4"
 
+    payload = request.get_data(as_text=True)
     signature = request.headers.get("X-BKApay-Signature")
-    payload = request.data
 
-    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+    expected = hmac.new(
+        WEBHOOK_SECRET.encode(),
+        payload.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
     if signature != expected:
         return {"error": "invalid-signature"}, 401
 
-    data = request.json
+    data = request.get_json()
 
-    if data.get("status") == "completed":
-        user_id = int(data.get("externalReference"))
-        amount = float(data.get("amount"))
-        transaction_id = data.get("transactionId")
+    if data.get("event") == "payment.completed":
+        user_id = int(data["externalReference"])
+        amount = float(data["amount"])
+        transaction_id = data["transactionId"]
 
         user = User.query.get(user_id)
-        if not user:
-            return {"error": "user not found"}, 404
-
-        user.solde_total += amount
-        user.solde_depot += amount
-        user.premier_depot = True
-
-        depot = Depot.query.filter_by(user_id=user_id, statut="pending").first()
-        if depot:
-            depot.statut = "valide"
-            depot.transaction_id = transaction_id
-
-        db.session.commit()
+        if user:
+            user.premier_depot = True
+            user.solde_total += amount
+            user.solde_depot += amount
+            db.session.commit()
 
     return {"received": True}, 200
+
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
