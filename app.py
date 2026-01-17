@@ -371,7 +371,7 @@ LAUNCH_DATE = datetime(2026, 1, 24)
 @app.before_request
 def site_coming_soon():
     # Exclure certaines routes (admin, static, etc.)
-    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/login"):
+    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/chaine"):
         return
 
     # Si date actuelle < date de lancement, afficher page "Coming Soon"
@@ -564,9 +564,9 @@ def dashboard_bloque():
 
     return render_template("dashboard_bloque.html", user=user)
 
-@app.route("/whatsapp-channel")
+@app.route("/chaine")
 def whatsapp_channel():
-    return render_template("whatsapp_channel.html")
+    return render_template("chaine.html")
 
 @app.route("/dashboard")
 def dashboard_page():
