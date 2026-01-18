@@ -19,7 +19,8 @@
 <meta name="twitter:title" content="Inscription gratuite | LuminaStar">
 <meta name="twitter:description" content="Rejoignez LuminaStar et commencez à gagner grâce à notre programme d’affiliation.">
 <meta name="twitter:image" content="https://lumina-stars.com/static/images/lu.jpg">
-
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#2575fc">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -293,5 +294,15 @@ function togglePassword(id){
     field.type = field.type === "password" ? "text" : "password";
 }
 </script>
+
+<!-- PWA Service Worker -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/sw.js")
+    .then(() => console.log("Service Worker enregistré"))
+    .catch(err => console.error("Erreur SW:", err));
+}
+</script>
+
 </body>
 </html>
