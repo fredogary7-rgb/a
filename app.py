@@ -362,21 +362,6 @@ def init_db():
     db.create_all()
     print("✅ Base de données initialisée avec succès !")
 
-from flask import request, redirect, render_template
-from datetime import datetime
-
-# Date de lancement
-LAUNCH_DATE = datetime(2026, 1, 24)
-
-@app.before_request
-def site_coming_soon():
-    # Exclure certaines routes (admin, static, etc.)
-    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/chaine"):
-        return
-
-    # Si date actuelle < date de lancement, afficher page "Coming Soon"
-    if datetime.today() < LAUNCH_DATE:
-        return render_template("coming_soon.html")
 
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
@@ -624,7 +609,7 @@ def admin_required(f):
 from flask import redirect, request, url_for, flash
 from urllib.parse import urlencode
 
-CLE_PUBLIQUE = "pk_live_70778994-74de-46ad-9752-f7d5244988a5"
+CLE_PUBLIQUE = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
 
 @app.route("/payer/<int:montant>")
 @login_required
@@ -661,7 +646,7 @@ def paiement_retour():
 def webhook_bkapay():
     import hmac, hashlib
 
-    WEBHOOK_SECRET = "cs_dc98f66eff084ed1993f51650ebbd8e4"
+    WEBHOOK_SECRET = "cs_66e85344d59a4a2db71c0a05ea4678e1"
 
     payload = request.get_data(as_text=True)
     signature = request.headers.get("X-BKApay-Signature")
