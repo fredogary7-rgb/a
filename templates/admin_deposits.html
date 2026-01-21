@@ -3,63 +3,226 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Liste des dépôts — Admin</title>
+<title>Admin – Dépôts & Retraits</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-body { font-family: 'Poppins', sans-serif; background:#f5f5f5; color:#333; padding:20px; }
-table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { padding:10px; border:1px solid #ccc; text-align:center; }
-th { background:#ff7a00; color:#fff; }
-tr:nth-child(even) { background:#f9f9f9; }
+body {
+  font-family:'Poppins', sans-serif;
+  margin:0;
+  padding:20px;
+  background:#f3f6f9;
+}
+
+h2 { margin-bottom:15px; }
+
+/* ====== Onglets ====== */
+.tabs {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.tab-btn {
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  background:#ddd;
+}
+
+.tab-btn.active {
+  background:#2575fc;
+  color:#fff;
+}
+
+/* ====== Sections ====== */
+.tab-content {
+  display:none;
+}
+
+.tab-content.active {
+  display:block;
+}
+
+/* ====== Retraits ====== */
+.table-container {
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+table th, table td {
+  padding:12px;
+  text-align:left;
+  border-bottom:1px solid #ddd;
+}
+
+table th {
+  background:#333;
+  color:#fff;
+}
+
+button {
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:#fff;
+  font-weight:500;
+}
+
+.valider { background:#28a745; }
+.refuser { background:#dc3545; }
+
+.flash {
+  margin-bottom:15px;
+  padding:10px;
+  border-radius:6px;
+}
+
+.flash.success { background:rgba(40,167,69,0.2); }
+.flash.danger { background:rgba(220,53,69,0.2); }
+
+/* ====== Dépôts ====== */
+.depot-table th {
+  background:#ff7a00;
+}
+
 .status-pending { color:orange; font-weight:700; }
 .status-valide { color:green; font-weight:700; }
 .status-rejete { color:red; font-weight:700; }
 </style>
 </head>
+
 <body>
 
-<h2>Liste des dépôts</h2>
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Utilisateur</th>
-      <th>Nom</th>
-      <th>Opérateur</th>
-      <th>Pays</th>
-      <th>Montant</th>
-      <th>Statut</th>
-      <th>Date</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for d in depots %}
-    <tr>
-      <td>{{ d.id }}</td>
-      <td>{{ d.phone }}</td>
-      <td>{{ d.fullname or '-' }}</td>
-      <td>{{ d.operator }}</td>
-      <td>{{ d.country }}</td>
-      <td>{{ d.montant }}</td>
-      <td class="status-{{ d.statut }}">{{ d.statut }}</td>
-      <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
-      <td>
-        {% if d.statut == 'pending' %}
-          <a href="{{ url_for('valider_depot', depot_id=d.id) }}">Valider</a> |
-          <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">Rejeter</a>
-        {% else %}
-          -
-        {% endif %}
-      </td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="9">Aucun dépôt pour le moment.</td>
-    </tr>
+<h2>Gestion financière</h2>
+
+<!-- Onglets -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('retraits')">💸 Retraits</button>
+  <button class="tab-btn" onclick="showTab('depots')">💰 Dépôts</button>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
     {% endfor %}
-  </tbody>
-</table>
+  {% endif %}
+{% endwith %}
+
+<!-- ===== RETRAITS ===== -->
+<div id="retraits" class="tab-content active">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Utilisateur</th>
+          <th>Montant</th>
+          <th>Frais</th>
+          <th>Moyen</th>
+          <th>Numéro</th>
+          <th>Pays</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in retraits %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.phone_user.username if r.phone_user else r.phone }}</td>
+          <td>{{ r.montant }} XOF</td>
+          <td>{{ r.frais }} XOF</td>
+          <td>{{ r.payment_method }}</td>
+          <td>{{ r.phone }}</td>
+          <td>{{ r.pays }}</td>
+          <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
+          <td>{{ r.statut }}</td>
+          <td>
+            <a href="/admin/retraits/valider/{{ r.id }}">
+              <button class="valider">Valider</button>
+            </a>
+            <a href="/admin/retraits/refuser/{{ r.id }}">
+              <button class="refuser">Refuser</button>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== DEPOTS ===== -->
+<div id="depots" class="tab-content">
+  <div class="table-container">
+    <table class="depot-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Utilisateur</th>
+          <th>Nom</th>
+          <th>Opérateur</th>
+          <th>Pays</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in depots %}
+        <tr>
+          <td>{{ d.id }}</td>
+          <td>{{ d.phone }}</td>
+          <td>{{ d.fullname or '-' }}</td>
+          <td>{{ d.operator }}</td>
+          <td>{{ d.country }}</td>
+          <td>{{ d.montant }}</td>
+          <td class="status-{{ d.statut }}">{{ d.statut }}</td>
+          <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            {% if d.statut == 'pending' %}
+              <a href="{{ url_for('valider_depot', depot_id=d.id) }}">Valider</a> |
+              <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">Rejeter</a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9">Aucun dépôt pour le moment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function showTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
 
 </body>
 </html>
