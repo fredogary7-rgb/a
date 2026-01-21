@@ -354,17 +354,6 @@ def calculer_montant_points(user):
 # Vérification des investissements
 # -----------------------
 
-LAUNCH_DATE = datetime(2026, 1, 24)
-
-@app.before_request
-def site_coming_soon():
-    # Exclure certaines routes (admin, static, etc.)
-    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/login"):
-        return
-
-    # Si date actuelle < date de lancement, afficher page "Coming Soon"
-    if datetime.today() < LAUNCH_DATE:
-        return render_template("coming_soon.html")
 
 
 @app.cli.command("init-db")
@@ -518,8 +507,8 @@ WEBHOOK_SECRET = "cs_dc98f66eff084ed1993f51650ebbd8e4"
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    # Si le premier dépôt est validé → on débloque
-    if user.premier_depot:
+    # Si le premier dépôt a été validé → on débloque l'accès
+    if user.premier_depot is True:
         return redirect(url_for("dashboard_page"))
 
     if request.method == "POST":
@@ -532,10 +521,10 @@ def dashboard_bloque():
             return redirect(url_for("dashboard_bloque"))
 
         if montant < 3800:
-            flash("Le montant minimum est de 3800 FCFA.", "danger")
+            flash("Le montant minimum est de 3000 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # Création du dépôt pending
+        # Création du dépôt
         depot = Depot(
             user_name=user.username,
             phone=user.phone,
@@ -547,15 +536,11 @@ def dashboard_bloque():
         db.session.add(depot)
         db.session.commit()
 
-        # Redirection vers BKApay
-        callback_url = url_for("paiement_retour", _external=True)
-        params = {
-            "amount": montant,
-            "description": f"Dépôt utilisateur {user.username}",
-            "callback": callback_url
-        }
-        payment_url = f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}?" + urlencode(params)
-        return redirect(payment_url)
+        flash("Votre dépôt a été créé avec succès et est en attente de validation.", "success")
+
+        # 🔹 Redirection vers le lien de paiement
+        payment_link = f"https://payin.moneyfusion.net/payment/69650c69013a0771971bf1a9/3800/Kedboy"
+        return redirect(payment_link)
 
     return render_template("dashboard_bloque.html", user=user)
 
