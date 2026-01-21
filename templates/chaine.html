@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rejoindre notre Chaîne WhatsApp – LuminaStar</title>
 
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="/static/images/favicon-48.png" sizes="48x48" type="image/png">
     <link rel="icon" href="/static/images/lu.png" sizes="192x192" type="image/png">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2575fc">
+
     <style>
         body {
             margin: 0;
@@ -69,6 +75,8 @@
             text-decoration: none;
             transition: 0.3s;
             margin: 10px;
+            border: none;
+            cursor: pointer;
         }
 
         .btn-primary:hover {
@@ -116,76 +124,98 @@
             font-size: 14px;
         }
     </style>
-
 </head>
+
 <body>
 
-    <!-- Navigation simple -->
-    <div class="header">
-        <div>
-            <a href="/dashboard">Accueil</a>
-            <a href="/about">À propos</a>
-            <a href="/inscription">S’inscrire</a>
-        </div>
+<!-- Navigation -->
+<div class="header">
+    <div>
+        <a href="/dashboard">Accueil</a>
+        <a href="/about">À propos</a>
+        <a href="/inscription">S’inscrire</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1>Rejoignez Notre Chaîne WhatsApp Officielle</h1>
+
+    <p>
+        Recevez en exclusivité les nouvelles offres, promotions, mises à jour, tutoriels
+        et opportunités de gains proposées par LuminaStar.
+    </p>
+
+    <!-- WhatsApp -->
+    <a href="https://whatsapp.com/channel/0029VbC67Yu6xCSYk45qGs04"
+       target="_blank"
+       class="btn-whatsapp">
+        👉 Rejoindre la chaîne WhatsApp
+    </a>
+
+    <!-- 🔥 BOUTON INSTALLER (remplace le 1er bouton inscription) -->
+    <button id="installApp" class="btn-primary" style="display:none;">
+        📲 Installer l’application LuminaStar
+    </button>
+
+    <!-- Autres boutons -->
+    <a href="/about" class="btn-primary">
+        ℹ️ En savoir plus sur LuminaStar
+    </a>
+
+    <!-- Sections -->
+    <div class="section">
+        <h2>Pourquoi rejoindre LuminaStar ?</h2>
+        <ul>
+            <li>Programme d’affiliation simple et rentable</li>
+            <li>Gains basés sur l’activité des membres</li>
+            <li>Support rapide et professionnel</li>
+            <li>Accès aux formations marketing</li>
+            <li>Concours et bonus exclusifs</li>
+        </ul>
     </div>
 
-    <div class="container">
-
-        <h1>Rejoignez Notre Chaîne WhatsApp Officielle</h1>
-
-        <p>
-            Recevez en exclusivité les nouvelles offres, promotions, mises à jour, tutoriels
-            et opportunités de gains proposées par LuminaStar.
-        </p>
-
-        <a href="https://whatsapp.com/channel/0029VbC67Yu6xCSYk45qGs04" 
-           target="_blank" 
-           class="btn-whatsapp">
-           👉 Rejoindre la chaîne WhatsApp
-        </a>
-
-        <a href="/inscription" class="btn-primary">
-            🚀 S’inscrire maintenant sur LuminaStar
-        </a>
-
-        <a href="/about" class="btn-primary">
-            ℹ️ En savoir plus sur LuminaStar
-        </a>
-
-        <!-- Pourquoi nous rejoindre -->
-        <div class="section">
-            <h2>Pourquoi rejoindre LuminaStar ?</h2>
-            <ul>
-                <li>Programme d’affiliation simple et rentable</li>
-                <li>Gains basés sur l’activité des membres</li>
-                <li>Support  rapide et professionnel</li>
-                <li>Accès aux formations marketing</li>
-                <li>Concours et bonus exclusifs</li>
-            </ul>
-        </div>
-
-        <!-- Fonctionnement -->
-        <div class="section">
-            <h2>Comment ça fonctionne ?</h2>
-            <ul>
-                <li>1️⃣ Créez un compte LuminaStar</li>
-                <li>2️⃣ Accédez à votre tableau de bord</li>
-                <li>3️⃣ Partagez votre lien de parrainage</li>
-                <li>4️⃣ Gagnez des points grâce aux plateformes TikTok, YouTube, Instagram, Ads</li>
-                <li>5️⃣ Transformez vos points en revenus 💸</li>
-            </ul>
-        </div>
-
-        <!-- CTA -->
-        <div style="text-align:center; margin-top:30px;">
-            <a href="/inscription" class="btn-primary">🎉 Créer mon compte maintenant</a>
-        </div>
-
+    <div class="section">
+        <h2>Comment ça fonctionne ?</h2>
+        <ul>
+            <li>1️⃣ Créez un compte LuminaStar</li>
+            <li>2️⃣ Accédez à votre tableau de bord</li>
+            <li>3️⃣ Partagez votre lien de parrainage</li>
+            <li>4️⃣ Gagnez des points via TikTok, YouTube, Instagram, Ads</li>
+            <li>5️⃣ Transformez vos points en revenus 💸</li>
+        </ul>
     </div>
 
-    <footer>
-        © 2026 LuminaStar — Marketing d’Affiliation & Réseaux Sociaux
-    </footer>
+    <!-- CTA final -->
+    <div style="text-align:center; margin-top:30px;">
+        <a href="/inscription" class="btn-primary">🎉 Créer mon compte maintenant</a>
+    </div>
+
+</div>
+
+<footer>
+    © 2026 LuminaStar — Marketing d’Affiliation & Réseaux Sociaux
+</footer>
+
+<!-- ✅ SCRIPT INSTALLATION PWA -->
+<script>
+let deferredPrompt;
+const installBtn = document.getElementById("installApp");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = "inline-block";
+});
+
+installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = "none";
+});
+</script>
 
 </body>
 </html>
