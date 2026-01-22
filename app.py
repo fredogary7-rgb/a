@@ -669,6 +669,28 @@ def webhook_bkapay():
 
     return {"received": True}, 200
 
+@app.route("/admin/active-users")
+def admin_active_users():
+    user = get_logged_in_admin()  # ta session admin
+
+    # Vérifier si admin
+    if not user:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("admin_finance"))
+
+    # Utilisateurs actifs / inactifs
+    actifs = User.query.filter_by(premier_depot=True).order_by(User.date_creation.desc()).all()
+    inactifs = User.query.filter_by(premier_depot=False).order_by(User.date_creation.desc()).all()
+
+    return render_template(
+        "admin_active_users.html",
+        user=user,
+        actifs=actifs,
+        inactifs=inactifs,
+        total_actifs=len(actifs),
+        total_inactifs=len(inactifs)
+    )
+
 @app.route("/admin/users")
 @login_required
 def admin_users():
@@ -913,8 +935,8 @@ def profile_page():
 def retrait_page():
     user = get_logged_in_user()
 
-    MIN_RETRAIT = 500
-    FRAIS = 10
+    MIN_RETRAIT = 4000
+    FRAIS = 500
 
     # Stats pour le template : afficher le solde parrainage
     stats = {
@@ -1154,7 +1176,9 @@ def team_page():
 # ===== Page de connexion admin =====
 @app.route("/admin/finance", methods=["GET", "POST"])
 def admin_finance():
+    submitted = False  # Sert à afficher le loader
     if request.method == "POST":
+        submitted = True
         username = request.form.get("username")
         password = request.form.get("password")
 
@@ -1162,12 +1186,15 @@ def admin_finance():
         user = User.query.filter_by(username=username, is_admin=True).first()
         if user and check_password_hash(user.password, password):
             session["admin_id"] = user.id  # Stocke l'id de l'admin
+            # Redirection vers admin_deposits après connexion
             return redirect(url_for("admin_deposits"))
         else:
             flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
-            return redirect(url_for("admin_finance"))
+            # Reste sur la page avec le message flash
+            return render_template("admin_finance.html", submitted=False)
 
-    return render_template("admin_finance.html")
+    # GET → formulaire normal
+    return render_template("admin_finance.html", submitted=submitted)
 
 # ===== Détection de l'admin connecté =====
 def get_logged_in_admin():
@@ -1176,6 +1203,7 @@ def get_logged_in_admin():
         return User.query.filter_by(id=admin_id, is_admin=True).first()
     return None
 
+# ===== Page admin – Dépôts, retraits et utilisateurs =====
 # ===== Page admin – Dépôts, retraits et utilisateurs =====
 @app.route("/admin/deposits")
 def admin_deposits():
@@ -1188,6 +1216,7 @@ def admin_deposits():
     # ===== Récupération des utilisateurs =====
     all_users = User.query.order_by(User.date_creation.desc()).all()
     users_data = []
+
     for u in all_users:
         niveau1 = u.downlines.count()
         niveau2 = sum([child.downlines.count() for child in u.downlines])
@@ -1201,8 +1230,13 @@ def admin_deposits():
             "niveau1": niveau1,
             "niveau2": niveau2,
             "niveau3": niveau3,
-            "date_creation": u.date_creation
+            "date_creation": u.date_creation,
+            "premier_depot": u.premier_depot  # ✅ on ajoute ça
         })
+
+    # ===== Utilisateurs actifs/inactifs selon premier_depot =====
+    actifs = [u for u in users_data if u["premier_depot"] == True]
+    inactifs = [u for u in users_data if u["premier_depot"] == False]
 
     # ===== Récupération des dépôts =====
     depots = Depot.query.order_by(Depot.date.desc()).all()
@@ -1219,7 +1253,11 @@ def admin_deposits():
         user=user,
         users=users_data,
         depots=depots,
-        retraits=retraits
+        retraits=retraits,
+        actifs=actifs,
+        inactifs=inactifs,
+        total_actifs=len(actifs),
+        total_inactifs=len(inactifs)
     )
 
 

@@ -57,7 +57,7 @@ body {
 .main { padding:20px; }
 
 /* ===== Tabs ===== */
-.tabs { display:flex; gap:10px; margin-bottom:20px; }
+.tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
 .tab-btn {
     padding:10px 20px;
     border:none;
@@ -133,13 +133,18 @@ button {
 
 /* ===== Animations ===== */
 @keyframes fadeUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+
+h3{
+    margin: 0 0 15px 0;
+    font-size: 18px;
+}
 </style>
 </head>
 
 <body>
 <div class="overlay" id="overlay"></div>
 <div class="sidebar" id="sidebar">
-    <a href="/admin/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/admin/deposits"><i class="fa fa-home"></i> Tableau de bord</a>
     <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
 </div>
 
@@ -161,9 +166,10 @@ button {
 
     <!-- Onglets -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('usersTab')">👥 Utilisateurs</button>
-        <button class="tab-btn" onclick="showTab('depotsTab')">💰 Dépôts</button>
-        <button class="tab-btn" onclick="showTab('retraitsTab')">💸 Retraits</button>
+        <button class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Utilisateurs</button>
+        <button class="tab-btn" onclick="showTab(event,'depotsTab')">💰 Dépôts</button>
+        <button class="tab-btn" onclick="showTab(event,'retraitsTab')">💸 Retraits</button>
+        <button class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs / ❌ Inactifs</button>
     </div>
 
     <!-- ===== USERS ===== -->
@@ -179,6 +185,7 @@ button {
                         <th>Niveau 1</th>
                         <th>Niveau 2</th>
                         <th>Niveau 3</th>
+                        <th>Premier dépôt</th>
                         <th>Date d'inscription</th>
                     </tr>
                 </thead>
@@ -192,6 +199,13 @@ button {
                         <td><span class="badge level1">{{ u.niveau1 }}</span></td>
                         <td><span class="badge level2">{{ u.niveau2 }}</span></td>
                         <td><span class="badge level3">{{ u.niveau3 }}</span></td>
+                        <td>
+                            {% if u.premier_depot %}
+                                <span class="badge level3">Actif</span>
+                            {% else %}
+                                <span class="badge level1">Inactif</span>
+                            {% endif %}
+                        </td>
                         <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
                     </tr>
                     {% endfor %}
@@ -282,6 +296,79 @@ button {
         </div>
     </div>
 
+    <!-- ===== ACTIFS / INACTIFS ===== -->
+    <div id="actifsTab" class="tab-content">
+        <div class="table-container">
+
+            <h3>✅ Utilisateurs Actifs 
+                <span class="badge level3">{{ total_actifs }}</span>
+            </h3>
+
+            <table style="margin-bottom:25px;">
+                <thead>
+                    <tr>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in actifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if actifs|length == 0 %}
+                    <tr>
+                        <td colspan="5">Aucun utilisateur actif.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <h3>❌ Utilisateurs Inactifs
+                <span class="badge level1">{{ total_inactifs }}</span>
+            </h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in inactifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if inactifs|length == 0 %}
+                    <tr>
+                        <td colspan="5">Aucun utilisateur inactif.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -299,11 +386,12 @@ overlay.onclick = () => {
     overlay.classList.remove("active");
 };
 
-function showTab(tabId){
+function showTab(e, tabId){
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
     document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+    e.target.classList.add('active');
 }
 </script>
 </body>

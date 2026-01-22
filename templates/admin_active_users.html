@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utilisateurs actifs / inactifs - Admin | LuminaStar</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Poppins',sans-serif;
+    margin:0;
+    padding:20px;
+    background:#f7f7f7;
+}
+
+.container{
+    max-width:1200px;
+    margin:0 auto;
+    background:#fff;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.08);
+}
+
+h1{
+    margin:0 0 15px;
+    text-align:center;
+}
+
+.stats{
+    display:flex;
+    gap:15px;
+    justify-content:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+.stat-box{
+    background:#f1f1f1;
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:600;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    color:white;
+    margin-left:8px;
+}
+
+.badge.green{ background:#28a745; }
+.badge.red{ background:#dc3545; }
+
+.tabs{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+}
+
+.tab-btn{
+    padding:10px 18px;
+    border:none;
+    cursor:pointer;
+    border-radius:10px;
+    font-weight:600;
+    background:#ddd;
+}
+
+.tab-btn.active{
+    background:#2575fc;
+    color:white;
+}
+
+.tab-content{
+    display:none;
+}
+
+.tab-content.active{
+    display:block;
+}
+
+.table-container{
+    overflow-x:auto;
+    border-radius:12px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:12px 10px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+    font-size:14px;
+}
+
+th{
+    background:#2575fc;
+    color:white;
+    position:sticky;
+    top:0;
+}
+
+tr:hover{
+    background:#f9f9f9;
+}
+
+.status-active{
+    color:#28a745;
+    font-weight:700;
+}
+
+.status-inactive{
+    color:#dc3545;
+    font-weight:700;
+}
+
+.flash{
+    margin-bottom:15px;
+    padding:10px;
+    border-radius:8px;
+    font-size:14px;
+}
+.flash.danger{ background:rgba(220,53,69,0.15); color:#dc3545; }
+.flash.success{ background:rgba(40,167,69,0.15); color:#28a745; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Utilisateurs actifs / inactifs</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="stats">
+        <div class="stat-box">
+            Total actifs
+            <span class="badge green">{{ total_actifs }}</span>
+        </div>
+
+        <div class="stat-box">
+            Total inactifs
+            <span class="badge red">{{ total_inactifs }}</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('actifsTab', this)">
+            ✅ Actifs
+        </button>
+        <button class="tab-btn" onclick="showTab('inactifsTab', this)">
+            ❌ Inactifs
+        </button>
+    </div>
+
+    <!-- ===== ACTIFS ===== -->
+    <div id="actifsTab" class="tab-content active">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Statut</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in actifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain if u.parrain else "—" }}</td>
+                        <td class="status-active">Actif</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else "-" }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if actifs|length == 0 %}
+                    <tr>
+                        <td colspan="6">Aucun utilisateur actif trouvé.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== INACTIFS ===== -->
+    <div id="inactifsTab" class="tab-content">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Statut</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in inactifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain if u.parrain else "—" }}</td>
+                        <td class="status-inactive">Inactif</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else "-" }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if inactifs|length == 0 %}
+                    <tr>
+                        <td colspan="6">Aucun utilisateur inactif trouvé.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function showTab(tabId, btn){
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+    document.getElementById(tabId).classList.add("active");
+    btn.classList.add("active");
+}
+</script>
+
+</body>
+</html>
