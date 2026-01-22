@@ -19,11 +19,40 @@ body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:1
 .topbar .user { font-weight:600; font-size:16px; }
 
 /* SIDEBAR */
-.sidebar { position:fixed; left:-260px; top:0; height:100%; width:260px; background:rgba(255,255,255,0.20); backdrop-filter:blur(12px); transition:0.4s; padding-top:80px; z-index:999; border-right:1px solid rgba(255,255,255,0.25);}
-.sidebar.active { left:0; }
-.sidebar a { display:block; padding:14px 25px; font-size:15px; color:#fff; text-decoration:none; transition:0.3s;}
-.sidebar a i { margin-right:12px; }
-.sidebar a:hover { background: rgba(255,255,255,0.25); }
+.sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    width: 260px;
+    background: rgba(255,255,255,0.20);
+    backdrop-filter: blur(12px);
+    transition: 0.4s;
+    padding-top: 80px;
+    z-index: 999;
+    border-right: 1px solid rgba(255,255,255,0.25);
+
+    /* ✅ AJOUT POUR LE SCROLL */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sidebar.active { left: 0; }
+
+.sidebar a {
+    display: block;
+    padding: 14px 25px;
+    font-size: 15px;
+    color: #fff;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.sidebar a i { margin-right: 12px; }
+
+.sidebar a:hover {
+    background: rgba(255,255,255,0.25);
+}
 
 /* Sous-menus */
 .sub-menu { display:none; padding-left:25px; }
