@@ -361,11 +361,12 @@ def init_db():
     db.create_all()
     print("✅ Base de données initialisée avec succès !")
 
-
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
-
     ref_code = request.args.get("ref", "").strip().lower()
+
+    # Supprimer le flag session au début
+    session.pop('username_exists', None)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip().lower()
@@ -374,47 +375,46 @@ def inscription_page():
         phone = request.form.get("phone", "").strip()
         password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm_password", "").strip()
-
-        # code parrain du formulaire OU URL
         parrain_code = (request.form.get("parrain", "") or ref_code).strip().lower()
 
         # 1️⃣ champs obligatoires
         if not all([username, email, country, phone, password, confirm]):
             flash("Tous les champs sont obligatoires.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
         # 2️⃣ format username
         if not re.fullmatch(r"[a-z0-9]+", username):
             flash("Nom d'utilisateur invalide : lettres & chiffres uniquement.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
         # 3️⃣ mots de passe identiques
         if password != confirm:
             flash("Les mots de passe ne correspondent pas.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
         # 4️⃣ username unique
         if User.query.filter_by(username=username).first():
-            flash("Ce nom d'utilisateur existe déjà.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            flash(f"Nom d'utilisateur '{username}' existe déjà, veuillez ajouter 3 chiffres.", "danger")
+            session['username_exists'] = True
+            return render_template("inscription.html", code_ref=ref_code)
 
-        # 5️⃣ email unique  (AJOUT ESSENTIEL)
+        # 5️⃣ email unique
         if User.query.filter_by(email=email).first():
             flash("Cet email est déjà utilisé.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
         # 6️⃣ numéro unique
         if User.query.filter_by(phone=phone).first():
             flash("Ce numéro est déjà enregistré.", "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
-        # 7️⃣ parrain basé sur username
+        # 7️⃣ parrain
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
             if not parrain_user:
                 flash("Code parrain invalide.", "danger")
-                return redirect(url_for("inscription_page", ref=ref_code))
+                return render_template("inscription.html", code_ref=ref_code)
 
         # 8️⃣ création
         try:
@@ -432,17 +432,15 @@ def inscription_page():
                 solde_parrainage=0,
                 date_creation=datetime.now(timezone.utc)
             )
-
             db.session.add(new_user)
             db.session.commit()
-
         except Exception as e:
             db.session.rollback()
             flash("Erreur lors de l’inscription : " + str(e), "danger")
-            return redirect(url_for("inscription_page", ref=ref_code))
+            return render_template("inscription.html", code_ref=ref_code)
 
-        flash("Inscription réussie ! Connectez-vous.", "success")
-        return redirect(url_for("connexion_page"))
+        flash("Inscription réussie !.", "success")
+        return redirect(url_for("dashboard_bloque"))
 
     return render_template("inscription.html", code_ref=ref_code)
 
@@ -671,6 +669,33 @@ def webhook_bkapay():
 
     return {"received": True}, 200
 
+@app.route("/admin/users")
+@login_required
+def admin_users():
+    # Récupère l'utilisateur connecté via session
+    logged_in_user = get_logged_in_user()
+
+    # Récupère tous les utilisateurs
+    users = User.query.order_by(User.date_creation.desc()).all()
+
+    # Calcul des filleuls par niveau
+    user_data = []
+    for u in users:
+        niveau1 = u.downlines.count()
+        niveau2 = sum([child.downlines.count() for child in u.downlines])
+        niveau3 = sum([sum([c.downlines.count() for c in child.downlines]) for child in u.downlines])
+
+        user_data.append({
+            "username": u.username,
+            "email": u.email,
+            "phone": u.phone,
+            "parrain": u.parrain if u.parrain else "—",
+            "niveau1": niveau1,
+            "niveau2": niveau2,
+            "niveau3": niveau3
+        })
+
+    return render_template("admin_users.html", users=user_data)
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -708,21 +733,6 @@ def admin_parrainage():
 
     return render_template("admin_parrainage.html", users=users)
 # ===== Dashboard admin =====
-
-@app.route("/admin/finance", methods=["GET", "POST"])
-def admin_finance():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        # Vérifie l'utilisateur admin
-        user = User.query.filter_by(username=username, is_admin=True).first()
-        if user and check_password_hash(user.password, password):
-            session["admin_id"] = user.id
-            return redirect(url_for("admin_deposits"))
-        else:
-            flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
-            return redirect(url_for("admin_finance"))
-    return render_template("admin_finance.html")
 
 # ===== Helpers =====
 def get_logged_in_user_phone():
@@ -1141,16 +1151,77 @@ def team_page():
         level3_users=level3
     )
 
+# ===== Page de connexion admin =====
+@app.route("/admin/finance", methods=["GET", "POST"])
+def admin_finance():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # Vérifie l'utilisateur admin
+        user = User.query.filter_by(username=username, is_admin=True).first()
+        if user and check_password_hash(user.password, password):
+            session["admin_id"] = user.id  # Stocke l'id de l'admin
+            return redirect(url_for("admin_deposits"))
+        else:
+            flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
+            return redirect(url_for("admin_finance"))
+
+    return render_template("admin_finance.html")
+
+# ===== Détection de l'admin connecté =====
+def get_logged_in_admin():
+    admin_id = session.get("admin_id")
+    if admin_id:
+        return User.query.filter_by(id=admin_id, is_admin=True).first()
+    return None
+
+# ===== Page admin – Dépôts, retraits et utilisateurs =====
 @app.route("/admin/deposits")
 def admin_deposits():
-    user = get_logged_in_user()
+    user = get_logged_in_admin()  # Utilise la session admin
 
-    # Vérifier si admin
+    if not user:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("admin_finance"))
 
-    # Récupérer tous les dépôts triés par date décroissante
+    # ===== Récupération des utilisateurs =====
+    all_users = User.query.order_by(User.date_creation.desc()).all()
+    users_data = []
+    for u in all_users:
+        niveau1 = u.downlines.count()
+        niveau2 = sum([child.downlines.count() for child in u.downlines])
+        niveau3 = sum([sum([c.downlines.count() for c in child.downlines]) for child in u.downlines])
+
+        users_data.append({
+            "username": u.username,
+            "email": u.email,
+            "phone": u.phone,
+            "parrain": u.parrain if u.parrain else "—",
+            "niveau1": niveau1,
+            "niveau2": niveau2,
+            "niveau3": niveau3,
+            "date_creation": u.date_creation
+        })
+
+    # ===== Récupération des dépôts =====
     depots = Depot.query.order_by(Depot.date.desc()).all()
+    for d in depots:
+        d.username = d.user.username if hasattr(d, 'user') and d.user else d.phone
 
-    return render_template("admin_deposits.html", user=user, depots=depots)
+    # ===== Récupération des retraits =====
+    retraits = Retrait.query.order_by(Retrait.date.desc()).all()
+    for r in retraits:
+        r.username = r.phone_user.username if hasattr(r, 'phone_user') and r.phone_user else r.phone
+
+    return render_template(
+        "admin_deposits.html",
+        user=user,
+        users=users_data,
+        depots=depots,
+        retraits=retraits
+    )
+
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 @login_required
