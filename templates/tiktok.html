@@ -67,6 +67,12 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
                 </video>
             </div>
 
+            <!-- Message avant 8h -->
+            <div id="tooEarlyMessage" class="no-video" style="display:none;">
+                ⏳ La vidéo sera disponible <strong>mardi à partir de 08h00</strong>.<br>
+                Revenez à 8h pour gagner 20 points !
+            </div>
+
             <div id="successMessage" class="no-video" style="display:none;">
                 🎉 20 points ajoutés ! Vidéo complétée. Revenez mardi prochain !
             </div>
@@ -79,7 +85,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 
         {% else %}
             <div class="no-video">
-                La vidéo sera disponible mardi.<br>
+                La vidéo sera disponible mardi <strong>à partir de 08h00</strong>.<br>
                 Revenez ce jour-là pour gagner 20 points !
             </div>
         {% endif %}
@@ -105,29 +111,52 @@ overlay.onclick = () => {
 };
 
 {% if today == 1 and user.last_tiktok_date != current_date %}
+
+/* ---------------------------
+   Heure d'ouverture : 08h00
+   --------------------------- */
+const OPEN_HOUR = 8; // 08h00
+
+function canPlayNow(){
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= OPEN_HOUR;
+}
+
 let video = document.getElementById("tiktokVideo");
-video.currentTime = 0;
-video.controls = false; // désactiver barre de contrôle
+let videoBox = document.getElementById("videoBox");
+let tooEarlyMessage = document.getElementById("tooEarlyMessage");
 
-// Empêcher l'avance rapide
-video.addEventListener('seeking', function() {
-    if (video.seekingTime !== undefined && video.currentTime > video.seekingTime) {
-        video.currentTime = video.seekingTime;
-    }
-});
-video.addEventListener('timeupdate', function() {
-    video.seekingTime = video.currentTime;
-});
+// Si mardi mais avant 8h => on bloque l'accès à la vidéo
+if(!canPlayNow()){
+    if(videoBox) videoBox.style.display = "none";
+    if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
+} else {
+    // Logique originale (inchangée)
+    video.currentTime = 0;
+    video.controls = false; // désactiver barre de contrôle
 
-// Créditer les points à la fin de la vidéo
-video.addEventListener('ended', () => {
-    fetch("/tiktok/complete")
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("videoBox").style.display = "none";
-        document.getElementById("successMessage").style.display = "block";
+    // Empêcher l'avance rapide
+    video.addEventListener('seeking', function() {
+        if (video.seekingTime !== undefined && video.currentTime > video.seekingTime) {
+            video.currentTime = video.seekingTime;
+        }
     });
-});
+    video.addEventListener('timeupdate', function() {
+        video.seekingTime = video.currentTime;
+    });
+
+    // Créditer les points à la fin de la vidéo
+    video.addEventListener('ended', () => {
+        fetch("/tiktok/complete")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("videoBox").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+        });
+    });
+}
+
 {% endif %}
 </script>
 

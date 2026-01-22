@@ -59,6 +59,12 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
                 </video>
             </div>
 
+            <!-- Message avant 8h -->
+            <div id="tooEarlyMessage" class="no-video" style="display:none;">
+                ⏳ La vidéo sera disponible <strong>vendredi à partir de 08h00</strong>.<br>
+                Revenez à 8h pour gagner 20 points !
+            </div>
+
             <div id="successMessage" class="no-video" style="display:none;">
                 🎉 20 points ajoutés ! Vidéo complétée. Revenez vendredi prochain !
             </div>
@@ -71,7 +77,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 
         {% else %}
             <div class="no-video">
-                La vidéo sera disponible vendredi.<br>
+                La vidéo sera disponible vendredi <strong>à partir de 08h00</strong>.<br>
                 Revenez ce jour-là pour gagner 20 points !
             </div>
         {% endif %}
@@ -97,28 +103,51 @@ overlay.onclick = () => {
 };
 
 {% if today == 4 and user.last_instagram_date != current_date %}
+
+/* ---------------------------
+   Heure d'ouverture : 08h00
+   --------------------------- */
+const OPEN_HOUR = 8; // 08h00
+
+function canPlayNow(){
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= OPEN_HOUR;
+}
+
 let video = document.getElementById("instagramVideo");
+let videoBox = document.getElementById("videoBox");
+let tooEarlyMessage = document.getElementById("tooEarlyMessage");
 
-video.currentTime = 0;
-video.controls = false;
+// Si vendredi mais avant 8h => on bloque la vidéo
+if(!canPlayNow()){
+    if(videoBox) videoBox.style.display = "none";
+    if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
+} else {
 
-video.addEventListener('seeking', function() {
-    if (video.seekingTime !== undefined && video.currentTime > video.seekingTime) {
-        video.currentTime = video.seekingTime;
-    }
-});
-video.addEventListener('timeupdate', function() {
-    video.seekingTime = video.currentTime;
-});
+    // Logique originale (inchangée)
+    video.currentTime = 0;
+    video.controls = false;
 
-video.addEventListener('ended', () => {
-    fetch("/instagram/complete")
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("videoBox").style.display = "none";
-        document.getElementById("successMessage").style.display = "block";
+    video.addEventListener('seeking', function() {
+        if (video.seekingTime !== undefined && video.currentTime > video.seekingTime) {
+            video.currentTime = video.seekingTime;
+        }
     });
-});
+    video.addEventListener('timeupdate', function() {
+        video.seekingTime = video.currentTime;
+    });
+
+    video.addEventListener('ended', () => {
+        fetch("/instagram/complete")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("videoBox").style.display = "none";
+            document.getElementById("successMessage").style.display = "block";
+        });
+    });
+}
+
 {% endif %}
 </script>
 

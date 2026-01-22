@@ -67,6 +67,12 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
         {% if today == 2 and user.last_youtube_date != current_date %}
             <div id="player"></div>
 
+            <!-- Message avant 8h -->
+            <div id="tooEarlyMessage" class="no-video" style="display:none;">
+                ⏳ La vidéo sera disponible <strong>mercredi à partir de 08h00</strong>.<br>
+                Revenez à 8h pour gagner 20 points !
+            </div>
+
             <div id="successMessage" class="no-video" style="display:none;">
                 🎉 20 points ajoutés ! Vidéo complétée. Revenez mercredi prochain !
             </div>
@@ -79,7 +85,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 
         {% else %}
             <div class="no-video">
-                La vidéo sera disponible mercredi.<br>
+                La vidéo sera disponible mercredi <strong>à partir de 08h00</strong>.<br>
                 Revenez ce jour-là pour gagner 20 points !
             </div>
         {% endif %}
@@ -108,9 +114,33 @@ overlay.onclick = () => {
 
 {% if today == 2 and user.last_youtube_date != current_date %}
 
+/* ---------------------------
+   Heure d'ouverture : 08h00
+   --------------------------- */
+const OPEN_HOUR = 8; // 08h00
+
+function canPlayNow(){
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= OPEN_HOUR;
+}
+
 /* --- PLAYER YOUTUBE --- */
 var player;
+
 function onYouTubeIframeAPIReady() {
+
+    // Si on est mercredi mais avant 8h : on bloque l'affichage du player
+    if(!canPlayNow()){
+        const playerDiv = document.getElementById("player");
+        const tooEarlyMessage = document.getElementById("tooEarlyMessage");
+
+        if(playerDiv) playerDiv.style.display = "none";
+        if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
+        return;
+    }
+
+    // Sinon on joue normalement
     player = new YT.Player('player', {
         height: '400',
         width: '100%',

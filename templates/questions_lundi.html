@@ -57,24 +57,25 @@ button:hover { opacity:0.9; }
 .schedule-left { display:flex; align-items:center; gap:12px; }
 .schedule-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
 
-.icon-gray { background:#9e9e9e; } 
-.icon-tiktok { background:#ff2d55; } 
-.icon-youtube { background:#ff0000; } 
-.icon-ads { background:#ffb300; } 
+.icon-gray { background:#9e9e9e; }
+.icon-tiktok { background:#ff2d55; }
+.icon-youtube { background:#ff0000; }
+.icon-ads { background:#ffb300; }
 .icon-instagram { background:#8a3ab9; }
 
 .schedule-text strong { display:block; font-size:14px; font-weight:600; }
 .schedule-text span { font-size:12px; opacity:0.8; }
 
 .schedule-day { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; background:rgba(255,255,255,0.8);}
-.day-monday { color:#555; } 
-.day-tuesday { color:#ff2d55; } 
-.day-wednesday { color:#ff0000; } 
-.day-thursday { color:#ffb300; } 
+.day-monday { color:#555; }
+.day-tuesday { color:#ff2d55; }
+.day-wednesday { color:#ff0000; }
+.day-thursday { color:#ffb300; }
 .day-friday { color:#8a3ab9; }
 
 /* FOOTER */
 footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
+.no-video { font-size:18px; font-weight:600; padding:25px 20px; opacity:0.85; text-align:center; background:rgba(255,255,255,0.15); border-radius:15px; margin-bottom:15px; }
 </style>
 </head>
 <body>
@@ -108,7 +109,13 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     {% endif %}
     {% endwith %}
 
-    <form method="POST">
+    <!-- Message avant 8h -->
+    <div id="tooEarlyMessage" class="no-video" style="display:none;">
+        ⏳ Les questions seront disponibles à partir de <strong>08h00</strong>.<br>
+        Revenez à 8h pour participer !
+    </div>
+
+    <form method="POST" id="questionsForm">
         {% for q in questions %}
         <div class="question-box">
             <label for="question_{{ q.id }}">{{ loop.index }}. {{ q.question }}</label>
@@ -123,7 +130,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 <!-- HORAIRES TRENDSTAR -->
 <div class="schedule-card">
     <h3>Horaire TrendStar</h3>
-    
+
     <div class="schedule-item">
         <div class="schedule-left">
             <div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
@@ -197,6 +204,19 @@ overlay.onclick = () => {
     sidebar.classList.remove("active");
     overlay.classList.remove("active");
 };
+
+/* ---------------------------
+   Vérifier l'heure pour Lundi
+   --------------------------- */
+const OPEN_HOUR = 8; // 08h00
+const form = document.getElementById("questionsForm");
+const tooEarlyMessage = document.getElementById("tooEarlyMessage");
+
+const now = new Date();
+if(now.getDay() === 1 && now.getHours() < OPEN_HOUR){ // lundi = 1
+    if(form) form.style.display = "none";
+    if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
+}
 </script>
 
 </body>

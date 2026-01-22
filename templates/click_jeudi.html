@@ -4,135 +4,333 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Click du jeudi - LuminaStar</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
 /* RESET */
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
 
-/* BODY CENTRÉ PERFECT */
-body {
-    background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
-    min-height:100vh;
-    color:#fff;
-    overflow-x:hidden;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:0;
+/* BODY */
+body{
+  background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
+  min-height:100vh;
+  color:#fff;
+  overflow-x:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:0;
 }
 
-/* CONTAINER CENTRALISÉ */
-.page-wrapper {
-    width:100%;
-    max-width:600px;
-    padding:20px;
+/* CONTAINER */
+.page-wrapper{
+  width:100%;
+  max-width:650px;
+  padding:20px;
 }
 
 /* TOPBAR */
-.topbar {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px;
-    background:rgba(255,255,255,0.15);
-    backdrop-filter:blur(15px);
-    border-bottom:1px solid rgba(255,255,255,0.25);
-    border-radius:15px;
-    margin-bottom:25px;
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.20);
+  border-radius:16px;
+  margin-bottom:20px;
 }
-.topbar .menu-toggle { font-size:24px; cursor:pointer; color:#fff; }
+.topbar .menu-toggle{
+  font-size:24px;
+  cursor:pointer;
+  color:#fff;
+}
 
 /* SIDEBAR */
-.sidebar {
-    position:fixed; left:-260px; top:0; width:260px; height:100%;
-    background:rgba(255,255,255,0.20);
-    backdrop-filter:blur(12px);
-    padding-top:80px;
-    border-right:1px solid rgba(255,255,255,0.25);
-    transition:0.4s;
-    z-index:999;
+.sidebar{
+  position:fixed;
+  left:-260px;
+  top:0;
+  width:260px;
+  height:100%;
+  background:rgba(255,255,255,0.20);
+  backdrop-filter:blur(12px);
+  padding-top:80px;
+  border-right:1px solid rgba(255,255,255,0.25);
+  transition:0.35s;
+  z-index:999;
 }
-.sidebar.active { left:0; }
-.sidebar a { padding:14px 25px; display:block; color:#fff; font-size:15px; text-decoration:none; }
-.sidebar a:hover { background:rgba(255,255,255,0.25); }
+.sidebar.active{left:0;}
+.sidebar a{
+  padding:14px 25px;
+  display:block;
+  color:#fff;
+  font-size:15px;
+  text-decoration:none;
+}
+.sidebar a:hover{
+  background:rgba(255,255,255,0.25);
+}
 
 /* OVERLAY */
-.overlay {
-    position:fixed; top:0; left:0; height:100%; width:100%;
-    background:rgba(0,0,0,0.45);
-    opacity:0; visibility:hidden;
-    transition:0.3s;
-    z-index:998;
+.overlay{
+  position:fixed;
+  top:0;left:0;
+  height:100%;
+  width:100%;
+  background:rgba(0,0,0,0.45);
+  opacity:0;
+  visibility:hidden;
+  transition:0.3s;
+  z-index:998;
 }
-.overlay.active { opacity:1; visibility:visible; }
+.overlay.active{
+  opacity:1;
+  visibility:visible;
+}
 
-/* CLICK BOX */
-.click-box {
-    background:rgba(0,0,0,0.4);
-    padding:30px;
-    border-radius:20px;
-    text-align:center;
+/* MAIN CARD */
+.click-box{
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,255,255,0.18);
+  padding:26px;
+  border-radius:22px;
+  text-align:center;
+  box-shadow:0 18px 45px rgba(0,0,0,0.25);
 }
-.click-box h2 { margin-bottom:15px; font-size:24px; }
-.click-box p { margin-bottom:25px; font-size:16px; }
 
-/* BUTTONS */
-.click-box button {
-    padding:15px 30px;
-    font-size:16px;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    background:linear-gradient(to right,#1dd75f,#65ff3f);
-    color:#fff;
-    margin:0 15px;
-    transition:0.3s;
+.click-box h2{
+  margin-bottom:8px;
+  font-size:24px;
+  font-weight:700;
 }
-.click-box button:hover { opacity:0.9; }
+
+.click-box p{
+  margin-bottom:18px;
+  font-size:15px;
+  opacity:0.95;
+}
+
+/* PROGRESS */
+.progress-wrap{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin:12px 0 22px;
+}
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.35);
+  transition:0.25s;
+}
+.dot.active{
+  background:#fff;
+  transform:scale(1.15);
+}
+
+/* GRID OPTIONS */
+.options{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  margin-top:10px;
+}
+
+.option-card{
+  position:relative;
+  border-radius:18px;
+  overflow:hidden;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.20);
+  background:rgba(255,255,255,0.08);
+  transition:0.25s;
+  user-select:none;
+}
+
+.option-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);
+}
+
+/* IMAGE */
+.option-img{
+  height:140px;
+  width:100%;
+  background-size:cover;
+  background-position:center;
+  filter:saturate(1.1);
+}
+
+/* LABEL */
+.option-label{
+  padding:12px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:14px;
+  font-weight:600;
+}
+
+.badge{
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.20);
+}
+
+/* SELECTED STATE */
+.option-card.selected{
+  outline:2px solid rgba(255,255,255,0.85);
+  transform:scale(1.01);
+}
+
+/* CONFIRM BOX */
+.confirm-box{
+  margin-top:18px;
+  display:none;
+  background:rgba(0,0,0,0.30);
+  border:1px solid rgba(255,255,255,0.18);
+  padding:14px;
+  border-radius:16px;
+  font-size:14px;
+}
+.confirm-box.show{
+  display:block;
+}
+
+/* BLOQUÉ */
+.lock-box{
+  display:none;
+  margin-top:18px;
+  background:rgba(0,0,0,0.30);
+  border:1px solid rgba(255,255,255,0.18);
+  padding:14px;
+  border-radius:16px;
+  font-size:14px;
+  line-height:1.4;
+}
+.lock-box.show{
+  display:block;
+}
+.lock-box strong{
+  display:block;
+  margin-bottom:6px;
+}
+
+/* DISABLED OPTIONS */
+.options.disabled{
+  opacity:0.55;
+  pointer-events:none;
+  filter:grayscale(0.15);
+}
 
 /* FOOTER */
-footer {
-    margin-top:25px;
-    text-align:center;
-    font-size:13px;
-    opacity:0.8;
+footer{
+  margin-top:20px;
+  text-align:center;
+  font-size:13px;
+  opacity:0.85;
 }
 </style>
 </head>
+
 <body>
 
 <div class="overlay" id="overlay"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
-    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
-    <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>
-    <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
+  <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+  <a href="/revenus"><i class="fa fa-wallet"></i> Revenus</a>
+  <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
 </div>
 
 <div class="page-wrapper">
 
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="menu-toggle" id="menuToggle"><i class="fa fa-bars"></i></div>
+    <div style="font-weight:600; opacity:.95;">LuminaStar</div>
+  </div>
+
+  <!-- CLICK BOX -->
+  <div class="click-box">
+    <h2>Click du jeudi</h2>
+    <p id="subtitle">Cliquez sur <strong>2 images</strong> pour gagner <strong>20 points</strong> 🎁</p>
+
+    <!-- PROGRESS -->
+    <div class="progress-wrap">
+      <div class="dot" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
     </div>
 
-    <!-- CLICK BOX -->
-    <div class="click-box">
-        <h2>Click du jeudi</h2>
-        <p>Cliquez sur les deux boutons pour gagner <strong>20 points</strong> !</p>
+    <form method="POST" id="clickForm">
+      <input type="hidden" name="clicks" id="clicks" value="0">
 
-        <form method="POST" id="clickForm">
-            <input type="hidden" name="clicks" id="clicks" value="0">
-            <button type="button" class="click-btn">Bouton 1</button>
-            <button type="button" class="click-btn">Bouton 2</button>
-        </form>
-    </div>
+      <div class="options" id="optionsGrid">
 
-    <footer>
-        2026 © LuminaStar by Nina Academy
-    </footer>
+        <!-- Option 1 -->
+        <div class="option-card vote-option" data-id="1">
+          <div class="option-img" style="background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=60');"></div>
+          <div class="option-label">
+            <span><i class="fa-solid fa-star"></i> Offre 1</span>
+            <span class="badge">Clique</span>
+          </div>
+        </div>
+
+        <!-- Option 2 -->
+        <div class="option-card vote-option" data-id="2">
+          <div class="option-img" style="background-image:url('https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=60');"></div>
+          <div class="option-label">
+            <span><i class="fa-solid fa-bolt"></i> Offre 2</span>
+            <span class="badge">Clique</span>
+          </div>
+        </div>
+
+        <!-- Option 3 -->
+        <div class="option-card vote-option" data-id="3">
+          <div class="option-img" style="background-image:url('https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=60');"></div>
+          <div class="option-label">
+            <span><i class="fa-solid fa-gift"></i> Offre 3</span>
+            <span class="badge">Clique</span>
+          </div>
+        </div>
+
+        <!-- Option 4 -->
+        <div class="option-card vote-option" data-id="4">
+          <div class="option-img" style="background-image:url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=60');"></div>
+          <div class="option-label">
+            <span><i class="fa-solid fa-crown"></i> Offre 4</span>
+            <span class="badge">Clique</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- message validation -->
+      <div class="confirm-box" id="confirmBox">
+        <i class="fa-solid fa-circle-check"></i>
+        Bien joué ! Validation en cours...
+      </div>
+
+      <!-- message bloqué -->
+      <div class="lock-box" id="lockBox">
+        <strong><i class="fa-solid fa-lock"></i> Click indisponible</strong>
+        <span id="lockText">Disponible uniquement le jeudi à partir de 08h00.</span>
+      </div>
+
+    </form>
+  </div>
+
+  <footer>
+    2026 © LuminaStar by Nina Academy
+  </footer>
 
 </div>
 
@@ -140,33 +338,100 @@ footer {
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const menuToggle = document.getElementById("menuToggle");
-const btns = document.querySelectorAll(".click-btn");
+
+const options = document.querySelectorAll(".vote-option");
 const hiddenInput = document.getElementById("clicks");
+const form = document.getElementById("clickForm");
+
+const dot1 = document.getElementById("dot1");
+const dot2 = document.getElementById("dot2");
+const confirmBox = document.getElementById("confirmBox");
+
+const lockBox = document.getElementById("lockBox");
+const lockText = document.getElementById("lockText");
+const optionsGrid = document.getElementById("optionsGrid");
+const subtitle = document.getElementById("subtitle");
 
 // SIDEBAR
 menuToggle.onclick = () => {
-    sidebar.classList.add("active");
-    overlay.classList.add("active");
+  sidebar.classList.add("active");
+  overlay.classList.add("active");
 };
 overlay.onclick = () => {
-    sidebar.classList.remove("active");
-    overlay.classList.remove("active");
+  sidebar.classList.remove("active");
+  overlay.classList.remove("active");
 };
 
-// CLICK LOGIC
-let clicks = 0;
-btns.forEach(btn => {
-    btn.onclick = () => {
-        clicks++;
-        hiddenInput.value = clicks;
+// ✅ BLOQUER SAUF JEUDI À PARTIR DE 08H00
+function isThursdayAfter8() {
+  const now = new Date();
 
-        if(clicks >= 2){
-            alert("Félicitations ! Vous avez gagné 20 points.");
-            document.getElementById("clickForm").submit();
-        } else {
-            alert("Cliquez sur l'autre bouton pour gagner les points !");
-        }
-    };
+  // Jeudi = 4 (Dimanche=0, Lundi=1, ..., Jeudi=4)
+  const isThursday = now.getDay() === 4;
+
+  // Heure >= 8
+  const after8 = now.getHours() >= 8;
+
+  return isThursday && after8;
+}
+
+function lockClickUI(message) {
+  optionsGrid.classList.add("disabled");
+  lockBox.classList.add("show");
+  lockText.innerHTML = message;
+  subtitle.innerHTML = "Revenez <strong>jeudi à partir de 08h00</strong> pour gagner vos points 🎁";
+}
+
+function unlockClickUI() {
+  optionsGrid.classList.remove("disabled");
+  lockBox.classList.remove("show");
+}
+
+// Vérifie au chargement
+if (!isThursdayAfter8()) {
+  lockClickUI("Disponible uniquement le <strong>jeudi</strong> à partir de <strong>08h00</strong>.");
+} else {
+  unlockClickUI();
+}
+
+// CLICK LOGIC (2 clics = submit)
+let clicks = 0;
+let locked = false;
+
+function updateProgress(){
+  dot1.classList.toggle("active", clicks >= 1);
+  dot2.classList.toggle("active", clicks >= 2);
+}
+
+options.forEach(card => {
+  card.addEventListener("click", () => {
+
+    // 🔒 si bloqué par la date
+    if (!isThursdayAfter8()) {
+      lockClickUI("Disponible uniquement le <strong>jeudi</strong> à partir de <strong>08h00</strong>.");
+      return;
+    }
+
+    if(locked) return;
+
+    // Effet visuel sélection
+    card.classList.add("selected");
+    setTimeout(() => card.classList.remove("selected"), 450);
+
+    clicks++;
+    hiddenInput.value = clicks;
+    updateProgress();
+
+    if(clicks >= 2){
+      locked = true;
+      confirmBox.classList.add("show");
+
+      // Petit délai pour effet pro
+      setTimeout(() => {
+        form.submit();
+      }, 700);
+    }
+  });
 });
 </script>
 
