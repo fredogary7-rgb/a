@@ -708,101 +708,21 @@ def admin_parrainage():
 
     return render_template("admin_parrainage.html", users=users)
 # ===== Dashboard admin =====
-@app.route("/admin")
-@login_required
-def admin_dashboard():
-    stats = {
-        "users": User.query.count(),
-        "depots": Depot.query.count(),
-        "retraits": Retrait.query.count(),
-        "investissements": Investissement.query.count(),
-        "staking": Staking.query.count(),
-        "commissions": Commission.query.count(),
-        "solde_total": db.session.query(db.func.sum(User.solde_total)).scalar() or 0
-    }
-    return render_template("admin/dashboard.html", stats=stats)
 
-# ===== Liste utilisateurs =====
-@app.route("/admin/users")
-@login_required
-def admin_users():
-    users = User.query.order_by(User.date_creation.desc()).all()
-    return render_template("admin/users.html", users=users)
-
-# ===== Crédit / débit utilisateur =====
-@app.route("/admin/user/<int:user_id>/balance", methods=["POST"])
-@login_required
-def admin_balance(user_id):
-    user = User.query.get_or_404(user_id)
-    action = request.form.get("action")   # credit | debit
-    try:
-        montant = float(request.form.get("montant", 0))
-    except ValueError:
-        flash("Montant invalide", "danger")
-        return redirect(request.referrer)
-
-    if montant <= 0:
-        flash("Montant invalide", "danger")
-        return redirect(request.referrer)
-
-    if action == "credit":
-        user.solde_total += montant
-    elif action == "debit":
-        if user.solde_total < montant:
-            flash("Solde insuffisant", "danger")
-            return redirect(request.referrer)
-        user.solde_total -= montant
-
-    db.session.commit()
-    flash("Opération réussie ✅", "success")
-    return redirect(request.referrer)
-
-# ===== Activer / désactiver bannissement =====
-@app.route("/admin/user/<int:user_id>/toggle-ban")
-@login_required
-def toggle_ban(user_id):
-    user = User.query.get_or_404(user_id)
-    user.is_banned = not getattr(user, "is_banned", False)
-    db.session.commit()
-    flash(
-        "Compte suspendu ⛔" if user.is_banned else "Compte réactivé ✅",
-        "warning" if user.is_banned else "success"
-    )
-    return redirect(request.referrer)
-
-# ===== Quick invest =====
-@app.route("/admin/user/<int:user_id>/quick-invest", methods=["POST"])
-@login_required
-def quick_invest(user_id):
-    user = User.query.get_or_404(user_id)
-    try:
-        montant = float(request.form.get("montant"))
-        duree = int(request.form.get("duree"))
-        revenu_journalier = float(request.form.get("revenu_journalier"))
-    except (ValueError, TypeError):
-        flash("Valeurs invalides", "danger")
-        return redirect(request.referrer)
-
-    inv = Investissement(
-        phone=user.phone,
-        montant=montant,
-        revenu_journalier=revenu_journalier,
-        duree=duree
-    )
-    db.session.add(inv)
-    db.session.commit()
-    flash("Investissement activé ✅", "success")
-    return redirect(request.referrer)
-
-# ===== Vérification des utilisateurs bannis à chaque connexion =====
-@app.before_request
-def check_banned_user():
-    if "phone" in session:
-        user = User.query.filter_by(phone=session["phone"]).first()
-        if user and getattr(user, "is_banned", False):
-            flash("⛔ Votre compte est suspendu", "danger")
-            session.pop("phone", None)
-            return redirect(url_for("connexion_page"))
+@app.route("/admin/finance", methods=["GET", "POST"])
+def admin_finance():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        # Vérifie l'utilisateur admin
+        user = User.query.filter_by(username=username, is_admin=True).first()
+        if user and check_password_hash(user.password, password):
+            session["admin_id"] = user.id
+            return redirect(url_for("admin_deposits"))
+        else:
+            flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
+            return redirect(url_for("admin_finance"))
+    return render_template("admin_finance.html")
 
 # ===== Helpers =====
 def get_logged_in_user_phone():
