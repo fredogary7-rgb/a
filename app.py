@@ -24,6 +24,7 @@ UPLOAD_FOLDER_PROFILE = 'static/uploads/profiles'
 UPLOAD_FOLDER_VLOGS = 'static/vlogs'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+
 # Initialisation
 os.makedirs(UPLOAD_FOLDER_PROFILE, exist_ok=True)
 
@@ -79,7 +80,10 @@ def add_reference_column():
     print("✅ Colonne 'reference' ajoutée si elle n'existait pas.")
 
 
-class User(db.Model):
+from flask_login import UserMixin
+
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(50), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
@@ -365,7 +369,6 @@ def init_db():
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
     ref_code = request.args.get("ref", "").strip().lower()
-
     session.pop('username_exists', None)
 
     if request.method == "POST":
@@ -377,6 +380,7 @@ def inscription_page():
         confirm = request.form.get("confirm_password", "").strip()
         parrain_code = (request.form.get("parrain", "") or ref_code).strip().lower()
 
+        # 🔒 Vérifications
         if not all([username, email, country, phone, password, confirm]):
             flash("Tous les champs sont obligatoires.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
@@ -402,6 +406,7 @@ def inscription_page():
             flash("Ce numéro est déjà enregistré.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
+        # 🔗 Parrainage
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
@@ -428,11 +433,11 @@ def inscription_page():
             db.session.add(new_user)
             db.session.commit()
 
-            # ✅ CONNECTER AUTOMATIQUEMENT APRÈS INSCRIPTION
-            login_user(new_user)
+            # ✅ CONNEXION VIA SESSION (ancienne logique)
+            session["user_id"] = new_user.id
 
             flash("Inscription réussie !", "success")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("dashboard_bloque"))
 
         except Exception as e:
             db.session.rollback()
@@ -440,7 +445,6 @@ def inscription_page():
             return render_template("inscription.html", code_ref=ref_code)
 
     return render_template("inscription.html", code_ref=ref_code)
-
 
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():
@@ -547,17 +551,19 @@ def whatsapp_channel():
 
 @app.route("/dashboard")
 def dashboard_page():
+    # Récupération de l'utilisateur connecté via session
     user_id = session.get("user_id")
     if not user_id:
         flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
         return redirect(url_for("connexion_page"))
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         session.clear()
         flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
 
+    # Génération du lien de parrainage
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
@@ -568,19 +574,21 @@ def dashboard_page():
     # 🔹 Stats globales
     total_users, total_deposits, total_withdrawn = get_global_stats()
 
+    # Revenu cumulé de l'utilisateur
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
     stats = {
         "commissions_total": float(user.solde_revenu or 0)
     }
 
+    # 🔹 Rendu du template
     return render_template(
         "dashboard.html",
         user=user,
         points=user.points or 0,
         revenu_cumule=revenu_cumule,
-        solde_parrainage=user.solde_parrainage or 0,   # <- ajouté ici
-        solde_revenu=user.solde_revenu or 0,           # <- ajouté aussi si tu veux l’afficher
+        solde_parrainage=user.solde_parrainage or 0,
+        solde_revenu=user.solde_revenu or 0,
         total_users=total_users,
         total_withdrawn_user=user.total_retrait or 0,
         total_deposits=total_deposits,
@@ -588,6 +596,8 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
+
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
