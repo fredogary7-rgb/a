@@ -496,8 +496,6 @@ def get_global_stats():
     return total_users, total_deposits, total_withdrawn
 
 
-CLE_PUBLIQUE = "pk_live_70778994-74de-46ad-9752-f7d5244988a5"
-WEBHOOK_SECRET = "cs_dc98f66eff084ed1993f51650ebbd8e4"
 
 # --------------------------------------
 # 1️⃣ Page dashboard_bloque (initiation paiement)
@@ -540,7 +538,7 @@ def dashboard_bloque():
         flash("Votre dépôt a été créé avec succès et est en attente de validation.", "success")
 
         # 🔹 Redirection vers le lien de paiement
-        payment_link = f"https://my.moneyfusion.net/6970f71c284fe9ccf037f8ce"
+        payment_link = f"https://my.moneyfusion.net/6973e49933c6f213cd9c8208"
         return redirect(payment_link)
 
     return render_template("dashboard_bloque.html", user=user)
@@ -1225,16 +1223,26 @@ def admin_deposits():
 
     page = request.args.get("page", 1, type=int)
 
-    # ===== Utilisateurs =====
+    # ===== Utilisateurs paginés =====
     users_query = User.query.order_by(User.date_creation.desc())
     users_paginated = users_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
 
     users_data = []
     for u in users_paginated.items:
-        downlines1 = list(u.downlines)
+        downlines1 = u.downlines.all() if hasattr(u.downlines, "all") else list(u.downlines)
+
         niveau1 = len(downlines1)
-        niveau2 = sum(len(list(child.downlines)) for child in downlines1)
-        niveau3 = sum(sum(len(list(c.downlines)) for c in child.downlines) for child in downlines1)
+        niveau2 = sum(
+            (child.downlines.count() if hasattr(child.downlines, "count") else len(child.downlines))
+            for child in downlines1
+        )
+        niveau3 = sum(
+            sum(
+                (c.downlines.count() if hasattr(c.downlines, "count") else len(c.downlines))
+                for c in (child.downlines.all() if hasattr(child.downlines, "all") else list(child.downlines))
+            )
+            for child in downlines1
+        )
 
         users_data.append({
             "username": u.username,
@@ -1245,20 +1253,24 @@ def admin_deposits():
             "niveau2": niveau2,
             "niveau3": niveau3,
             "date_creation": u.date_creation,
-            "premier_depot": u.premier_depot
+            "premier_depot": bool(u.premier_depot)
         })
 
+    # ✅ Actifs/inactifs SUR LA PAGE (si tu veux juste la page)
     actifs = [u for u in users_data if u["premier_depot"]]
     inactifs = [u for u in users_data if not u["premier_depot"]]
+
+    # ✅ Stats globales (comme avant)
+    total_actifs = User.query.filter(User.premier_depot == True).count()
+    total_inactifs = User.query.filter(User.premier_depot == False).count()
 
     # ===== Dépôts =====
     depots_query = Depot.query.order_by(Depot.date.desc())
     depots_paginated = depots_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     depots = depots_paginated.items
 
-    # Attribut temporaire pour affichage dans le template
     for d in depots:
-        d.username_display = getattr(d.user, "username", d.phone) if getattr(d, "user", None) else d.phone
+        d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
     # ===== Retraits =====
     retraits_query = Retrait.query.order_by(Retrait.date.desc())
@@ -1266,7 +1278,7 @@ def admin_deposits():
     retraits = retraits_paginated.items
 
     for r in retraits:
-        r.username_display = getattr(r.phone_user, "username", r.phone) if getattr(r, "phone_user", None) else r.phone
+        r.username_display = getattr(getattr(r, "phone_user", None), "username", None) or r.phone
 
     return render_template(
         "admin_deposits.html",
@@ -1276,13 +1288,12 @@ def admin_deposits():
         retraits=retraits,
         actifs=actifs,
         inactifs=inactifs,
-        total_actifs=len(actifs),
-        total_inactifs=len(inactifs),
+        total_actifs=total_actifs,
+        total_inactifs=total_inactifs,
         users_paginated=users_paginated,
         depots_paginated=depots_paginated,
         retraits_paginated=retraits_paginated
     )
-
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 @login_required
