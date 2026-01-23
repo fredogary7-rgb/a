@@ -365,7 +365,6 @@ def init_db():
 def inscription_page():
     ref_code = request.args.get("ref", "").strip().lower()
 
-    # Supprimer le flag session au début
     session.pop('username_exists', None)
 
     if request.method == "POST":
@@ -377,38 +376,31 @@ def inscription_page():
         confirm = request.form.get("confirm_password", "").strip()
         parrain_code = (request.form.get("parrain", "") or ref_code).strip().lower()
 
-        # 1️⃣ champs obligatoires
         if not all([username, email, country, phone, password, confirm]):
             flash("Tous les champs sont obligatoires.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 2️⃣ format username
         if not re.fullmatch(r"[a-z0-9]+", username):
             flash("Nom d'utilisateur invalide : lettres & chiffres uniquement.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 3️⃣ mots de passe identiques
         if password != confirm:
             flash("Les mots de passe ne correspondent pas.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 4️⃣ username unique
         if User.query.filter_by(username=username).first():
             flash(f"Nom d'utilisateur '{username}' existe déjà, veuillez ajouter 3 chiffres.", "danger")
             session['username_exists'] = True
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 5️⃣ email unique
         if User.query.filter_by(email=email).first():
             flash("Cet email est déjà utilisé.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 6️⃣ numéro unique
         if User.query.filter_by(phone=phone).first():
             flash("Ce numéro est déjà enregistré.", "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        # 7️⃣ parrain
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
@@ -416,7 +408,6 @@ def inscription_page():
                 flash("Code parrain invalide.", "danger")
                 return render_template("inscription.html", code_ref=ref_code)
 
-        # 8️⃣ création
         try:
             new_user = User(
                 uid=str(uuid.uuid4()),
@@ -432,17 +423,23 @@ def inscription_page():
                 solde_parrainage=0,
                 date_creation=datetime.now(timezone.utc)
             )
+
             db.session.add(new_user)
             db.session.commit()
+
+            # ✅ CONNECTER AUTOMATIQUEMENT APRÈS INSCRIPTION
+            login_user(new_user)
+
+            flash("Inscription réussie !", "success")
+            return redirect(url_for("dashboard"))
+
         except Exception as e:
             db.session.rollback()
             flash("Erreur lors de l’inscription : " + str(e), "danger")
             return render_template("inscription.html", code_ref=ref_code)
 
-        flash("Inscription réussie !.", "success")
-        return redirect(url_for("dashboard_bloque"))
-
     return render_template("inscription.html", code_ref=ref_code)
+
 
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():

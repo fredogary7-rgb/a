@@ -150,6 +150,59 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     font-weight: 700;
     margin-top: 8px;
 }
+
+/* --- AJOUT WhatsApp Select --- */
+.phone-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.country-select {
+    width: 45%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    background: #fff;
+}
+
+.phone-input {
+    width: 55%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    background: #fff;
+}
+
+/* Profit Bleu */
+.blue-profit {
+    background: linear-gradient(to right, #0d47a1, #1976d2);
+}
+
+
+.stat-container {
+    display: flex;
+    gap: 10px;              /* espace horizontal uniquement */
+    flex-wrap: nowrap;      /* 🔴 empêche le retour à la ligne */
+}
+
+/* Texte plus petit */
+.stat-title {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.stat-amount {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Profit en bleu */
+.blue-profit {
+    background: linear-gradient(to right, #0d47a1, #1976d2);
+}
 </style>
 </head>
 <body>
@@ -222,31 +275,69 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 
     <!-- STAT BOXES CONTAINER -->
     <div class="stat-container" style="display:flex; flex-wrap:wrap; gap:15px;">
-        <!-- Dépenses / Profit -->
-        <div class="stat-box red-box" style="flex:1 1 300px;">
-            <div>
-                <div class="stat-title">Dépenses</div>
-                <div class="stat-amount">XOF {{ user.solde_depot }}</div>
-            </div>
-            <div>
-                <div class="stat-title">Profit</div>
-                <div class="stat-amount">XOF {{ user.solde_revenu }}</div>
-            </div>
+
+<div class="stat-container">
+
+    <!-- Dépenses -->
+    <div class="stat-box red-box" style="flex:1;">
+        <div class="stat-title">Dépenses</div>
+        <div class="stat-amount">XOF {{ user.solde_depot }}</div>
+    </div>
+
+    <!-- Profit -->
+    <div class="stat-box blue-profit" style="flex:1;">
+        <div class="stat-title">Profit</div>
+        <div class="stat-amount">XOF {{ user.solde_revenu }}</div>
+    </div>
+
+</div>
+
+{% if not user.whatsapp_number %}
+<div class="whatsapp-box" style="flex:1 1 300px;">
+    <div class="whatsapp-header">
+        <strong>Ajoutez votre WhatsApp</strong>
+    </div>
+
+    <p class="whatsapp-text">
+        Sélectionnez votre pays puis entrez votre numéro WhatsApp.
+    </p>
+
+    <form method="POST" action="/whatsapp-number" onsubmit="prepareWhatsappNumber()">
+
+        <div class="phone-group">
+            <select id="countryCode" class="country-select" required>
+                <option value="+228">🇹🇬 Togo (+228)</option>
+                <option value="+229">🇧🇯 Bénin (+229)</option>
+                <option value="+237">🇨🇲 Cameroun (+237)</option>
+                <option value="+242">🇨🇬 Congo Brazzaville (+242)</option>
+                <option value="+225">🇨🇮 Côte d’Ivoire (+225)</option>
+                <option value="+226">🇧🇫 Burkina Faso (+226)</option>
+                <option value="+223">🇲🇱 Mali (+223)</option>
+                <option value="+221">🇸🇳 Sénégal (+221)</option>
+                <option value="+243">🇨🇩 Congo Kinshasa (+243)</option>
+                <option value="+227">🇳🇪 Niger (+227)</option>
+                <option value="+241">🇬🇦 Gabon (+241)</option>
+            </select>
+
+            <input
+                type="tel"
+                id="phoneNumber"
+                class="phone-input"
+                placeholder="Numéro WhatsApp"
+                required
+            >
         </div>
 
-        <!-- WhatsApp Box -->
-        {% if not user.whatsapp_number %}
-        <div class="whatsapp-box" style="flex:1 1 300px;">
-            <div class="whatsapp-header">
-                <strong>Ajoutez votre WhatsApp</strong>
-            </div>
-            <p class="whatsapp-text">Veuillez entrer votre numéro WhatsApp avec l’indicatif du pays.</p>
-            <form method="POST" action="/whatsapp-number">
-                <input type="text" name="number" class="whatsapp-input" placeholder="+228XXXXXXXX" required>
-                <button type="submit" class="whatsapp-btn">Enregistrer</button>
-            </form>
-        </div>
-        {% endif %}
+        <!-- Champ réel envoyé au backend -->
+        <input type="hidden" name="number" id="fullWhatsapp">
+
+        <button type="submit" class="whatsapp-btn">
+            Enregistrer
+        </button>
+    </form>
+</div>
+{% endif %}
+
 
         <!-- Commissions Totales -->
         <div class="stat-card orange-box" style="flex:1 1 300px;">
@@ -439,5 +530,12 @@ moiToggle.onclick = () => {
         moiToggle.querySelector(".fa-chevron-down").classList.remove("rotate");
     }
 };
-</script>  </body>
+
+function prepareWhatsappNumber() {
+    const code = document.getElementById("countryCode").value;
+    const phone = document.getElementById("phoneNumber").value.replace(/\s+/g, '');
+    document.getElementById("fullWhatsapp").value = code + phone;
+}
+</script>  
+</body>
 </html>

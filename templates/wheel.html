@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
+<html lang="fr">                                                                          <head>                                                                                    <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roue de la Fortune</title>
 
@@ -11,9 +9,7 @@
 body{
     background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
     min-height:100vh;
-    font-family:'Poppins',sans-serif;
-    color:#fff;
-    text-align:center;
+    font-family:'Poppins',sans-serif;                                                         color:#fff;                                                                               text-align:center;
     padding:20px;
 }
 
@@ -27,8 +23,7 @@ body{
 }
 
 .pointer{
-    width:0;
-    height:0;
+    width:0;                                                                                  height:0;
     border-left:18px solid transparent;
     border-right:18px solid transparent;
     border-bottom:32px solid black;
@@ -74,8 +69,7 @@ body{
     position:absolute;
     width:110px;
     height:110px;
-    border-radius:50%;
-    background:#ffcc00;
+    border-radius:50%;                                                                        background:#ffcc00;
     border:6px solid black;
     top:50%;
     left:50%;
@@ -157,8 +151,7 @@ btn.addEventListener("click",()=>{
     fetch("/wheel/spin",{method:"POST"})
     .then(res=>res.json())
     .then(data=>{
-        if(data.status==="error"){
-            alert(data.message);
+        if(data.status==="error"){                                                                    alert(data.message);
             return;
         }
 
