@@ -191,131 +191,164 @@ h3{
     <input type="text" id="userSearch" placeholder="Rechercher un utilisateur (username, email, téléphone, parrain)...">
 </div>
 
-    <!-- ===== USERS ===== -->
-    <div id="usersTab" class="tab-content active">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nom d'utilisateur</th>
-                        <th>Email</th>
-                        <th>Téléphone</th>
-                        <th>Parrain</th>
-                        <th>Niveau 1</th>
-                        <th>Niveau 2</th>
-                        <th>Niveau 3</th>
-                        <th>Premier dépôt</th>
-                        <th>Date d'inscription</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for u in users %}
-                    <tr>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.email }}</td>
-                        <td>{{ u.phone }}</td>
-                        <td>{{ u.parrain }}</td>
-                        <td><span class="badge level1">{{ u.niveau1 }}</span></td>
-                        <td><span class="badge level2">{{ u.niveau2 }}</span></td>
-                        <td><span class="badge level3">{{ u.niveau3 }}</span></td>
-                        <td>
-                            {% if u.premier_depot %}
-                                <span class="badge level3">Actif</span>
-                            {% else %}
-                                <span class="badge level1">Inactif</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<!-- ===== USERS ===== -->
+<div id="usersTab" class="tab-content active">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Parrain</th>
+                    <th>Niveau 1</th>
+                    <th>Niveau 2</th>
+                    <th>Niveau 3</th>
+                    <th>Premier dépôt</th>
+                    <th>Date d'inscription</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone }}</td>
+                    <td>{{ u.parrain }}</td>
+                    <td><span class="badge level1">{{ u.niveau1 }}</span></td>
+                    <td><span class="badge level2">{{ u.niveau2 }}</span></td>
+                    <td><span class="badge level3">{{ u.niveau3 }}</span></td>
+                    <td>
+                        {% if u.premier_depot %}
+                            <span class="badge level3">Actif</span>
+                        {% else %}
+                            <span class="badge level1">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <!-- ===== DEPOTS ===== -->
-    <div id="depotsTab" class="tab-content">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Utilisateur</th>
-                        <th>Email</th>
-                        <th>Nom</th>
-                        <th>Opérateur</th>
-                        <th>Pays</th>
-                        <th>Montant</th>
-                        <th>Statut</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in depots %}
-                    <tr>
-                        <td>{{ d.id }}</td>
-                        <td>{{ d.phone }}</td>
-                        <td>{{ d.email or '-' }}</td>
-                        <td>{{ d.user_name }}</td>
-                        <td>{{ d.operator }}</td>
-                        <td>{{ d.country }}</td>
-                        <td>{{ d.montant }}</td>
-                        <td class="status-{{ d.statut }}">{{ d.statut }}</td>
-                        <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td>
-                            {% if d.statut == 'pending' %}
-                                <a href="{{ url_for('valider_depot', depot_id=d.id) }}"><button class="valider">Valider</button></a>
-                                <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}"><button class="refuser">Rejeter</button></a>
-                            {% else %}-{% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Pagination utilisateurs -->
+        <div class="pagination">
+            {% if users_paginated.has_prev %}
+                <a href="{{ url_for('admin_deposits', page=users_paginated.prev_num) }}">« Précédent</a>
+            {% endif %}
+            Page {{ users_paginated.page }} sur {{ users_paginated.pages }}
+            {% if users_paginated.has_next %}
+                <a href="{{ url_for('admin_deposits', page=users_paginated.next_num) }}">Suivant »</a>
+            {% endif %}
         </div>
     </div>
+</div>
 
-    <!-- ===== RETRAITS ===== -->
-    <div id="retraitsTab" class="tab-content">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Utilisateur</th>
-                        <th>Montant</th>
-                        <th>Frais</th>
-                        <th>Moyen</th>
-                        <th>Numéro</th>
-                        <th>Pays</th>
-                        <th>Date</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in retraits %}
-                    <tr>
-                        <td>{{ r.id }}</td>
-                        <td>{{ r.phone_user.username if r.phone_user else r.phone }}</td>
-                        <td>{{ r.montant }} XOF</td>
-                        <td>{{ r.frais }} XOF</td>
-                        <td>{{ r.payment_method }}</td>
-                        <td>{{ r.phone }}</td>
-                        <td>{{ r.pays }}</td>
-                        <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
-                        <td>{{ r.statut }}</td>
-                        <td>
-                            <a href="/admin/retraits/valider/{{ r.id }}"><button class="valider">Valider</button></a>
-                            <a href="/admin/retraits/refuser/{{ r.id }}"><button class="refuser">Refuser</button></a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- ===== DEPOTS ===== -->
+<div id="depotsTab" class="tab-content">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Utilisateur</th>
+                    <th>Email</th>
+                    <th>Nom</th>
+                    <th>Opérateur</th>
+                    <th>Pays</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in depots %}
+                <tr>
+                    <td>{{ d.id }}</td>
+                    <td>{{ d.user_name }}</td>
+                    <td>{{ d.email or '-' }}</td>
+                    <td>{{ d.user_name or '-' }}</td>
+                    <td>{{ d.operator or '-' }}</td>
+                    <td>{{ d.country or '-' }}</td>
+                    <td>{{ d.montant }}</td>
+                    <td class="status-{{ d.statut }}">{{ d.statut }}</td>
+                    <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        {% if d.statut == 'pending' %}
+                            <a href="{{ url_for('valider_depot', depot_id=d.id) }}"><button class="valider">Valider</button></a>
+                            <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}"><button class="refuser">Rejeter</button></a>
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination dépôts -->
+        <div class="pagination">
+            {% if depots_paginated.has_prev %}
+                <a href="{{ url_for('admin_deposits', page=depots_paginated.prev_num) }}">« Précédent</a>
+            {% endif %}
+            Page {{ depots_paginated.page }} sur {{ depots_paginated.pages }}
+            {% if depots_paginated.has_next %}
+                <a href="{{ url_for('admin_deposits', page=depots_paginated.next_num) }}">Suivant »</a>
+            {% endif %}
         </div>
     </div>
+</div>
+
+<!-- ===== RETRAITS ===== -->
+<div id="retraitsTab" class="tab-content">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Utilisateur</th>
+                    <th>Montant</th>
+                    <th>Frais</th>
+                    <th>Moyen</th>
+                    <th>Numéro</th>
+                    <th>Pays</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in retraits %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.username }}</td>
+                    <td>{{ r.montant }} XOF</td>
+                    <td>{{ r.frais }} XOF</td>
+                    <td>{{ r.payment_method }}</td>
+                    <td>{{ r.phone }}</td>
+                    <td>{{ r.pays }}</td>
+                    <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
+                    <td>{{ r.statut }}</td>
+                    <td>
+                        <a href="/admin/retraits/valider/{{ r.id }}"><button class="valider">Valider</button></a>
+                        <a href="/admin/retraits/refuser/{{ r.id }}"><button class="refuser">Refuser</button></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination retraits -->
+        <div class="pagination">
+            {% if retraits_paginated.has_prev %}
+                <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Précédent</a>
+            {% endif %}
+            Page {{ retraits_paginated.page }} sur {{ retraits_paginated.pages }}
+            {% if retraits_paginated.has_next %}
+                <a href="{{ url_for('admin_deposits', page=retraits_paginated.next_num) }}">Suivant »</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
     <!-- ===== ACTIFS / INACTIFS ===== -->
     <div id="actifsTab" class="tab-content">

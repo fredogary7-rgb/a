@@ -1212,24 +1212,29 @@ def get_logged_in_admin():
         return User.query.filter_by(id=admin_id, is_admin=True).first()
     return None
 
-# ===== Page admin – Dépôts, retraits et utilisateurs =====
-# ===== Page admin – Dépôts, retraits et utilisateurs =====
+from flask import request, render_template, flash, redirect, url_for
+
+PER_PAGE = 50
+
 @app.route("/admin/deposits")
 def admin_deposits():
-    user = get_logged_in_admin()  # Utilise la session admin
-
+    user = get_logged_in_admin()
     if not user:
         flash("Accès refusé.", "danger")
         return redirect(url_for("admin_finance"))
 
-    # ===== Récupération des utilisateurs =====
-    all_users = User.query.order_by(User.date_creation.desc()).all()
-    users_data = []
+    page = request.args.get("page", 1, type=int)
 
-    for u in all_users:
-        niveau1 = u.downlines.count()
-        niveau2 = sum([child.downlines.count() for child in u.downlines])
-        niveau3 = sum([sum([c.downlines.count() for c in child.downlines]) for child in u.downlines])
+    # ===== Utilisateurs =====
+    users_query = User.query.order_by(User.date_creation.desc())
+    users_paginated = users_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+
+    users_data = []
+    for u in users_paginated.items:
+        downlines1 = list(u.downlines)
+        niveau1 = len(downlines1)
+        niveau2 = sum(len(list(child.downlines)) for child in downlines1)
+        niveau3 = sum(sum(len(list(c.downlines)) for c in child.downlines) for child in downlines1)
 
         users_data.append({
             "username": u.username,
@@ -1240,22 +1245,28 @@ def admin_deposits():
             "niveau2": niveau2,
             "niveau3": niveau3,
             "date_creation": u.date_creation,
-            "premier_depot": u.premier_depot  # ✅ on ajoute ça
+            "premier_depot": u.premier_depot
         })
 
-    # ===== Utilisateurs actifs/inactifs selon premier_depot =====
-    actifs = [u for u in users_data if u["premier_depot"] == True]
-    inactifs = [u for u in users_data if u["premier_depot"] == False]
+    actifs = [u for u in users_data if u["premier_depot"]]
+    inactifs = [u for u in users_data if not u["premier_depot"]]
 
-    # ===== Récupération des dépôts =====
-    depots = Depot.query.order_by(Depot.date.desc()).all()
+    # ===== Dépôts =====
+    depots_query = Depot.query.order_by(Depot.date.desc())
+    depots_paginated = depots_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    depots = depots_paginated.items
+
+    # Attribut temporaire pour affichage dans le template
     for d in depots:
-        d.username = d.user.username if hasattr(d, 'user') and d.user else d.phone
+        d.username_display = getattr(d.user, "username", d.phone) if getattr(d, "user", None) else d.phone
 
-    # ===== Récupération des retraits =====
-    retraits = Retrait.query.order_by(Retrait.date.desc()).all()
+    # ===== Retraits =====
+    retraits_query = Retrait.query.order_by(Retrait.date.desc())
+    retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    retraits = retraits_paginated.items
+
     for r in retraits:
-        r.username = r.phone_user.username if hasattr(r, 'phone_user') and r.phone_user else r.phone
+        r.username_display = getattr(r.phone_user, "username", r.phone) if getattr(r, "phone_user", None) else r.phone
 
     return render_template(
         "admin_deposits.html",
@@ -1266,7 +1277,10 @@ def admin_deposits():
         actifs=actifs,
         inactifs=inactifs,
         total_actifs=len(actifs),
-        total_inactifs=len(inactifs)
+        total_inactifs=len(inactifs),
+        users_paginated=users_paginated,
+        depots_paginated=depots_paginated,
+        retraits_paginated=retraits_paginated
     )
 
 
@@ -1560,4 +1574,5 @@ def instagram_complete():
     return jsonify({"status": "done", "message": "Vous avez déjà obtenu vos points aujourd’hui."})
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    port = int(os.environ.get("PORT", 10000))  # Render fournit le PORT
+    app.run(host="0.0.0.0", port=port, debug=False)

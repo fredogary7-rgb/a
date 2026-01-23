@@ -152,6 +152,127 @@ body {
 .copy-btn:hover {
     background: #ffb35a;
 }
+
+/* TEAM BOX */
+.team-box{
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.25);
+}
+
+.team-box h3{
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* SCROLL ZONE */
+.team-table-wrapper{
+    max-height: 260px; /* ≈ 4 lignes visibles */
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+/* TABLE */
+.team-table{
+    width: 100%;
+    min-width: 650px; /* force le scroll horizontal */
+    border-collapse: collapse;
+    color: #fff;
+}
+
+.team-table th,
+.team-table td{
+    padding: 12px 14px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.team-table thead{
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    z-index: 2;
+}
+
+.team-table tr{
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+/* STATUS */
+.status{
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status.active{
+    background: rgba(0,255,120,0.25);
+    color: #3cff9a;
+}
+
+.status.inactive{
+    background: rgba(255,0,0,0.25);
+    color: #ff7b7b;
+}
+
+/* SEARCH BAR */
+.team-search{
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.team-search input{
+    width: 100%;
+    padding: 10px 40px 10px 14px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 14px;
+}
+
+.team-search input::placeholder{
+    color: rgba(255,255,255,0.7);
+}
+
+.team-search i{
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    opacity: 0.8;
+}
+
+/* LEVEL SEPARATOR */
+.level-separator td{
+    background: rgba(255,255,255,0.18);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 14px;
+}
+
+/* TABLE WRAPPER (4 lignes visibles) */
+.team-table-wrapper{
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+/* FORCE SCROLL HORIZONTAL */
+.team-table{
+    min-width: 750px;
+}
 </style>
 </head>
 
@@ -195,6 +316,94 @@ body {
         <div class="stat-value">{{ stats.commissions_total }} XOF</div>
     </div>
 
+<!-- TEAM ALL LEVELS -->
+<div class="team-box">
+    <h3>👥 Mon équipe</h3>
+
+    <!-- SEARCH -->
+    <div class="team-search">
+        <input type="text" id="teamSearch" placeholder="Rechercher un utilisateur ou pays...">
+        <i class="fa fa-search"></i>
+    </div>
+
+    <div class="team-table-wrapper">
+        <table class="team-table" id="teamTable">
+            <thead>
+                <tr>
+                    <th>Date d'inscription</th>
+                    <th>Pays</th>
+                    <th>Utilisateur</th>
+                    <th>Niveau</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <!-- ===== NIVEAU 1 ===== -->
+                <tr class="level-separator">
+                    <td colspan="5">Niveau 1</td>
+                </tr>
+                {% for user in level1_users %}
+                <tr>
+                    <td>{{ user.date_creation.strftime('%d %B %Y à %H:%M') }}</td>
+                    <td>{{ user.country or "—" }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>Niveau 1</td>
+                    <td>
+                        {% if user.premier_depot %}
+                            <span class="status active">Actif</span>
+                        {% else %}
+                            <span class="status inactive">Inactif</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <!-- ===== NIVEAU 2 ===== -->
+                <tr class="level-separator">
+                    <td colspan="5">Niveau 2</td>
+                </tr>
+                {% for user in level2_users %}
+                <tr>
+                    <td>{{ user.date_creation.strftime('%d %B %Y à %H:%M') }}</td>
+                    <td>{{ user.country or "—" }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>Niveau 2</td>
+                    <td>
+                        {% if user.premier_depot %}
+                            <span class="status active">Actif</span>
+                        {% else %}
+                            <span class="status inactive">Inactif</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <!-- ===== NIVEAU 3 ===== -->
+                <tr class="level-separator">
+                    <td colspan="5">Niveau 3</td>
+                </tr>
+                {% for user in level3_users %}
+                <tr>
+                    <td>{{ user.date_creation.strftime('%d %B %Y à %H:%M') }}</td>
+                    <td>{{ user.country or "—" }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>Niveau 3</td>
+                    <td>
+                        {% if user.premier_depot %}
+                            <span class="status active">Actif</span>
+                        {% else %}
+                            <span class="status inactive">Inactif</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
 
     <!-- REFERRAL LINK -->
     <div class="ref-box">
@@ -233,6 +442,21 @@ overlay.onclick = () => {
     sidebar.classList.remove("active");
     overlay.classList.remove("active");
 };
+
+const searchInput = document.getElementById("teamSearch");
+const table = document.getElementById("teamTable");
+const rows = table.querySelectorAll("tbody tr");
+
+searchInput.addEventListener("keyup", () => {
+    const value = searchInput.value.toLowerCase();
+
+    rows.forEach(row => {
+        if(row.classList.contains("level-separator")) return;
+
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(value) ? "" : "none";
+    });
+});
 </script>
 
 </body>
