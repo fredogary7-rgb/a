@@ -175,6 +175,7 @@ class Depot(db.Model):
     # 📌 Statut du dépôt
     statut = db.Column(db.String(20), default="pending")
 
+    email = db.Column(db.String(120), nullable=True)
     # ⏱ Date création
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -522,6 +523,7 @@ def dashboard_bloque():
         # Création du dépôt
         depot = Depot(
             user_name=user.username,
+            email=user.email,   # ✅ AJOUT
             phone=user.phone,
             operator=operator,
             country=user.country,
