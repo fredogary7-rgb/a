@@ -721,9 +721,14 @@ def dashboard_page():
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 🔒 Bloque si aucun paiement BKApay succès (dépôt validé)
+    # ✅ Nouvelle logique (BKApay succès)
     paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
-    if not paiement_ok:
+
+    # ✅ Ancienne logique (premier dépôt)
+    ancien_ok = (user.premier_depot is True)
+
+    # 🔒 Bloque seulement si les 2 sont faux
+    if not paiement_ok and not ancien_ok:
         return redirect(url_for("dashboard_bloque"))
 
     # 🔹 Stats globales
@@ -745,7 +750,6 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
-
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
