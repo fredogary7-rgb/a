@@ -497,7 +497,17 @@ def get_global_stats():
     total_withdrawn = db.session.query(func.sum(User.total_retrait)).scalar() or 0  # ← On utilise maintenant total_retrait
     return total_users, total_deposits, total_withdrawn
 
+@app.route("/test/webhook/<username>")
+def test_webhook(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return "Utilisateur non trouvé", 404
 
+    user.premier_depot = True
+    user.solde_depot += 3800
+    user.solde_total += 3800
+    db.session.commit()
+    return f"{username} activé avec succès !"
 
 # --------------------------------------
 # 1️⃣ Page dashboard_bloque (initiation paiement)
@@ -1348,8 +1358,8 @@ def admin_deposits():
 
     page = request.args.get("page", 1, type=int)
 
-    # ===== Utilisateurs paginés =====
-    users_query = User.query.order_by(User.date_creation.desc())
+    # ===== UTILISATEURS =====
+    users_query = User.query.order_by(User.username.asc(), User.date_creation.desc())
     users_paginated = users_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
 
     users_data = []
@@ -1381,15 +1391,13 @@ def admin_deposits():
             "premier_depot": bool(u.premier_depot)
         })
 
-    # ✅ Actifs/inactifs SUR LA PAGE (users affichés seulement)
     actifs = [u for u in users_data if u["premier_depot"]]
     inactifs = [u for u in users_data if not u["premier_depot"]]
 
-    # ✅ Stats globales
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== DEPOTS : uniquement utilisateurs inactifs =====
+    # ===== DEPOTS =====
     subquery = (
         db.session.query(func.max(Depot.id).label("last_id"))
         .join(User, Depot.user_name == User.username)
@@ -1401,15 +1409,21 @@ def admin_deposits():
     depots = (
         Depot.query
         .filter(Depot.id.in_(subquery))
-        .order_by(Depot.date.desc())
+        .join(User, Depot.user_name == User.username)
+        .order_by(User.username.asc(), Depot.date.desc())
         .all()
     )
 
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
-    # ===== Retraits =====
-    retraits_query = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc())
+    # ===== RETRAITS =====
+    retraits_query = (
+        Retrait.query
+        .filter(Retrait.statut == "en_attente")
+        .join(User, Retrait.phone == User.phone)  # adapter selon la relation
+        .order_by(User.username.asc(), Retrait.date.desc())
+    )
     retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     retraits = retraits_paginated.items
 
