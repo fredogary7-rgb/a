@@ -561,7 +561,6 @@ def dashboard_bloque():
 import hmac
 import hashlib
 from flask import request, jsonify
-from app import db, Depot, User  # Ajuste si nécessaire
 
 ACTIVATION_AMOUNT = 3800
 
@@ -718,6 +717,7 @@ def paiement_en_cours():
     if paiement_ok:
         return redirect(url_for("dashboard_page"))
     return render_template("paiement_en_cours.html", user=user)
+
 
 @app.route("/chaine")
 def whatsapp_channel():
