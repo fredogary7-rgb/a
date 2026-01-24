@@ -497,17 +497,6 @@ def get_global_stats():
     total_withdrawn = db.session.query(func.sum(User.total_retrait)).scalar() or 0  # ← On utilise maintenant total_retrait
     return total_users, total_deposits, total_withdrawn
 
-@app.route("/test/webhook/<username>")
-def test_webhook(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return "Utilisateur non trouvé", 404
-
-    user.premier_depot = True
-    user.solde_depot += 3800
-    user.solde_total += 3800
-    db.session.commit()
-    return f"{username} activé avec succès !"
 
 # --------------------------------------
 # 1️⃣ Page dashboard_bloque (initiation paiement)
@@ -1311,6 +1300,7 @@ from flask import request, render_template, flash, redirect, url_for
 
 PER_PAGE = 50
 
+
 from sqlalchemy import func
 
 @app.route("/admin/deposits")
@@ -1322,35 +1312,23 @@ def admin_deposits():
 
     page = request.args.get("page", 1, type=int)
 
-    # ===== UTILISATEURS =====
-    users_query = User.query.order_by(User.username.asc(), User.date_creation.desc())
+    # ==========================
+    # ===== UTILISATEURS (LIGHT)
+    # ==========================
+    users_query = User.query.order_by(User.date_creation.desc())
     users_paginated = users_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
 
     users_data = []
     for u in users_paginated.items:
-        downlines1 = u.downlines.all() if hasattr(u.downlines, "all") else list(u.downlines)
-
-        niveau1 = len(downlines1)
-        niveau2 = sum(
-            (child.downlines.count() if hasattr(child.downlines, "count") else len(child.downlines))
-            for child in downlines1
-        )
-        niveau3 = sum(
-            sum(
-                (c.downlines.count() if hasattr(c.downlines, "count") else len(c.downlines))
-                for c in (child.downlines.all() if hasattr(child.downlines, "all") else list(child.downlines))
-            )
-            for child in downlines1
-        )
-
+        # ✅ IMPORTANT : on enlève les calculs downlines (trop lourds)
         users_data.append({
             "username": u.username,
             "email": u.email,
             "phone": u.phone,
             "parrain": u.parrain if u.parrain else "—",
-            "niveau1": niveau1,
-            "niveau2": niveau2,
-            "niveau3": niveau3,
+            "niveau1": "-",   # ou 0
+            "niveau2": "-",   # ou 0
+            "niveau3": "-",   # ou 0
             "date_creation": u.date_creation,
             "premier_depot": bool(u.premier_depot)
         })
@@ -1361,7 +1339,9 @@ def admin_deposits():
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== DEPOTS =====
+    # ==========================
+    # ===== DEPOTS (INCHANGÉ)
+    # ==========================
     subquery = (
         db.session.query(func.max(Depot.id).label("last_id"))
         .join(User, Depot.user_name == User.username)
@@ -1372,7 +1352,7 @@ def admin_deposits():
 
     depots = (
         Depot.query
-        .filter(Depot.id.in_(subquery))
+        .filter(Depot.id.in_(db.session.query(subquery.c.last_id)))  # ✅ FIX SQLAlchemy
         .join(User, Depot.user_name == User.username)
         .order_by(User.username.asc(), Depot.date.desc())
         .all()
@@ -1381,7 +1361,9 @@ def admin_deposits():
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
-    # ===== RETRAITS =====
+    # ==========================
+    # ===== RETRAITS (INCHANGÉ)
+    # ==========================
     retraits_query = (
         Retrait.query
         .filter(Retrait.statut == "en_attente")
@@ -1407,6 +1389,7 @@ def admin_deposits():
         users_paginated=users_paginated,
         retraits_paginated=retraits_paginated
     )
+
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 @login_required

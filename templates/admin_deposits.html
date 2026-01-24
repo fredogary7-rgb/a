@@ -291,10 +291,9 @@ h3{
 </div>
 
 <!-- ===== DEPOTS ===== -->
-<table id="depotsTabTable">
 <div id="depotsTab" class="tab-content">
     <div class="table-container">
-        <table>
+        <table id="depotsTabTable">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -321,7 +320,6 @@ h3{
                     <td>{{ d.montant }}</td>
                     <td class="status-{{ d.statut }}">{{ d.statut }}</td>
                     <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
-
                     <td>
                         {% if d.statut == 'pending' %}
                             <div class="action-buttons">
@@ -350,10 +348,9 @@ h3{
 </div>
 
 <!-- ===== RETRAITS ===== -->
-<table id="retraitsTabTable">
 <div id="retraitsTab" class="tab-content">
     <div class="table-container">
-        <table>
+        <table id="retraitsTabTable">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -380,13 +377,11 @@ h3{
                     <td>{{ r.pays }}</td>
                     <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
                     <td>{{ r.statut }}</td>
-
                     <td>
                         <div class="action-buttons">
                             <a href="/admin/retraits/refuser/{{ r.id }}">
                                 <button class="refuser">Refuser</button>
                             </a>
-
                             <a href="/admin/retraits/valider/{{ r.id }}">
                                 <button class="valider">Valider</button>
                             </a>
