@@ -366,21 +366,6 @@ def init_db():
     db.create_all()
     print("✅ Base de données initialisée avec succès !")
 
-from flask import request, redirect, render_template
-from datetime import datetime
-
-# Date de lancement (24 Janvier 2026 à 12h00 GMT)
-LAUNCH_DATE = datetime(2026, 1, 24, 12, 0, 0)
-
-@app.before_request
-def site_coming_soon():
-    # Exclure certaines routes (admin, static, etc.)
-    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/about"):
-        return
-
-    # Si date actuelle < date de lancement, afficher page "Coming Soon"
-    if datetime.today() < LAUNCH_DATE:
-        return render_template("coming_soon.html")
 
 
 @app.route("/inscription", methods=["GET", "POST"])
