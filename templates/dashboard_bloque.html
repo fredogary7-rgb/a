@@ -3,168 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compte en attente - LuminaStar</title>
+<title>Compte Inactif - LuminaStar</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-body{
-    background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
-    min-height:100vh;
-    color:#fff;
-    overflow-x:hidden;
-}
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px;
-    background:rgba(255,255,255,0.15);
-    backdrop-filter:blur(15px);
-    border-bottom:1px solid rgba(255,255,255,0.25);
-    position:sticky;
-    top:0;
-    z-index:1000;
-}
-.topbar .menu-toggle{font-size:24px;cursor:pointer;color:#fff;}
-.topbar .user{font-weight:600;font-size:16px;}
-
-.sidebar{
-    position:fixed;
-    left:-260px;
-    top:0;
-    height:100%;
-    width:260px;
-    background:rgba(255,255,255,0.20);
-    backdrop-filter:blur(12px);
-    transition:.4s;
-    padding-top:80px;
-    z-index:999;
-    border-right:1px solid rgba(255,255,255,0.25);
-}
-.sidebar.active{left:0;}
-.sidebar a{
-    display:block;
-    padding:14px 25px;
-    font-size:15px;
-    color:#fff;
-    text-decoration:none;
-    transition:.3s;
-}
-.sidebar a i{margin-right:12px;}
-.sidebar a:hover{background:rgba(255,255,255,0.25);}
-
-.overlay{
-    position:fixed;
-    top:0;
-    left:0;
-    height:100%;
-    width:100%;
-    background:rgba(0,0,0,0.45);
-    opacity:0;
-    visibility:hidden;
-    transition:.3s;
-    z-index:998;
-}
-.overlay.active{opacity:1;visibility:visible;}
-
-.main{padding:20px;}
-
-.block{
-    background:rgba(255,255,255,0.25);
-    border-radius:20px;
-    padding:22px;
-    margin-bottom:20px;
-    backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.35);
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-
-.block h2{
-    font-size:20px;
-    font-weight:700;
-    margin-bottom:12px;
-}
-
-.alert{
-    background:rgba(255,255,255,0.22);
-    border:1px solid rgba(255,255,255,0.35);
-    border-radius:16px;
-    padding:18px;
-    margin-top:10px;
-}
-
-.alert .title{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-weight:700;
-    font-size:16px;
-    margin-bottom:8px;
-}
-
-.alert p{
-    font-size:14px;
-    line-height:1.6;
-    opacity:0.95;
-}
-
-.info-item{
-    margin-top:10px;
-    font-size:14px;
-}
-.info-item span{font-weight:700;}
-
-.big-phone{
-    margin-top:12px;
-    font-size:26px;
-    font-weight:800;
-    letter-spacing:0.5px;
-}
-
-.actions{
-    display:flex;
-    gap:10px;
-    margin-top:15px;
-    flex-wrap:wrap;
-}
-
-.btn{
-    flex:1;
-    min-width:140px;
-    border:none;
-    border-radius:14px;
-    padding:14px 16px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.25s;
-    color:#fff;
-}
-
-.btn-refresh{
-    background:#2575fc;
-}
-.btn-refresh:hover{
-    transform:translateY(-1px);
-    background:#1f63d8;
-}
-
-.btn-logout{
-    background:#dc3545;
-}
-.btn-logout:hover{
-    transform:translateY(-1px);
-    background:#b92c3a;
-}
-
-footer{
-    text-align:center;
-    margin-top:30px;
-    opacity:.85;
-    font-size:13px;
-}
+* {margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body {background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);min-height:100vh;color:#fff;overflow-x:hidden;}
+.topbar {display:flex;justify-content:space-between;align-items:center;padding:15px;background:rgba(255,255,255,0.15);backdrop-filter:blur(15px);border-bottom:1px solid rgba(255,255,255,0.25);position:sticky;top:0;z-index:1000;}
+.topbar .menu-toggle {font-size:24px;cursor:pointer;color:#fff;}
+.topbar .user {font-weight:600;font-size:16px;}
+.sidebar {position:fixed;left:-260px;top:0;height:100%;width:260px;background:rgba(255,255,255,0.20);backdrop-filter:blur(12px);transition:.4s;padding-top:80px;z-index:999;border-right:1px solid rgba(255,255,255,0.25);}
+.sidebar.active {left:0;}
+.sidebar a {display:block;padding:14px 25px;font-size:15px;color:#fff;text-decoration:none;transition:.3s;}
+.sidebar a i {margin-right:12px;}
+.sidebar a:hover {background:rgba(255,255,255,0.25);}
+.overlay {position:fixed;top:0;left:0;height:100%;width:100%;background:rgba(0,0,0,0.45);opacity:0;visibility:hidden;transition:.3s;z-index:998;}
+.overlay.active {opacity:1;visibility:visible;}
+.main {padding:20px;}
+.block {background:rgba(255,255,255,0.25);border-radius:20px;padding:20px;margin-bottom:25px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.35);}
+.block h2 {font-size:20px;font-weight:700;margin-bottom:12px;}
+.block p {font-size:14px;margin-bottom:12px;}
+.info-item {margin-bottom:8px;font-size:15px;}
+.info-item span {font-weight:600;}
+.payment-section {background:rgba(255,255,255,0.30);border-radius:18px;padding:18px;margin-top:15px;}
+.payment-section .label {font-weight:600;font-size:14px;}
+.payment-section .value, .payment-section input, .payment-section select {background:#fff;color:#333;padding:10px 12px;border-radius:10px;margin-top:5px;font-size:15px;font-weight:600;border:none;width:100%;}
+.pay-btn {margin-top:15px;width:100%;background:#ff7a00;color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;cursor:pointer;font-size:17px;transition:.3s;}
+.pay-btn:hover {background:#ffb35a;}
+.pay-btn:disabled {background:rgba(255,255,255,0.4);cursor:not-allowed;}
+footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
+.info-warning {margin-top:10px;color:#ffdd57;font-weight:600;font-size:14px;}
 </style>
 </head>
 
@@ -173,9 +43,9 @@ footer{
 <div class="overlay" id="overlay"></div>
 
 <div class="sidebar" id="sidebar">
-    <a href="/dashboard_bloque" style="background:rgba(255,255,255,0.25);">
-        <i class="fa fa-lock"></i> Compte en attente
-    </a>
+    <a href="/dashboard"><i class="fa fa-home"></i> Tableau de bord</a>
+    <a href="/dashboard_bloque" style="background:rgba(255,255,255,0.25);"><i class="fa fa-lock"></i> Compte inactif</a>
+    <a href="#"><i class="fa fa-wallet"></i> Compte recharge</a>
     <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
 </div>
 
@@ -186,35 +56,65 @@ footer{
 
 <div class="main">
 
+    <!-- Info utilisateur -->
     <div class="block">
-        <h2>⏳ Compte en attente de validation</h2>
+        <h2>Compte inactif</h2>
+        <p>Veuillez effectuer un dépôt pour activer votre compte.</p>
+        <p>Utilisez le numéro ci-dessous :</p>
+        <h2 style="font-size:26px;color:#fff;"><b>{{ user.phone }}</b></h2>
+        <div class="info-item"><span>Nom :</span> {{ user.username }}</div>
+        <div class="info-item"><span>Email :</span> {{ user.email }}</div>
+    </div>
 
-        <div class="alert">
-            <div class="title">
-                <i class="fa fa-circle-info"></i>
-                Information importante
-            </div>
+    <!-- Formulaire dépôt -->
+    <div class="block">
+        <h2>Effectuer un dépôt</h2>
 
-            <p>
-                Veuillez patienter pour la validation des comptes par l’administrateur.
-                <br>
-                Réessayez plus tard.
-            </p>
+        {% if user_has_pending_depot %}
+            <p class="info-warning">Vous avez déjà un dépôt en attente. Veuillez attendre la validation avant d'effectuer un nouveau dépôt.</p>
+            <form>
+                <div class="payment-section">
+                    <input type="text" value="{{ user.username }}" class="value" disabled>
+                    <input type="text" value="{{ user.phone }}" class="value" disabled>
+                    <input type="number" value="3800" class="value" disabled>
+                    <input type="text" value="{{ user.country }}" class="value" disabled>
+                    <select class="value" disabled>
+                        <option>MTN Mobile Money</option>
+                    </select>
+                    <button type="submit" class="pay-btn" disabled>Effectuer le paiement</button>
+                </div>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('dashboard_bloque') }}">
+                <div class="payment-section">
+                    <div class="label">Nom complet</div>
+                    <input type="text" name="fullname" class="value" value="{{ user.username }}" required>
 
-            <div class="info-item"><span>Utilisateur :</span> {{ user.username }}</div>
-            <div class="info-item"><span>Email :</span> {{ user.email }}</div>
-            <div class="big-phone">{{ user.phone }}</div>
+                    <div class="label" style="margin-top:15px;">Numéro de compte / portefeuille</div>
+                    <input type="text" name="phone" class="value" value="{{ user.phone }}" readonly>
 
-            <div class="actions">
-                <button class="btn btn-refresh" onclick="window.location.reload()">
-                    <i class="fa fa-rotate-right"></i> Actualiser
-                </button>
+                    <div class="label" style="margin-top:15px;">Montant</div>
+                    <input type="number" name="montant" class="value" value="3800" readonly>
 
-                <button class="btn btn-logout" onclick="window.location.href='/logout'">
-                    <i class="fa fa-right-from-bracket"></i> Déconnexion
-                </button>
-            </div>
-        </div>
+                    <div class="label" style="margin-top:15px;">Pays</div>
+                    <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
+
+                    <div class="label" style="margin-top:15px;">Canal de paiement</div>
+                    <select name="operator" class="value" required>
+                        <option value="MTN Mobile Money">MTN Mobile Money</option>
+                        <option value="MoMo Cameroun">MoMo Cameroun</option>
+                        <option value="Moov Money">Moov Money</option>
+                        <option value="Airtel Money">Airtel Money</option>
+                        <option value="Orange Money">Orange Money</option>
+                        <option value="Yas Togo">Yas Togo</option>
+                        <option value="Nita">Nita</option>
+                        <option value="Wave">Wave</option>
+                    </select>
+
+                    <button type="submit" class="pay-btn">Effectuer le paiement</button>
+                </div>
+            </form>
+        {% endif %}
     </div>
 
     <footer>
@@ -227,15 +127,8 @@ const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const menuToggle = document.getElementById("menuToggle");
 
-menuToggle.onclick = () => {
-    sidebar.classList.add("active");
-    overlay.classList.add("active");
-};
-
-overlay.onclick = () => {
-    sidebar.classList.remove("active");
-    overlay.classList.remove("active");
-};
+menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
+overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
 </script>
 
 </body>

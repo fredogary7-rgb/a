@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paiement en cours | LuminaStar</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body{
+      font-family:'Poppins',sans-serif;
+      margin:0;
+      padding:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);
+      color:#fff;
+    }
+    .card{
+      width:min(520px, 92%);
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      text-align:center;
+    }
+    h2{
+      margin:0 0 10px 0;
+      font-size:20px;
+      font-weight:700;
+    }
+    p{
+      margin:0 0 15px 0;
+      opacity:0.95;
+      font-size:14px;
+      line-height:1.4;
+    }
+    .loader{
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      border:6px solid rgba(255,255,255,0.35);
+      border-top-color:#fff;
+      margin:18px auto;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin{
+      from{ transform:rotate(0deg); }
+      to{ transform:rotate(360deg); }
+    }
+    .status{
+      margin-top:10px;
+      font-weight:600;
+      font-size:14px;
+    }
+    .btn{
+      display:inline-block;
+      margin-top:16px;
+      padding:10px 16px;
+      border-radius:12px;
+      text-decoration:none;
+      background: rgba(255,255,255,0.25);
+      color:#fff;
+      font-weight:600;
+      transition:0.25s;
+    }
+    .btn:hover{
+      background: rgba(255,255,255,0.35);
+    }
+    .small{
+      margin-top:10px;
+      font-size:12px;
+      opacity:0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>⏳ Paiement en cours...</h2>
+    <p>
+      Merci <b>{{ user.username }}</b> 🙏 <br>
+      Nous vérifions votre paiement et activons votre compte automatiquement.
+    </p>
+
+    <div class="loader"></div>
+
+    <div class="status" id="statusText">
+      Vérification de l'activation...
+    </div>
+
+    <a class="btn" href="{{ url_for('dashboard_bloque') }}">⬅️ Retour</a>
+
+    <div class="small">
+      Si ça prend du temps, ne payez pas 2 fois. Patientez quelques secondes.
+    </div>
+  </div>
+
+  <script>
+    async function checkActivation(){
+      try{
+        const res = await fetch("/api/check-activation");
+        const data = await res.json();
+
+        if(data.activated === true){
+          document.getElementById("statusText").innerText = "✅ Activation confirmée ! Redirection...";
+          window.location.href = "{{ url_for('dashboard_page') }}";
+          return;
+        }
+
+        document.getElementById("statusText").innerText = "⏳ Paiement reçu, activation en cours...";
+      }catch(e){
+        document.getElementById("statusText").innerText = "⚠️ Vérification impossible... nouvelle tentative...";
+      }
+    }
+
+    // check direct + toutes les 2 sec
+    checkActivation();
+    setInterval(checkActivation, 2000);
+  </script>
+
+</body>
+</html>
