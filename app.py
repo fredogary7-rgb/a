@@ -558,10 +558,10 @@ def dashboard_bloque():
 
     return render_template("dashboard_bloque.html", user=user)
 
-# === ROUTE DE RETOUR BKAPAY ===
 import hmac
 import hashlib
 from flask import request, jsonify
+from app import db, Depot, User  # Ajuste si nécessaire
 
 ACTIVATION_AMOUNT = 3800
 
@@ -571,14 +571,20 @@ def webhook_bkapay():
     signature = request.headers.get("X-BKApay-Signature")
     event_header = request.headers.get("X-BKApay-Event")
 
-    # ✅ Vérifier signature
+    # -----------------------
+    # 1️⃣ Vérifier signature
+    # -----------------------
     if not verify_bkapay_signature(raw_payload, signature):
+        print("❌ Signature invalide")
         return jsonify({"error": "Signature invalide"}), 401
 
-    # ✅ Lire JSON
+    # -----------------------
+    # 2️⃣ Lire JSON
+    # -----------------------
     try:
         data = request.get_json(force=True)
-    except Exception:
+    except Exception as e:
+        print("❌ JSON invalide:", e)
         return jsonify({"error": "JSON invalide"}), 400
 
     event = data.get("event") or event_header
@@ -593,13 +599,16 @@ def webhook_bkapay():
     except Exception:
         amount_int = None
 
+    print(f"Webhook reçu - event: {event}, status: {status}, ref: {external_reference}, amount: {amount_int}")
+
     # ===============================
     # ✅ PAYMENT SUCCESS
     # ===============================
     if event in ["payment.completed", "payment.success", "payment.succeeded"] and status in ["completed", "success"]:
-        
+
         # 🔥 Montant exact
         if amount_int != ACTIVATION_AMOUNT:
+            print(f"❌ Montant invalide {amount_int}, attendu {ACTIVATION_AMOUNT}")
             return jsonify({"error": f"Montant invalide ({amount_int}). Activation uniquement {ACTIVATION_AMOUNT}"}), 400
 
         # 🔥 Trouver dépôt
@@ -607,43 +616,51 @@ def webhook_bkapay():
         if external_reference:
             try:
                 depot = Depot.query.get(int(external_reference))
-            except:
-                depot = None
+            except Exception as e:
+                print("❌ Erreur récupération dépôt:", e)
 
         if not depot:
+            print("❌ Dépôt introuvable")
             return jsonify({"error": "Dépôt introuvable"}), 404
 
         # éviter double traitement
         if depot.statut == "valide":
+            print("ℹ️ Déjà validé")
             return jsonify({"received": True, "message": "Déjà validé"}), 200
 
         # Vérifier montant dépôt enregistré
         try:
             if int(float(depot.montant)) != ACTIVATION_AMOUNT:
+                print("❌ Montant dépôt différent de 3800")
                 return jsonify({"error": "Montant dépôt différent de 3800"}), 400
         except:
+            print("❌ Montant dépôt invalide")
             return jsonify({"error": "Montant dépôt invalide"}), 400
 
         # 🔥 Trouver user
         user = User.query.filter_by(username=depot.user_name).first()
         if not user:
+            print("❌ Utilisateur introuvable")
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
         # 🔥 Marquer dépôt validé
         depot.statut = "valide"
-
-        # Optionnel : stock transaction_id si champ existe
         if hasattr(depot, "transaction_id"):
             depot.transaction_id = transaction_id
 
         # 🔥 Créditer compte
         user.solde_depot += float(depot.montant)
         user.solde_total += float(depot.montant)
+        user.premier_depot = True  # active le compte
 
-        # (optionnel) activer premier_depot si tu veux garder l’ancien système
-        user.premier_depot = True
+        try:
+            db.session.commit()
+            print(f"✅ Paiement confirmé pour {user.username}")
+        except Exception as e:
+            db.session.rollback()
+            print("❌ Erreur commit DB:", e)
+            return jsonify({"error": "Erreur serveur lors de la validation"}), 500
 
-        db.session.commit()
         return jsonify({"received": True, "message": "Paiement confirmé : dépôt validé + compte crédité"}), 200
 
     # ===============================
@@ -658,12 +675,16 @@ def webhook_bkapay():
                     if hasattr(depot, "transaction_id"):
                         depot.transaction_id = transaction_id
                     db.session.commit()
-            except:
-                pass
+                    print(f"❌ Paiement échoué pour dépôt {depot.id}")
+            except Exception as e:
+                db.session.rollback()
+                print("❌ Erreur traitement paiement échoué:", e)
 
         return jsonify({"received": True, "message": "Paiement échoué reçu"}), 200
 
+    print("ℹ️ Event ignoré")
     return jsonify({"received": True, "message": "Event ignoré"}), 200
+
 
 @app.route("/paiement/bkapay/retour")
 @login_required
@@ -688,6 +709,15 @@ def api_check_activation():
         "activated": bool(paiement_ok)
     }
 
+@app.route("/paiement_en_cours")
+@login_required
+def paiement_en_cours():
+    user = get_logged_in_user()
+    # Vérifie si l'utilisateur a déjà un dépôt validé
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    if paiement_ok:
+        return redirect(url_for("dashboard_page"))
+    return render_template("paiement_en_cours.html", user=user)
 
 @app.route("/chaine")
 def whatsapp_channel():
