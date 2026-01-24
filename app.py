@@ -521,8 +521,9 @@ CLE_PUBLIQUE_BKAPAY = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    # Déjà actif → accès direct
-    if user.premier_depot is True:
+    # ✅ Déjà payé → accès direct au dashboard
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    if paiement_ok:
         return redirect(url_for("dashboard_page"))
 
     if request.method == "POST":
@@ -539,7 +540,7 @@ def dashboard_bloque():
             flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # Créer dépôt pending
+        # ✅ Créer dépôt pending
         depot = Depot(
             user_name=user.username,
             email=user.email,
@@ -569,81 +570,23 @@ def dashboard_bloque():
     return render_template("dashboard_bloque.html", user=user)
 
 # === ROUTE DE RETOUR BKAPAY ===
-@app.route("/paiement/bkapay/retour")
-@login_required
-def bkapay_retour():
-    """
-    Redirige l'utilisateur vers la page 'paiement en cours' après paiement
-    si status=success. Sinon, redirige vers dashboard bloqué.
-    """
-    status = request.args.get("status")
-
-    if status == "success":
-        # Le paiement a été initié avec succès côté client
-        return redirect(url_for("paiement_en_cours"))
-
-    # Paiement échoué ou annulé → page bloquée
-    flash("Paiement échoué ou annulé.", "danger")
-    return redirect(url_for("dashboard_bloque"))
-
-
-# === PAGE PAIEMENT EN COURS ===
-@app.route("/paiement/en-cours")
-@login_required
-def paiement_en_cours():
-    """
-    Affiche une page avec vérification automatique si l'utilisateur
-    est activé (premier_depot=True)
-    """
-    user = get_logged_in_user()
-
-    # Si déjà activé → direct dashboard
-    if user.premier_depot:
-        return redirect(url_for("dashboard_page"))
-
-    return render_template("paiement_en_cours.html", user=user)
-
-
-# === API CHECK ACTIVATION POUR JS ===
-@app.route("/api/check-activation")
-@login_required
-def api_check_activation():
-    """
-    Retourne JSON {"activated": True/False} pour le front
-    """
-    user = get_logged_in_user()
-    return {"activated": bool(user.premier_depot)}
-
-
-# === WEBHOOK BKAPAY ===
-import hmac, hashlib
+import hmac
+import hashlib
 from flask import request, jsonify
 
-BKAPAY_SECRET = "cs_66e85344d59a4a2db71c0a05ea4678e1"
-ACTIVATION_AMOUNT = 3800  # montant exact pour premier dépôt
-
-def verify_bkapay_signature(raw_payload: bytes, received_signature: str) -> bool:
-    expected_signature = hmac.new(
-        BKAPAY_SECRET.encode("utf-8"),
-        raw_payload,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected_signature, received_signature or "")
+ACTIVATION_AMOUNT = 3800
 
 @app.route("/api/webhook/bkapay", methods=["POST"])
 def webhook_bkapay():
-    """
-    Webhook appelé par BKApay pour signaler paiement réussi ou échoué
-    """
     raw_payload = request.get_data()
     signature = request.headers.get("X-BKApay-Signature")
     event_header = request.headers.get("X-BKApay-Event")
 
-    # 1️⃣ Vérifier signature
+    # ✅ Vérifier signature
     if not verify_bkapay_signature(raw_payload, signature):
         return jsonify({"error": "Signature invalide"}), 401
 
-    # 2️⃣ Parser JSON
+    # ✅ Lire JSON
     try:
         data = request.get_json(force=True)
     except Exception:
@@ -655,19 +598,22 @@ def webhook_bkapay():
     external_reference = data.get("externalReference")  # depot.id
     amount = data.get("amount")
 
-    # 3️⃣ Convertir montant en int
+    # sécuriser amount
     try:
         amount_int = int(float(amount))
     except Exception:
         amount_int = None
 
-    # 4️⃣ Paiement réussi → activation
-    if event == "payment.completed" and status == "completed":
-
+    # ===============================
+    # ✅ PAYMENT SUCCESS
+    # ===============================
+    if event in ["payment.completed", "payment.success", "payment.succeeded"] and status in ["completed", "success"]:
+        
+        # 🔥 Montant exact
         if amount_int != ACTIVATION_AMOUNT:
-            return jsonify({"error": f"Montant invalide, activation uniquement {ACTIVATION_AMOUNT}"}), 400
+            return jsonify({"error": f"Montant invalide ({amount_int}). Activation uniquement {ACTIVATION_AMOUNT}"}), 400
 
-        # Récupérer le dépôt
+        # 🔥 Trouver dépôt
         depot = None
         if external_reference:
             try:
@@ -675,50 +621,46 @@ def webhook_bkapay():
             except:
                 depot = None
 
-        # Fallback si pas externalReference
-        if not depot and transaction_id and hasattr(Depot, "transaction_id"):
-            depot = Depot.query.filter_by(transaction_id=transaction_id).first()
-
         if not depot:
             return jsonify({"error": "Dépôt introuvable"}), 404
 
-        # Dépôt déjà validé ?
+        # éviter double traitement
         if depot.statut == "valide":
             return jsonify({"received": True, "message": "Déjà validé"}), 200
 
-        # Vérifier montant dépôt
+        # Vérifier montant dépôt enregistré
         try:
             if int(float(depot.montant)) != ACTIVATION_AMOUNT:
                 return jsonify({"error": "Montant dépôt différent de 3800"}), 400
         except:
             return jsonify({"error": "Montant dépôt invalide"}), 400
 
-        # Récupérer user
+        # 🔥 Trouver user
         user = User.query.filter_by(username=depot.user_name).first()
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # Premier dépôt ?
-        premier_depot_valide = not Depot.query.filter_by(user_name=user.username, statut="valide").first()
-
-        # Crédite user et marque dépôt validé
+        # 🔥 Marquer dépôt validé
         depot.statut = "valide"
+
+        # Optionnel : stock transaction_id si champ existe
         if hasattr(depot, "transaction_id"):
             depot.transaction_id = transaction_id
 
+        # 🔥 Créditer compte
         user.solde_depot += float(depot.montant)
         user.solde_total += float(depot.montant)
 
-        if premier_depot_valide:
-            user.premier_depot = True
-            if user.parrain:
-                donner_commission(user.parrain, float(depot.montant))
+        # (optionnel) activer premier_depot si tu veux garder l’ancien système
+        user.premier_depot = True
 
         db.session.commit()
-        return jsonify({"received": True, "message": "Dépôt validé et utilisateur activé"}), 200
+        return jsonify({"received": True, "message": "Paiement confirmé : dépôt validé + compte crédité"}), 200
 
-    # 5️⃣ Paiement échoué
-    if event == "payment.failed":
+    # ===============================
+    # ❌ PAYMENT FAILED
+    # ===============================
+    if event in ["payment.failed", "payment.canceled", "payment.cancelled"] or status in ["failed", "canceled", "cancelled"]:
         if external_reference:
             try:
                 depot = Depot.query.get(int(external_reference))
@@ -729,9 +671,34 @@ def webhook_bkapay():
                     db.session.commit()
             except:
                 pass
+
         return jsonify({"received": True, "message": "Paiement échoué reçu"}), 200
 
     return jsonify({"received": True, "message": "Event ignoré"}), 200
+
+@app.route("/paiement/bkapay/retour")
+@login_required
+def bkapay_retour():
+    status = request.args.get("status")
+
+    if status == "success":
+        flash("Paiement reçu ! Vérification en cours...", "success")
+        return redirect(url_for("paiement_en_cours"))
+
+    flash("Paiement échoué ou annulé.", "danger")
+    return redirect(url_for("dashboard_bloque", status="failed"))
+
+@app.route("/api/check-activation")
+@login_required
+def api_check_activation():
+    user = get_logged_in_user()
+
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+
+    return {
+        "activated": bool(paiement_ok)
+    }
+
 
 @app.route("/chaine")
 def whatsapp_channel():
@@ -739,7 +706,6 @@ def whatsapp_channel():
 
 @app.route("/dashboard")
 def dashboard_page():
-    # Récupération de l'utilisateur connecté via session
     user_id = session.get("user_id")
     if not user_id:
         flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
@@ -755,21 +721,16 @@ def dashboard_page():
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 🔒 Bloque l'accès si premier dépôt pas encore validé
-    if user.premier_depot is False:
+    # 🔒 Bloque si aucun paiement BKApay succès (dépôt validé)
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    if not paiement_ok:
         return redirect(url_for("dashboard_bloque"))
 
     # 🔹 Stats globales
     total_users, total_deposits, total_withdrawn = get_global_stats()
 
-    # Revenu cumulé de l'utilisateur
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
-    stats = {
-        "commissions_total": float(user.solde_revenu or 0)
-    }
-
-    # 🔹 Rendu du template
     return render_template(
         "dashboard.html",
         user=user,
@@ -784,7 +745,6 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
-
 
 # ===== Décorateur admin =====
 def admin_required(f):
