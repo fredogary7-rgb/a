@@ -555,7 +555,7 @@ def dashboard_bloque():
         flash("Votre dépôt a été créé avec succès et est en attente de validation.", "success")
 
         # 🔹 Redirection vers le lien de paiement
-        payment_link = f"https://my.moneyfusion.net/6973e49933c6f213cd9c8208"
+        payment_link = f"https://my.moneyfusion.net/697496ad58be801a7c88ea77"
         return redirect(payment_link)
 
     return render_template("dashboard_bloque.html", user=user)
