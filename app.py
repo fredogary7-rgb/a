@@ -624,40 +624,16 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# app.py
+@app.route("/admin/users")
+def admin_users():
+    user = get_logged_in_admin()
 
-@app.route("/admin/active-users")
-def admin_active_users():
-    user = get_logged_in_admin()  # ta session admin
-
-    # Vérifier si admin
     if not user:
         flash("Accès refusé.", "danger")
         return redirect(url_for("admin_finance"))
 
-    # Utilisateurs actifs / inactifs
-    actifs = User.query.filter_by(premier_depot=True).order_by(User.date_creation.desc()).all()
-    inactifs = User.query.filter_by(premier_depot=False).order_by(User.date_creation.desc()).all()
-
-    return render_template(
-        "admin_active_users.html",
-        user=user,
-        actifs=actifs,
-        inactifs=inactifs,
-        total_actifs=len(actifs),
-        total_inactifs=len(inactifs)
-    )
-
-@app.route("/admin/users")
-@login_required
-def admin_users():
-    # Récupère l'utilisateur connecté via session
-    logged_in_user = get_logged_in_user()
-
-    # Récupère tous les utilisateurs
     users = User.query.order_by(User.date_creation.desc()).all()
 
-    # Calcul des filleuls par niveau
     user_data = []
     for u in users:
         niveau1 = u.downlines.count()
@@ -671,10 +647,46 @@ def admin_users():
             "parrain": u.parrain if u.parrain else "—",
             "niveau1": niveau1,
             "niveau2": niveau2,
-            "niveau3": niveau3
+            "niveau3": niveau3,
+            "date_creation": u.date_creation,
+            "premier_depot": u.premier_depot
         })
 
-    return render_template("admin_users.html", users=user_data)
+    return render_template("admin_users.html", user=user, users=user_data)
+
+@app.route("/admin/users/inactifs")
+def admin_users_inactifs():
+    user = get_logged_in_admin()
+
+    if not user:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("admin_finance"))
+
+    inactifs = User.query.filter_by(premier_depot=False).order_by(User.date_creation.desc()).all()
+
+    return render_template(
+        "admin_users_inactifs.html",
+        user=user,
+        inactifs=inactifs,
+        total_inactifs=len(inactifs)
+    )
+
+@app.route("/admin/users/actifs")
+def admin_users_actifs():
+    user = get_logged_in_admin()
+
+    if not user:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("admin_finance"))
+
+    actifs = User.query.filter_by(premier_depot=True).order_by(User.date_creation.desc()).all()
+
+    return render_template(
+        "admin_users_actifs.html",
+        user=user,
+        actifs=actifs,
+        total_actifs=len(actifs)
+    )
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -1206,24 +1218,24 @@ def admin_deposits():
             "premier_depot": bool(u.premier_depot)
         })
 
-    # ✅ Actifs/inactifs SUR LA PAGE (si tu veux juste la page)
+    # ✅ Actifs/inactifs SUR LA PAGE
     actifs = [u for u in users_data if u["premier_depot"]]
     inactifs = [u for u in users_data if not u["premier_depot"]]
 
-    # ✅ Stats globales (comme avant)
+    # ✅ Stats globales
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== Dépôts =====
-    depots_query = Depot.query.order_by(Depot.date.desc())
+    # ===== Dépôts (afficher seulement ceux EN ATTENTE) =====
+    depots_query = Depot.query.filter(Depot.statut == "pending").order_by(Depot.date.desc())
     depots_paginated = depots_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     depots = depots_paginated.items
 
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
-    # ===== Retraits =====
-    retraits_query = Retrait.query.order_by(Retrait.date.desc())
+    # ===== Retraits (afficher seulement ceux EN ATTENTE) =====
+    retraits_query = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc())
     retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     retraits = retraits_paginated.items
 
@@ -1249,11 +1261,10 @@ def admin_deposits():
 @login_required
 def valider_depot(depot_id):
 
-    # Dépôt à valider
     depot = Depot.query.get_or_404(depot_id)
 
     # User concerné par le dépôt via username
-    user = User.query.filter_by(username=depot.user_name).first()  # <--- depot.user_name à créer dans ton modèle Depot
+    user = User.query.filter_by(username=depot.user_name).first()
 
     if not user:
         flash("Utilisateur introuvable.", "danger")
@@ -1277,15 +1288,14 @@ def valider_depot(depot_id):
     user.solde_depot += depot.montant
     user.solde_total += depot.montant
 
-    # Si c'est réellement le premier dépôt validé, on met à jour le flag
+    # Premier dépôt
     if premier_depot_valide:
         user.premier_depot = True
 
-        # Donner commission au parrain si existe
+        # Commission parrain
         if user.parrain:
-            donner_commission(user.parrain, depot.montant)  # <--- parrain = username maintenant
+            donner_commission(user.parrain, depot.montant)
 
-    # Sauvegarder
     db.session.commit()
 
     flash("Dépôt validé et crédité avec succès !", "success")
@@ -1308,18 +1318,12 @@ def rejeter_depot(depot_id):
     flash("Dépôt rejeté avec succès.", "danger")
     return redirect(url_for("admin_deposits"))
 
-# Page affichage des retraits
 @app.route("/admin/retraits")
 @login_required
 def admin_retraits():
-    # 🔒 Vérifie que l'utilisateur est admin
-
-    # Récupération des retraits les plus récents
-    retraits = Retrait.query.order_by(Retrait.date.desc()).all()
+    retraits = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc()).all()
     return render_template("admin_retraits.html", retraits=retraits)
 
-
-# Valider un retrait
 @app.route("/admin/retraits/valider/<int:retrait_id>")
 @login_required
 def valider_retrait(retrait_id):
@@ -1336,10 +1340,9 @@ def valider_retrait(retrait_id):
         flash("Ce retrait a déjà été validé.", "info")
         return redirect(url_for("admin_retraits"))
 
-    # ✅ Mettre à jour le statut du retrait
     retrait.statut = "validé"
 
-    # 💰 Ajouter le montant + frais au total_retrait
+    # Total retrait
     user.total_retrait += retrait.montant + (retrait.frais or 0)
 
     db.session.commit()
@@ -1347,8 +1350,6 @@ def valider_retrait(retrait_id):
     flash("Retrait validé avec succès !", "success")
     return redirect(url_for("admin_retraits"))
 
-
-# Refuser un retrait
 @app.route("/admin/retraits/refuser/<int:retrait_id>")
 @login_required
 def refuser_retrait(retrait_id):
@@ -1365,7 +1366,7 @@ def refuser_retrait(retrait_id):
         flash("Ce retrait a déjà été refusé.", "info")
         return redirect(url_for("admin_retraits"))
 
-    # 💰 Recréditer le montant + frais sur le solde revenu
+    # Recréditer
     user.solde_parrainage += (retrait.montant + (retrait.frais or 0))
     retrait.statut = "refusé"
 
@@ -1373,7 +1374,6 @@ def refuser_retrait(retrait_id):
 
     flash("Retrait refusé et montant recrédité à l’utilisateur.", "warning")
     return redirect(url_for("admin_retraits"))
-
 
 
 @app.route("/taches/questions-lundi", methods=["GET", "POST"])

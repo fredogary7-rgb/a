@@ -153,6 +153,28 @@ h3{
     background: rgba(255,255,255,0.95);
     color: #333;
 }
+
+/* ===== Pagination ===== */
+.pagination{
+    margin-top: 15px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-weight:600;
+}
+.pagination a{
+    text-decoration:none;
+    color:#fff;
+    background: rgba(255,255,255,0.25);
+    padding:8px 12px;
+    border-radius:10px;
+    transition:0.3s;
+}
+.pagination a:hover{
+    background: rgba(255,255,255,0.35);
+}
 </style>
 </head>
 
@@ -179,19 +201,20 @@ h3{
       {% endif %}
     {% endwith %}
 
-    <!-- Onglets -->
+    <!-- Onglets (5 tabs) -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Utilisateurs</button>
+        <button class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Tous les utilisateurs</button>
         <button class="tab-btn" onclick="showTab(event,'depotsTab')">💰 Dépôts</button>
         <button class="tab-btn" onclick="showTab(event,'retraitsTab')">💸 Retraits</button>
-        <button class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs / ❌ Inactifs</button>
+        <button class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs</button>
+        <button class="tab-btn" onclick="showTab(event,'inactifsTab')">❌ Inactifs</button>
     </div>
 
 <div class="search-box">
     <input type="text" id="userSearch" placeholder="Rechercher un utilisateur (username, email, téléphone, parrain)...">
 </div>
 
-<!-- ===== USERS ===== -->
+<!-- ===== USERS (TOUS) ===== -->
 <div id="usersTab" class="tab-content active">
     <div class="table-container">
         <table>
@@ -350,78 +373,81 @@ h3{
     </div>
 </div>
 
-    <!-- ===== ACTIFS / INACTIFS ===== -->
-    <div id="actifsTab" class="tab-content">
-        <div class="table-container">
+<!-- ===== ACTIFS (SEUL) ===== -->
+<div id="actifsTab" class="tab-content">
+    <div class="table-container">
 
-            <h3>✅ Utilisateurs Actifs 
-                <span class="badge level3">{{ total_actifs }}</span>
-            </h3>
+        <h3>✅ Utilisateurs Actifs <span class="badge level3">{{ total_actifs }}</span></h3>
 
-            <table style="margin-bottom:25px;">
-                <thead>
-                    <tr>
-                        <th>Nom d'utilisateur</th>
-                        <th>Email</th>
-                        <th>Téléphone</th>
-                        <th>Parrain</th>
-                        <th>Date d'inscription</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for u in actifs %}
-                    <tr>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.email }}</td>
-                        <td>{{ u.phone }}</td>
-                        <td>{{ u.parrain }}</td>
-                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                    </tr>
-                    {% endfor %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Parrain</th>
+                    <th>Date d'inscription</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in actifs %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone }}</td>
+                    <td>{{ u.parrain }}</td>
+                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                </tr>
+                {% endfor %}
 
-                    {% if actifs|length == 0 %}
-                    <tr>
-                        <td colspan="5">Aucun utilisateur actif.</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+                {% if actifs|length == 0 %}
+                <tr>
+                    <td colspan="5">Aucun utilisateur actif.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
 
-            <h3>❌ Utilisateurs Inactifs
-                <span class="badge level1">{{ total_inactifs }}</span>
-            </h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nom d'utilisateur</th>
-                        <th>Email</th>
-                        <th>Téléphone</th>
-                        <th>Parrain</th>
-                        <th>Date d'inscription</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for u in inactifs %}
-                    <tr>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.email }}</td>
-                        <td>{{ u.phone }}</td>
-                        <td>{{ u.parrain }}</td>
-                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                    </tr>
-                    {% endfor %}
-
-                    {% if inactifs|length == 0 %}
-                    <tr>
-                        <td colspan="5">Aucun utilisateur inactif.</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-
-        </div>
     </div>
+</div>
+
+<!-- ===== INACTIFS (SEUL) ===== -->
+<div id="inactifsTab" class="tab-content">
+    <div class="table-container">
+
+        <h3>❌ Utilisateurs Inactifs <span class="badge level1">{{ total_inactifs }}</span></h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Parrain</th>
+                    <th>Date d'inscription</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in inactifs %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.phone }}</td>
+                    <td>{{ u.parrain }}</td>
+                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                </tr>
+                {% endfor %}
+
+                {% if inactifs|length == 0 %}
+                <tr>
+                    <td colspan="5">Aucun utilisateur inactif.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
 
 </div>
 
@@ -445,7 +471,9 @@ function showTab(e, tabId){
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
     document.getElementById(tabId).classList.add('active');
-    e.target.classList.add('active');
+
+    const btn = e.currentTarget || e.target;
+    btn.classList.add('active');
 }
 
 document.addEventListener("DOMContentLoaded", () => {
