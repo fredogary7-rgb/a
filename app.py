@@ -1159,6 +1159,8 @@ from flask import request, render_template, flash, redirect, url_for
 
 PER_PAGE = 50
 
+from sqlalchemy import or_
+
 @app.route("/admin/deposits")
 def admin_deposits():
     user = get_logged_in_admin()
@@ -1201,7 +1203,7 @@ def admin_deposits():
             "premier_depot": bool(u.premier_depot)
         })
 
-    # ✅ Actifs/inactifs SUR LA PAGE
+    # ✅ Actifs/inactifs SUR LA PAGE (users affichés seulement)
     actifs = [u for u in users_data if u["premier_depot"]]
     inactifs = [u for u in users_data if not u["premier_depot"]]
 
@@ -1209,15 +1211,13 @@ def admin_deposits():
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== Dépôts (afficher seulement ceux EN ATTENTE) =====
-    depots_query = Depot.query.filter(Depot.statut == "pending").order_by(Depot.date.desc())
-    depots_paginated = depots_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
-    depots = depots_paginated.items
+    # ===== Dépôts (PAS de pagination) =====
+    depots = Depot.query.filter(Depot.statut == "pending").order_by(Depot.date.desc()).all()
 
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
-    # ===== Retraits (afficher seulement ceux EN ATTENTE) =====
+    # ===== Retraits (pagination) =====
     retraits_query = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc())
     retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     retraits = retraits_paginated.items
@@ -1236,8 +1236,8 @@ def admin_deposits():
         total_actifs=total_actifs,
         total_inactifs=total_inactifs,
         users_paginated=users_paginated,
-        depots_paginated=depots_paginated,
         retraits_paginated=retraits_paginated
+        # ❌ on ne renvoie plus depots_paginated
     )
 
 @app.route("/admin/deposits/valider/<int:depot_id>")

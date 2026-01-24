@@ -329,21 +329,16 @@ h3{
                     </td>
                 </tr>
                 {% endfor %}
+
+                {% if depots|length == 0 %}
+                <tr>
+                    <td colspan="10">Aucun dépôt en attente.</td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
 
-        <!-- Pagination dépôts -->
-        <div class="pagination">
-            {% if depots_paginated.has_prev %}
-                <a href="{{ url_for('admin_deposits', page=depots_paginated.prev_num) }}">« Précédent</a>
-            {% endif %}
-
-            Page {{ depots_paginated.page }} sur {{ depots_paginated.pages }}
-
-            {% if depots_paginated.has_next %}
-                <a href="{{ url_for('admin_deposits', page=depots_paginated.next_num) }}">Suivant »</a>
-            {% endif %}
-        </div>
+        <!-- ❌ PAS de pagination dépôts (comme tu veux) -->
     </div>
 </div>
 
@@ -391,6 +386,12 @@ h3{
                     </td>
                 </tr>
                 {% endfor %}
+
+                {% if retraits|length == 0 %}
+                <tr>
+                    <td colspan="10">Aucun retrait en attente.</td>
+                </tr>
+                {% endif %}
             </tbody>
         </table>
 
