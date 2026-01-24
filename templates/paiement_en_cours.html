@@ -72,6 +72,12 @@
     .btn:hover{
       background: rgba(255,255,255,0.35);
     }
+    .btn-success{
+      background: #28a745;
+    }
+    .btn-failed{
+      background: #dc3545;
+    }
     .small{
       margin-top:10px;
       font-size:12px;
@@ -88,13 +94,13 @@
       Nous vérifions votre paiement et activons votre compte automatiquement.
     </p>
 
-    <div class="loader"></div>
+    <div class="loader" id="loader"></div>
 
     <div class="status" id="statusText">
       Vérification de l'activation...
     </div>
 
-    <a class="btn" href="{{ url_for('dashboard_bloque') }}">⬅️ Retour</a>
+    <a id="backBtn" class="btn" href="{{ url_for('dashboard_bloque') }}" style="display:none;">⬅️ Retour au dashboard</a>
 
     <div class="small">
       Si ça prend du temps, ne payez pas 2 fois. Patientez quelques secondes.
@@ -109,19 +115,52 @@
 
         if(data.activated === true){
           document.getElementById("statusText").innerText = "✅ Activation confirmée ! Redirection...";
+          document.getElementById("loader").style.display = "none";
           window.location.href = "{{ url_for('dashboard_page') }}";
           return;
         }
 
+        // Ici on peut aussi vérifier si paiement échoué via un endpoint ou flag
+        // Pour l'instant on continue à attendre
         document.getElementById("statusText").innerText = "⏳ Paiement reçu, activation en cours...";
       }catch(e){
+        console.log(e);
         document.getElementById("statusText").innerText = "⚠️ Vérification impossible... nouvelle tentative...";
       }
     }
 
-    // check direct + toutes les 2 sec
-    checkActivation();
-    setInterval(checkActivation, 2000);
+    // Vérifier l'état toutes les 2 secondes
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch("/api/check-activation");
+        const data = await res.json();
+
+        if(data.activated === true){
+          clearInterval(intervalId);
+          document.getElementById("statusText").innerText = "✅ Activation confirmée ! Redirection...";
+          document.getElementById("loader").style.display = "none";
+          window.location.href = "{{ url_for('dashboard_page') }}";
+          return;
+        }
+      } catch(e){
+        console.log(e);
+      }
+    }, 2000);
+
+    // Fonction pour afficher paiement échoué
+    function paiementFailed(){
+      clearInterval(intervalId);
+      document.getElementById("statusText").innerText = "❌ Paiement échoué ou annulé.";
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("backBtn").style.display = "inline-block";
+      document.getElementById("backBtn").classList.add("btn-failed");
+    }
+
+    // Vérification via query param si on veut signaler l'échec côté retour
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get("status") === "failed"){
+      paiementFailed();
+    }
   </script>
 
 </body>
