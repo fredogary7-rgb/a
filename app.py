@@ -502,48 +502,18 @@ def get_global_stats():
 # --------------------------------------
 # 1️⃣ Page dashboard_bloque (initiation paiement)
 # --------------------------------------
-@app.route("/dashboard_bloque", methods=["GET", "POST"])
+@app.route("/dashboard_bloque", methods=["GET"])
 @login_required
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    # Si le premier dépôt a été validé → on débloque l'accès
+    # ✅ Si le compte est activé, accès direct au dashboard normal
     if user.premier_depot is True:
         return redirect(url_for("dashboard_page"))
 
-    if request.method == "POST":
-        operator = request.form.get("operator")
-        montant = request.form.get("montant", type=float)
-        fullname = request.form.get("fullname")
-
-        if not operator or not montant or not fullname:
-            flash("Tous les champs sont requis.", "danger")
-            return redirect(url_for("dashboard_bloque"))
-
-        if montant < 3800:
-            flash("Le montant minimum est de 3000 FCFA.", "danger")
-            return redirect(url_for("dashboard_bloque"))
-
-        # Création du dépôt
-        depot = Depot(
-            user_name=user.username,
-            email=user.email,   # ✅ AJOUT
-            phone=user.phone,
-            operator=operator,
-            country=user.country,
-            montant=montant,
-            statut="pending"
-        )
-        db.session.add(depot)
-        db.session.commit()
-
-        flash("Votre dépôt a été créé avec succès et est en attente de validation.", "success")
-
-        # 🔹 Redirection vers le lien de paiement
-        payment_link = f"https://my.moneyfusion.net/697496ad58be801a7c88ea77"
-        return redirect(payment_link)
-
+    # ❌ Sinon on affiche uniquement un message de blocage
     return render_template("dashboard_bloque.html", user=user)
+
 
 @app.route("/chaine")
 def whatsapp_channel():
