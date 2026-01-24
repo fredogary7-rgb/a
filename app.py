@@ -369,13 +369,16 @@ def init_db():
 from flask import request, redirect, render_template
 from datetime import datetime
 
+from flask import request, redirect, render_template
+from datetime import datetime
+
 # Date de lancement
 LAUNCH_DATE = datetime(2026, 1, 24)
 
 @app.before_request
 def site_coming_soon():
     # Exclure certaines routes (admin, static, etc.)
-    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/about"):
+    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/login"):
         return
 
     # Si date actuelle < date de lancement, afficher page "Coming Soon"
@@ -622,75 +625,6 @@ def admin_required(f):
     return decorated
 
 # app.py
-from flask import redirect, request, url_for, flash
-from urllib.parse import urlencode
-
-CLE_PUBLIQUE = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
-
-@app.route("/payer/<int:montant>")
-@login_required
-def payer(montant):
-
-    callback_url = url_for("paiement_retour", _external=True)
-
-    params = {
-        "amount": montant,
-        "description": f"Depot utilisateur {current_user.id}",
-        "callback": callback_url,
-        "externalReference": current_user.id  # Important pour le webhook
-    }
-
-    url = f"https://bkapay.com/api-pay/{CLE_PUBLIQUE}?" + urlencode(params)
-    return redirect(url)
-
-
-@app.route("/paiement-retour")
-def paiement_retour():
-    status = request.args.get("status")
-    transaction_id = request.args.get("transactionId")
-    amount = request.args.get("amount")
-
-    if status == "success":
-        return redirect(url_for("dashboard_page"))
-
-    return redirect(url_for("dashboard_bloque"))
-
-# --------------------------------------
-# 3️⃣ Webhook BKApay (POST JSON sécurisé)
-# --------------------------------------
-@app.route("/webhook-bkapay", methods=["POST"])
-def webhook_bkapay():
-    import hmac, hashlib
-
-    WEBHOOK_SECRET = "cs_66e85344d59a4a2db71c0a05ea4678e1"
-
-    payload = request.get_data(as_text=True)
-    signature = request.headers.get("X-BKApay-Signature")
-
-    expected = hmac.new(
-        WEBHOOK_SECRET.encode(),
-        payload.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    if signature != expected:
-        return {"error": "invalid-signature"}, 401
-
-    data = request.get_json()
-
-    if data.get("event") == "payment.completed":
-        user_id = int(data["externalReference"])
-        amount = float(data["amount"])
-        transaction_id = data["transactionId"]
-
-        user = User.query.get(user_id)
-        if user:
-            user.premier_depot = True
-            user.solde_total += amount
-            user.solde_depot += amount
-            db.session.commit()
-
-    return {"received": True}, 200
 
 @app.route("/admin/active-users")
 def admin_active_users():
