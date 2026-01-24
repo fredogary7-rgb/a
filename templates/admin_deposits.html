@@ -122,6 +122,20 @@ button {
 .valider { background:#28a745; }
 .refuser { background:#dc3545; }
 
+/* ===== Actions boutons côte à côte ===== */
+.action-buttons{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+}
+
+.action-buttons button{
+    flex: 1;
+    min-width: 90px;
+}
+
 /* ===== Flash messages ===== */
 .flash {
     margin-bottom:15px;
@@ -297,11 +311,21 @@ h3{
                     <td>{{ d.montant }}</td>
                     <td class="status-{{ d.statut }}">{{ d.statut }}</td>
                     <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
+
                     <td>
                         {% if d.statut == 'pending' %}
-                            <a href="{{ url_for('valider_depot', depot_id=d.id) }}"><button class="valider">Valider</button></a>
-                            <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}"><button class="refuser">Rejeter</button></a>
-                        {% else %}-{% endif %}
+                            <div class="action-buttons">
+                                <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">
+                                    <button class="refuser">Rejeter</button>
+                                </a>
+
+                                <a href="{{ url_for('valider_depot', depot_id=d.id) }}">
+                                    <button class="valider">Valider</button>
+                                </a>
+                            </div>
+                        {% else %}
+                            -
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -313,7 +337,9 @@ h3{
             {% if depots_paginated.has_prev %}
                 <a href="{{ url_for('admin_deposits', page=depots_paginated.prev_num) }}">« Précédent</a>
             {% endif %}
+
             Page {{ depots_paginated.page }} sur {{ depots_paginated.pages }}
+
             {% if depots_paginated.has_next %}
                 <a href="{{ url_for('admin_deposits', page=depots_paginated.next_num) }}">Suivant »</a>
             {% endif %}
@@ -351,9 +377,17 @@ h3{
                     <td>{{ r.pays }}</td>
                     <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
                     <td>{{ r.statut }}</td>
+
                     <td>
-                        <a href="/admin/retraits/valider/{{ r.id }}"><button class="valider">Valider</button></a>
-                        <a href="/admin/retraits/refuser/{{ r.id }}"><button class="refuser">Refuser</button></a>
+                        <div class="action-buttons">
+                            <a href="/admin/retraits/refuser/{{ r.id }}">
+                                <button class="refuser">Refuser</button>
+                            </a>
+
+                            <a href="/admin/retraits/valider/{{ r.id }}">
+                                <button class="valider">Valider</button>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -365,7 +399,9 @@ h3{
             {% if retraits_paginated.has_prev %}
                 <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Précédent</a>
             {% endif %}
+
             Page {{ retraits_paginated.page }} sur {{ retraits_paginated.pages }}
+
             {% if retraits_paginated.has_next %}
                 <a href="{{ url_for('admin_deposits', page=retraits_paginated.next_num) }}">Suivant »</a>
             {% endif %}
