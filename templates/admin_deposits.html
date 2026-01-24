@@ -312,7 +312,7 @@ h3{
                 {% for d in depots %}
                 <tr>
                     <td>{{ d.id }}</td>
-                    <td>{{ d.phone }}</td>
+                    <td>{{ d.username_display }}</td>
                     <td>{{ d.email or '-' }}</td>
                     <td>{{ d.user_name or '-' }}</td>
                     <td>{{ d.operator or '-' }}</td>
@@ -327,13 +327,12 @@ h3{
                                 <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">
                                     <button class="refuser">Rejeter</button>
                                 </a>
-
                                 <a href="{{ url_for('valider_depot', depot_id=d.id) }}">
                                     <button class="valider">Valider</button>
                                 </a>
                             </div>
                         {% else %}
-                            -
+                            <span class="badge level3">{{ d.statut|capitalize }}</span>
                         {% endif %}
                     </td>
                 </tr>

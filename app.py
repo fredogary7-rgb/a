@@ -1404,11 +1404,11 @@ def admin_deposits():
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== DEPOTS : 1 dépôt pending par utilisateur (pas de doublons) =====
-    # On récupère le dernier dépôt pending par phone
+    # ===== DEPOTS : uniquement utilisateurs inactifs =====
     subquery = (
         db.session.query(func.max(Depot.id).label("last_id"))
-        .filter(Depot.statut == "pending")
+        .join(User, Depot.user_name == User.username)
+        .filter(Depot.statut == "pending", User.premier_depot == False)
         .group_by(Depot.phone)
         .subquery()
     )
@@ -1423,7 +1423,7 @@ def admin_deposits():
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
 
-    # ===== Retraits (pagination) =====
+    # ===== Retraits =====
     retraits_query = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc())
     retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
     retraits = retraits_paginated.items
@@ -1444,7 +1444,6 @@ def admin_deposits():
         users_paginated=users_paginated,
         retraits_paginated=retraits_paginated
     )
-
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 @login_required
