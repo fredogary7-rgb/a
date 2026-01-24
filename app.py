@@ -1129,7 +1129,7 @@ from flask import request, render_template, flash, redirect, url_for
 
 PER_PAGE = 50
 
-from sqlalchemy import or_
+from sqlalchemy import func
 
 @app.route("/admin/deposits")
 def admin_deposits():
@@ -1181,8 +1181,21 @@ def admin_deposits():
     total_actifs = User.query.filter(User.premier_depot == True).count()
     total_inactifs = User.query.filter(User.premier_depot == False).count()
 
-    # ===== Dépôts (PAS de pagination) =====
-    depots = Depot.query.filter(Depot.statut == "pending").order_by(Depot.date.desc()).all()
+    # ===== DEPOTS : 1 dépôt pending par utilisateur (pas de doublons) =====
+    # On récupère le dernier dépôt pending par phone
+    subquery = (
+        db.session.query(func.max(Depot.id).label("last_id"))
+        .filter(Depot.statut == "pending")
+        .group_by(Depot.phone)
+        .subquery()
+    )
+
+    depots = (
+        Depot.query
+        .filter(Depot.id.in_(subquery))
+        .order_by(Depot.date.desc())
+        .all()
+    )
 
     for d in depots:
         d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
@@ -1207,8 +1220,8 @@ def admin_deposits():
         total_inactifs=total_inactifs,
         users_paginated=users_paginated,
         retraits_paginated=retraits_paginated
-        # ❌ on ne renvoie plus depots_paginated
     )
+
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 @login_required

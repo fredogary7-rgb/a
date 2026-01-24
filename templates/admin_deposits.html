@@ -194,6 +194,7 @@ h3{
 
 <body>
 <div class="overlay" id="overlay"></div>
+
 <div class="sidebar" id="sidebar">
     <a href="/admin/deposits"><i class="fa fa-home"></i> Tableau de bord</a>
     <a href="/logout"><i class="fa fa-sign-out"></i> Déconnexion</a>
@@ -217,274 +218,283 @@ h3{
 
     <!-- Onglets (5 tabs) -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Tous les utilisateurs</button>
-        <button class="tab-btn" onclick="showTab(event,'depotsTab')">💰 Dépôts</button>
-        <button class="tab-btn" onclick="showTab(event,'retraitsTab')">💸 Retraits</button>
-        <button class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs</button>
-        <button class="tab-btn" onclick="showTab(event,'inactifsTab')">❌ Inactifs</button>
+        <button type="button" class="tab-btn active" onclick="showTab(event,'usersTab')">👥 Tous les utilisateurs</button>
+        <button type="button" class="tab-btn" onclick="showTab(event,'depotsTab')">💰 Dépôts</button>
+        <button type="button" class="tab-btn" onclick="showTab(event,'retraitsTab')">💸 Retraits</button>
+        <button type="button" class="tab-btn" onclick="showTab(event,'actifsTab')">✅ Actifs</button>
+        <button type="button" class="tab-btn" onclick="showTab(event,'inactifsTab')">❌ Inactifs</button>
     </div>
 
-<div class="search-box">
-    <input type="text" id="userSearch" placeholder="Rechercher un utilisateur (username, email, téléphone, parrain)...">
-</div>
+    <div class="search-box">
+        <input type="text" id="userSearch" placeholder="Rechercher un utilisateur (username, email, téléphone, parrain)...">
+    </div>
 
-<!-- ===== USERS (TOUS) ===== -->
-<div id="usersTab" class="tab-content active">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom d'utilisateur</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Parrain</th>
-                    <th>Niveau 1</th>
-                    <th>Niveau 2</th>
-                    <th>Niveau 3</th>
-                    <th>Premier dépôt</th>
-                    <th>Date d'inscription</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.phone }}</td>
-                    <td>{{ u.parrain }}</td>
-                    <td><span class="badge level1">{{ u.niveau1 }}</span></td>
-                    <td><span class="badge level2">{{ u.niveau2 }}</span></td>
-                    <td><span class="badge level3">{{ u.niveau3 }}</span></td>
-                    <td>
-                        {% if u.premier_depot %}
-                            <span class="badge level3">Actif</span>
-                        {% else %}
-                            <span class="badge level1">Inactif</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- ===== USERS (TOUS) ===== -->
+    <div id="usersTab" class="tab-content active">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Niveau 1</th>
+                        <th>Niveau 2</th>
+                        <th>Niveau 3</th>
+                        <th>Premier dépôt</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td><span class="badge level1">{{ u.niveau1 }}</span></td>
+                        <td><span class="badge level2">{{ u.niveau2 }}</span></td>
+                        <td><span class="badge level3">{{ u.niveau3 }}</span></td>
+                        <td>
+                            {% if u.premier_depot %}
+                                <span class="badge level3">Actif</span>
+                            {% else %}
+                                <span class="badge level1">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                    </tr>
+                    {% endfor %}
 
-        <!-- Pagination utilisateurs -->
-        <div class="pagination">
-            {% if users_paginated.has_prev %}
-                <a href="{{ url_for('admin_deposits', page=users_paginated.prev_num) }}">« Précédent</a>
-            {% endif %}
-            Page {{ users_paginated.page }} sur {{ users_paginated.pages }}
-            {% if users_paginated.has_next %}
-                <a href="{{ url_for('admin_deposits', page=users_paginated.next_num) }}">Suivant »</a>
+                    {% if users|length == 0 %}
+                    <tr>
+                        <td colspan="9">Aucun utilisateur trouvé.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <!-- Pagination utilisateurs -->
+            {% if users_paginated %}
+            <div class="pagination">
+                {% if users_paginated.has_prev %}
+                    <a href="{{ url_for('admin_deposits', page=users_paginated.prev_num) }}">« Précédent</a>
+                {% endif %}
+
+                Page {{ users_paginated.page }} sur {{ users_paginated.pages }}
+
+                {% if users_paginated.has_next %}
+                    <a href="{{ url_for('admin_deposits', page=users_paginated.next_num) }}">Suivant »</a>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
     </div>
-</div>
 
-<!-- ===== DEPOTS ===== -->
-<div id="depotsTab" class="tab-content">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Utilisateur</th>
-                    <th>Email</th>
-                    <th>Nom</th>
-                    <th>Opérateur</th>
-                    <th>Pays</th>
-                    <th>Montant</th>
-                    <th>Statut</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in depots %}
-                <tr>
-                    <td>{{ d.id }}</td>
-                    <td>{{ d.phone }}</td>
-                    <td>{{ d.email or '-' }}</td>
-                    <td>{{ d.user_name or '-' }}</td>
-                    <td>{{ d.operator or '-' }}</td>
-                    <td>{{ d.country or '-' }}</td>
-                    <td>{{ d.montant }}</td>
-                    <td class="status-{{ d.statut }}">{{ d.statut }}</td>
-                    <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
+    <!-- ===== DEPOTS ===== -->
+    <div id="depotsTab" class="tab-content">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilisateur</th>
+                        <th>Email</th>
+                        <th>Nom</th>
+                        <th>Opérateur</th>
+                        <th>Pays</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in depots %}
+                    <tr>
+                        <td>{{ d.id }}</td>
+                        <td>{{ d.phone }}</td>
+                        <td>{{ d.email or '-' }}</td>
+                        <td>{{ d.user_name or '-' }}</td>
+                        <td>{{ d.operator or '-' }}</td>
+                        <td>{{ d.country or '-' }}</td>
+                        <td>{{ d.montant }}</td>
+                        <td class="status-{{ d.statut }}">{{ d.statut }}</td>
+                        <td>{{ d.date.strftime('%d/%m/%Y %H:%M') if d.date else '-' }}</td>
+                        <td>
+                            {% if d.statut == 'pending' %}
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">
+                                        <button type="button" class="refuser">Rejeter</button>
+                                    </a>
 
-                    <td>
-                        {% if d.statut == 'pending' %}
+                                    <a href="{{ url_for('valider_depot', depot_id=d.id) }}">
+                                        <button type="button" class="valider">Valider</button>
+                                    </a>
+                                </div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if depots|length == 0 %}
+                    <tr>
+                        <td colspan="10">Aucun dépôt en attente.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== RETRAITS ===== -->
+    <div id="retraitsTab" class="tab-content">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilisateur</th>
+                        <th>Montant</th>
+                        <th>Frais</th>
+                        <th>Moyen</th>
+                        <th>Numéro</th>
+                        <th>Pays</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in retraits %}
+                    <tr>
+                        <td>{{ r.id }}</td>
+                        <td>{{ r.username }}</td>
+                        <td>{{ r.montant }} XOF</td>
+                        <td>{{ r.frais }} XOF</td>
+                        <td>{{ r.payment_method }}</td>
+                        <td>{{ r.phone }}</td>
+                        <td>{{ r.pays }}</td>
+                        <td>{{ r.date.strftime("%d/%m/%Y") if r.date else '-' }}</td>
+                        <td>{{ r.statut }}</td>
+
+                        <td>
+                            {% if r.statut == 'pending' %}
                             <div class="action-buttons">
-                                <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">
-                                    <button class="refuser">Rejeter</button>
+                                <a href="/admin/retraits/refuser/{{ r.id }}">
+                                    <button type="button" class="refuser">Refuser</button>
                                 </a>
 
-                                <a href="{{ url_for('valider_depot', depot_id=d.id) }}">
-                                    <button class="valider">Valider</button>
+                                <a href="/admin/retraits/valider/{{ r.id }}">
+                                    <button type="button" class="valider">Valider</button>
                                 </a>
                             </div>
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
 
-                {% if depots|length == 0 %}
-                <tr>
-                    <td colspan="10">Aucun dépôt en attente.</td>
-                </tr>
+                    {% if retraits|length == 0 %}
+                    <tr>
+                        <td colspan="10">Aucun retrait en attente.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <!-- Pagination retraits -->
+            {% if retraits_paginated %}
+            <div class="pagination">
+                {% if retraits_paginated.has_prev %}
+                    <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Précédent</a>
                 {% endif %}
-            </tbody>
-        </table>
 
-        <!-- ❌ PAS de pagination dépôts (comme tu veux) -->
-    </div>
-</div>
+                Page {{ retraits_paginated.page }} sur {{ retraits_paginated.pages }}
 
-<!-- ===== RETRAITS ===== -->
-<div id="retraitsTab" class="tab-content">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Utilisateur</th>
-                    <th>Montant</th>
-                    <th>Frais</th>
-                    <th>Moyen</th>
-                    <th>Numéro</th>
-                    <th>Pays</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in retraits %}
-                <tr>
-                    <td>{{ r.id }}</td>
-                    <td>{{ r.username }}</td>
-                    <td>{{ r.montant }} XOF</td>
-                    <td>{{ r.frais }} XOF</td>
-                    <td>{{ r.payment_method }}</td>
-                    <td>{{ r.phone }}</td>
-                    <td>{{ r.pays }}</td>
-                    <td>{{ r.date.strftime("%d/%m/%Y") }}</td>
-                    <td>{{ r.statut }}</td>
-
-                    <td>
-                        <div class="action-buttons">
-                            <a href="/admin/retraits/refuser/{{ r.id }}">
-                                <button class="refuser">Refuser</button>
-                            </a>
-
-                            <a href="/admin/retraits/valider/{{ r.id }}">
-                                <button class="valider">Valider</button>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-
-                {% if retraits|length == 0 %}
-                <tr>
-                    <td colspan="10">Aucun retrait en attente.</td>
-                </tr>
+                {% if retraits_paginated.has_next %}
+                    <a href="{{ url_for('admin_deposits', page=retraits_paginated.next_num) }}">Suivant »</a>
                 {% endif %}
-            </tbody>
-        </table>
-
-        <!-- Pagination retraits -->
-        <div class="pagination">
-            {% if retraits_paginated.has_prev %}
-                <a href="{{ url_for('admin_deposits', page=retraits_paginated.prev_num) }}">« Précédent</a>
-            {% endif %}
-
-            Page {{ retraits_paginated.page }} sur {{ retraits_paginated.pages }}
-
-            {% if retraits_paginated.has_next %}
-                <a href="{{ url_for('admin_deposits', page=retraits_paginated.next_num) }}">Suivant »</a>
+            </div>
             {% endif %}
         </div>
     </div>
-</div>
 
-<!-- ===== ACTIFS (SEUL) ===== -->
-<div id="actifsTab" class="tab-content">
-    <div class="table-container">
+    <!-- ===== ACTIFS ===== -->
+    <div id="actifsTab" class="tab-content">
+        <div class="table-container">
+            <h3>✅ Utilisateurs Actifs <span class="badge level3">{{ total_actifs }}</span></h3>
 
-        <h3>✅ Utilisateurs Actifs <span class="badge level3">{{ total_actifs }}</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in actifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                    </tr>
+                    {% endfor %}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom d'utilisateur</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Parrain</th>
-                    <th>Date d'inscription</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in actifs %}
-                <tr>
-                    <td>{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.phone }}</td>
-                    <td>{{ u.parrain }}</td>
-                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                </tr>
-                {% endfor %}
-
-                {% if actifs|length == 0 %}
-                <tr>
-                    <td colspan="5">Aucun utilisateur actif.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
-
+                    {% if actifs|length == 0 %}
+                    <tr>
+                        <td colspan="5">Aucun utilisateur actif.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 
-<!-- ===== INACTIFS (SEUL) ===== -->
-<div id="inactifsTab" class="tab-content">
-    <div class="table-container">
+    <!-- ===== INACTIFS ===== -->
+    <div id="inactifsTab" class="tab-content">
+        <div class="table-container">
+            <h3>❌ Utilisateurs Inactifs <span class="badge level1">{{ total_inactifs }}</span></h3>
 
-        <h3>❌ Utilisateurs Inactifs <span class="badge level1">{{ total_inactifs }}</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Parrain</th>
+                        <th>Date d'inscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in inactifs %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
+                    </tr>
+                    {% endfor %}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom d'utilisateur</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Parrain</th>
-                    <th>Date d'inscription</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in inactifs %}
-                <tr>
-                    <td>{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.phone }}</td>
-                    <td>{{ u.parrain }}</td>
-                    <td>{{ u.date_creation.strftime('%d/%m/%Y') if u.date_creation else '-' }}</td>
-                </tr>
-                {% endfor %}
-
-                {% if inactifs|length == 0 %}
-                <tr>
-                    <td colspan="5">Aucun utilisateur inactif.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
-
+                    {% if inactifs|length == 0 %}
+                    <tr>
+                        <td colspan="5">Aucun utilisateur inactif.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 
 </div>
 
@@ -493,24 +503,25 @@ const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const menuToggle = document.getElementById("menuToggle");
 
-menuToggle.onclick = () => {
+menuToggle.addEventListener("click", () => {
     sidebar.classList.add("active");
     overlay.classList.add("active");
-};
+});
 
-overlay.onclick = () => {
+overlay.addEventListener("click", () => {
     sidebar.classList.remove("active");
     overlay.classList.remove("active");
-};
+});
 
 function showTab(e, tabId){
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
-    document.getElementById(tabId).classList.add('active');
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
 
     const btn = e.currentTarget || e.target;
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 }
 
 document.addEventListener("DOMContentLoaded", () => {
