@@ -6,32 +6,34 @@ from datetime import datetime, timedelta, timezone, date
 from functools import wraps
 from urllib.parse import urlencode
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, create_engine
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine
+
 # ─── FLASK APP ───────────────────────────────────────────
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "ma_cle_ultra_secrete"
 
-# ─── ENV VARIABLES ───────────────────────────────────────
-
 # ─── UPLOAD CONFIG ───────────────────────────────────────
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 # Dossiers pour les uploads
 UPLOAD_FOLDER_PROFILE = 'static/uploads/profiles'
 UPLOAD_FOLDER_VLOGS = 'static/vlogs'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+UPLOAD_FOLDER_APPS = os.path.join(os.getcwd(), "static", "uploads", "apps")  # chemin absolu correct
 
-
-# Initialisation
+# Création des dossiers si inexistant
 os.makedirs(UPLOAD_FOLDER_PROFILE, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_APPS, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_VLOGS, exist_ok=True)
 
-# Configuration dans Flask
+# Configuration Flask
 app.config['UPLOAD_FOLDER_PROFILE'] = UPLOAD_FOLDER_PROFILE
-UPLOAD_FOLDER_APPS = "static/uploads/apps"
+app.config['UPLOAD_FOLDER_VLOGS'] = UPLOAD_FOLDER_VLOGS
 app.config['UPLOAD_FOLDER_APPS'] = UPLOAD_FOLDER_APPS
+
 def allowed_file(filename):
     """
     Vérifie si le fichier uploadé est autorisé.
@@ -59,6 +61,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # ─── INITIALISATION DE LA BASE DE DONNÉES ───────────────
 db = SQLAlchemy(app)
+
 
 from sqlalchemy import text
 from flask_migrate import Migrate
@@ -788,20 +791,6 @@ def paiement_en_cours():
         return redirect(url_for("dashboard_page"))
     return render_template("paiement_en_cours.html", user=user)
 
-from flask import send_from_directory, abort
-import os
-
-@app.route("/download/apk/<filename>")
-@login_required
-def download_apk(filename):
-    apk_folder = app.config['UPLOAD_FOLDER_APPS']  # "static/uploads/apps"
-
-    # Sécurité : on vérifie que le fichier demandé existe réellement
-    if not os.path.isfile(os.path.join(apk_folder, filename)):
-        abort(404)
-
-    # Force le téléchargement avec le vrai nom du fichier
-    return send_from_directory(apk_folder, filename, as_attachment=True)
 
 @app.route("/chaine")
 def whatsapp_channel():
@@ -1058,15 +1047,14 @@ def whatsapp_number():
         print("Erreur VCF :", e)
 
     return redirect("/dashboard")
-# ===============================
-# WEBHOOK MONEYFUSION
+
 @app.route("/apk")
 @login_required
 def apk_page():
     """
     Retourne la liste des APK disponibles.
     Sur Render, les fichiers LFS ne sont pas garantis dans le FS,
-    donc on utilise une liste fixe.
+    donc on peut utiliser une liste fixe.
     """
     apk_files = [
         "capcut.apk",
@@ -1075,6 +1063,20 @@ def apk_page():
     ]
 
     return render_template("apk.html", apk_files=apk_files)
+
+# ─── ROUTE DE TÉLÉCHARGEMENT ────────────────────────────
+@app.route("/download/apk/<filename>")
+@login_required
+def download_apk(filename):
+    apk_folder = app.config['UPLOAD_FOLDER_APPS']
+    file_path = os.path.join(apk_folder, filename)
+
+    # Sécurité : on vérifie que le fichier demandé existe réellement
+    if not os.path.isfile(file_path):
+        abort(404)
+
+    # Force le téléchargement avec le vrai nom du fichier
+    return send_from_directory(apk_folder, filename, as_attachment=True)
 
 @app.route("/ecom")
 def ecom():
