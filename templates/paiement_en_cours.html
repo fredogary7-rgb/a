@@ -53,14 +53,20 @@ const menuToggle = document.getElementById("menuToggle");
 menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
 overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
 
-// ✅ Vérifier toutes les 5 secondes si le compte est activé
+// ✅ Vérifier toutes les 3 secondes si le compte est activé
 setInterval(async () => {
-    const res = await fetch('/api/check-activation');
-    const data = await res.json();
-    if(data.activated){
-        window.location.href = '/dashboard_page';
+    try{
+        const res = await fetch('/api/check-activation', { cache: "no-store" });
+        const data = await res.json();
+
+        if(data.activated){
+            window.location.href = '/dashboard';  // ✅ BONNE URL
+        }
+    }catch(e){
+        console.log("Erreur check activation:", e);
     }
-}, 5000);
+}, 3000);
 </script>
+
 </body>
 </html>
