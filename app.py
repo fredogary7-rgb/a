@@ -1047,6 +1047,7 @@ def whatsapp_number():
         print("Erreur VCF :", e)
 
     return redirect("/dashboard")
+
 @app.route("/apk")
 @login_required
 def apk_page():
@@ -1072,7 +1073,6 @@ def apk_page():
     ]
 
     return render_template("apk.html", apk_files=apk_files)
-
 
 @app.route("/ecom")
 def ecom():
