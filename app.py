@@ -1058,17 +1058,17 @@ def apk_page():
         {
             "name": "Netflix",
             "filename": "Netflix.apk",
-            "link": "https://drive.google.com/uc?export=download&id=1-4idwrgNxjNilpLzR8zHkdMroVo41g9b"
+            "link": "https://drive.google.com/file/d/1afSa24_oVoTWRCgpO07Lbu4qjKMUhwLC/view?usp=drivesdk"
         },
         {
             "name": "Chat",
             "filename": "chat.apk",
-            "link": "https://drive.google.com/uc?export=download&id=1hwEzqwQWV2FKnTg1u0QAWrPjjOEyZCyj"
+            "link": "https://drive.google.com/file/d/1-4idwrgNxjNilpLzR8zHkdMroVo41g9b/view?usp=drivesdk"
         },
         {
             "name": "CapCut",
             "filename": "capcut.apk",
-            "link": "https://drive.google.com/uc?export=download&id=1afSa24_oVoTWRCgpO07Lbu4qjKMUhwLC"
+            "link": "https://drive.google.com/file/d/1hwEzqwQWV2FKnTg1u0QAWrPjjOEyZCyj/view?usp=drivesdk"
         }
     ]
 
