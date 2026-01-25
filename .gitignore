@@ -1,11 +1,11 @@
-# Ignorer toutes les vidéos
+# Ignorer toutes les vidéos sauf tik.mp4
 /static/videos/*.mp4
 !static/videos/tik.mp4
 
-# Ignorer tous les APK sauf chat et Netflix
-/static/uploads/apps/*.apk
-!static/uploads/apps/chat.apk
-!static/uploads/apps/Netflix.apk
+# Suivi des APK dans static/uploads/apps
+# On ne veut pas ignorer ce dossier
+# Donc on supprime toute mention .apk
+# Ne rien mettre ici pour ce dossier si tu veux que git les suive
 
 # Python cache
 __pycache__/
@@ -18,5 +18,3 @@ migrations/__pycache__/
 # Autres dossiers temporaires
 /static/uploads/profiles/
 internal_uploads/
-
-!static/uploads/apps/*.apk
