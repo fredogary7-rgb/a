@@ -788,12 +788,19 @@ def paiement_en_cours():
         return redirect(url_for("dashboard_page"))
     return render_template("paiement_en_cours.html", user=user)
 
-from flask import send_from_directory
+from flask import send_from_directory, abort
+import os
 
 @app.route("/download/apk/<filename>")
 @login_required
 def download_apk(filename):
-    apk_folder = app.config['UPLOAD_FOLDER_APPS']
+    apk_folder = app.config['UPLOAD_FOLDER_APPS']  # "static/uploads/apps"
+
+    # Sécurité : on vérifie que le fichier demandé existe réellement
+    if not os.path.isfile(os.path.join(apk_folder, filename)):
+        abort(404)
+
+    # Force le téléchargement avec le vrai nom du fichier
     return send_from_directory(apk_folder, filename, as_attachment=True)
 
 @app.route("/chaine")
