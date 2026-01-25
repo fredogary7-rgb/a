@@ -1142,7 +1142,7 @@ def retrait_page():
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
-    FRAIS = 500
+    FRAIS = 0
 
     # Stats pour le template : afficher le solde parrainage
     stats = {
