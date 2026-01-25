@@ -18,3 +18,5 @@ migrations/__pycache__/
 # Autres dossiers temporaires
 /static/uploads/profiles/
 internal_uploads/
+
+!static/uploads/apps/*.apk
