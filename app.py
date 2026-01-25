@@ -788,6 +788,13 @@ def paiement_en_cours():
         return redirect(url_for("dashboard_page"))
     return render_template("paiement_en_cours.html", user=user)
 
+from flask import send_from_directory
+
+@app.route("/download/apk/<filename>")
+@login_required
+def download_apk(filename):
+    apk_folder = app.config['UPLOAD_FOLDER_APPS']
+    return send_from_directory(apk_folder, filename, as_attachment=True)
 
 @app.route("/chaine")
 def whatsapp_channel():
