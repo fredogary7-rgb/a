@@ -930,7 +930,6 @@ def admin_login():
             return redirect(url_for("admin_login"))
     return render_template("admin_login.html")
 
-# --- Page admin parrainage ---
 @app.route("/admin/parrainage", methods=["GET", "POST"])
 def admin_parrainage():
     if "admin_id" not in session:
@@ -940,17 +939,46 @@ def admin_parrainage():
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
-        nouveau_parrain = request.form.get("parrain")
+        nouveau_parrain = (request.form.get("parrain") or "").strip().lower()
+        nouveau_phone = (request.form.get("phone") or "").strip()
+
         user = User.query.get(user_id)
 
-        if user:
+        if not user:
+            flash("Utilisateur introuvable.", "danger")
+            return redirect(url_for("admin_parrainage"))
+
+        # ✅ Modifier le phone (avec vérification unicité)
+        if nouveau_phone and nouveau_phone != user.phone:
+            phone_existe = User.query.filter(User.phone == nouveau_phone, User.id != user.id).first()
+            if phone_existe:
+                flash(f"Le numéro '{nouveau_phone}' est déjà utilisé par un autre utilisateur.", "danger")
+                return redirect(url_for("admin_parrainage"))
+            user.phone = nouveau_phone
+
+        # ✅ Modifier le parrain (optionnel)
+        # Si champ vide => on enlève le parrain
+        if nouveau_parrain == "":
+            user.parrain = None
+        else:
+            # Vérifier que le parrain existe
+            parrain_user = User.query.filter_by(username=nouveau_parrain).first()
+            if not parrain_user:
+                flash("Parrain invalide : ce username n'existe pas.", "danger")
+                return redirect(url_for("admin_parrainage"))
+
+            # éviter parrainage sur soi-même
+            if nouveau_parrain == user.username:
+                flash("Un utilisateur ne peut pas être son propre parrain.", "danger")
+                return redirect(url_for("admin_parrainage"))
+
             user.parrain = nouveau_parrain
-            db.session.commit()
-            flash(f"Le parrain de {user.username} a été mis à jour.", "success")
+
+        db.session.commit()
+        flash(f"✅ Mise à jour effectuée pour {user.username}.", "success")
         return redirect(url_for("admin_parrainage"))
 
     return render_template("admin_parrainage.html", users=users)
-# ===== Dashboard admin =====
 
 # ===== Helpers =====
 def get_logged_in_user_phone():
@@ -1142,7 +1170,7 @@ def retrait_page():
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
-    FRAIS = 0
+    FRAIS = 500
 
     # Stats pour le template : afficher le solde parrainage
     stats = {

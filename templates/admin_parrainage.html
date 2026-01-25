@@ -24,17 +24,25 @@ button { background:#fff; color:#ff758c; cursor:pointer; }
 <table id="usersTable">
     <tr>
         <th>Utilisateur</th>
+        <th>Numéro</th>
         <th>Parrain actuel</th>
         <th>Modifier</th>
     </tr>
+
     {% for user in users %}
     <tr>
         <form method="POST">
-            <td>{{ user.username }}</td>
+            <td><b>{{ user.username }}</b></td>
+
+            <td>
+                <input type="text" name="phone" value="{{ user.phone }}" required>
+            </td>
+
             <td>{{ user.parrain or "-" }}</td>
+
             <td>
                 <input type="hidden" name="user_id" value="{{ user.id }}">
-                <input type="text" name="parrain" placeholder="Nouveau parrain">
+                <input type="text" name="parrain" placeholder="Nouveau parrain (username)">
                 <button type="submit">Mettre à jour</button>
             </td>
         </form>
