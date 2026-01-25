@@ -1047,36 +1047,32 @@ def whatsapp_number():
         print("Erreur VCF :", e)
 
     return redirect("/dashboard")
-
 @app.route("/apk")
 @login_required
 def apk_page():
     """
-    Retourne la liste des APK disponibles.
-    Sur Render, les fichiers LFS ne sont pas garantis dans le FS,
-    donc on peut utiliser une liste fixe.
+    Retourne la liste des APK disponibles via liens Google Drive.
     """
     apk_files = [
-        "capcut.apk",
-        "chat.apk",
-        "Netflix.apk"
+        {
+            "name": "Netflix",
+            "filename": "Netflix.apk",
+            "link": "https://drive.google.com/uc?export=download&id=1-4idwrgNxjNilpLzR8zHkdMroVo41g9b"
+        },
+        {
+            "name": "Chat",
+            "filename": "chat.apk",
+            "link": "https://drive.google.com/uc?export=download&id=1hwEzqwQWV2FKnTg1u0QAWrPjjOEyZCyj"
+        },
+        {
+            "name": "CapCut",
+            "filename": "capcut.apk",
+            "link": "https://drive.google.com/uc?export=download&id=1afSa24_oVoTWRCgpO07Lbu4qjKMUhwLC"
+        }
     ]
 
     return render_template("apk.html", apk_files=apk_files)
 
-# ─── ROUTE DE TÉLÉCHARGEMENT ────────────────────────────
-@app.route("/download/apk/<filename>")
-@login_required
-def download_apk(filename):
-    apk_folder = app.config['UPLOAD_FOLDER_APPS']
-    file_path = os.path.join(apk_folder, filename)
-
-    # Sécurité : on vérifie que le fichier demandé existe réellement
-    if not os.path.isfile(file_path):
-        abort(404)
-
-    # Force le téléchargement avec le vrai nom du fichier
-    return send_from_directory(apk_folder, filename, as_attachment=True)
 
 @app.route("/ecom")
 def ecom():

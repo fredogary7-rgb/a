@@ -11,93 +11,27 @@
 <style>
 /* RESET */
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-
-body {
-    background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);
-    min-height: 100vh;
-    padding: 20px;
-    color: #fff;
-}
+body { background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199); min-height: 100vh; padding: 20px; color: #fff; }
 
 /* CARD INFO */
-.info-box {
-    background: rgba(255,255,255,0.20);
-    backdrop-filter: blur(12px);
-    padding: 20px;
-    border-radius: 20px;
-    margin-bottom: 25px;
-    border: 1px solid rgba(255,255,255,0.3);
-}
-
-.info-box h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.info-box p {
-    font-size: 14px;
-    opacity: 0.9;
-    line-height: 1.6;
-}
+.info-box { background: rgba(255,255,255,0.20); backdrop-filter: blur(12px); padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.3); }
+.info-box h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.info-box p { font-size: 14px; opacity: 0.9; line-height: 1.6; }
 
 /* APP CARD */
-.app-card {
-    background: rgba(255,255,255,0.25);
-    backdrop-filter: blur(10px);
-    padding: 18px;
-    margin-bottom: 15px;
-    border-radius: 20px;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.35);
-}
+.app-card { background: rgba(255,255,255,0.25); backdrop-filter: blur(10px); padding: 18px; margin-bottom: 15px; border-radius: 20px; color: #fff; border: 1px solid rgba(255,255,255,0.35); }
+.app-card h3 { font-size: 18px; margin-bottom: 8px; }
+.app-card p { font-size: 13px; opacity: 0.85; margin-bottom: 10px; }
 
-.app-card h3 {
-    font-size: 18px;
-    margin-bottom: 8px;
-}
-
-.app-card p {
-    font-size: 13px;
-    opacity: 0.85;
-    margin-bottom: 10px;
-}
-
-.btn-download {
-    display: inline-block;
-    padding: 10px 20px;
-    background: #07184d;
-    color: #fff;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.btn-download:hover {
-    background: #15306b;
-}
+.btn-download { display: inline-block; padding: 10px 20px; background: #07184d; color: #fff; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 600; }
+.btn-download:hover { background: #15306b; }
 
 /* OFFICIAL LINKS */
-.link-row {
-    margin-top: 10px;
-}
-
-.link-row a {
-    margin-right: 15px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    text-decoration: underline;
-}
+.link-row { margin-top: 10px; }
+.link-row a { margin-right: 15px; font-size: 14px; font-weight: 600; color: #fff; text-decoration: underline; }
 
 /* FOOTER */
-footer {
-    margin-top: 40px;
-    text-align: center;
-    font-size: 13px;
-    opacity: 0.8;
-}
+footer { margin-top: 40px; text-align: center; font-size: 13px; opacity: 0.8; }
 </style>
 </head>
 
@@ -106,21 +40,20 @@ footer {
 <div class="info-box">
     <h2>Applications Premium et Moyens Officiels pour les Obtenir</h2>
     <p>
-        Ci-dessous vous trouverez les applications que nous avons rendues disponibles au téléchargement.  
-        Toutes proviennent de sources fiables. Nous rappelons que les versions modifiées sont illégales  
+        Ci-dessous vous trouverez les applications que nous avons rendues disponibles au téléchargement.
+        Toutes proviennent de sources fiables. Nous rappelons que les versions modifiées sont illégales
         et dangereuses pour votre appareil.
     </p>
 </div>
 
 {% for file in apk_files %}
 <div class="app-card">
-    <h3><i class="fa fa-robot"></i> {{ file }}</h3>
+    <h3><i class="fa fa-robot"></i> {{ file.name }} ({{ file.filename }})</h3>
     <p>Fichier APK disponible en téléchargement direct depuis LuminaStar.</p>
 
-<a class="btn-download" href="{{ url_for('static', filename='uploads/apps/' + file) }}" download>
-    <i class="fa fa-download"></i> Télécharger
-</a>
-
+    <a class="btn-download" href="{{ file.link }}" download="{{ file.filename }}">
+        <i class="fa fa-download"></i> Télécharger
+    </a>
 </div>
 {% endfor %}
 
