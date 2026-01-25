@@ -1047,19 +1047,23 @@ def whatsapp_number():
 # ===============================
 # WEBHOOK MONEYFUSION
 from flask import render_template
+from flask_login import login_required
+
 @app.route("/apk")
 @login_required
 def apk_page():
-    apk_folder = app.config['UPLOAD_FOLDER_APPS']  # "static/uploads/apps"
-    files = os.listdir(apk_folder)
-    
-    # Filtrer uniquement .apk
-    apk_files = [f for f in files if f.endswith(".apk")]
-    
-    # Passer la bonne liste au template
+    """
+    Retourne la liste des APK disponibles.
+    Sur Render, les fichiers LFS ne sont pas garantis dans le FS, donc on utilise une liste fixe.
+    """
+    apk_files = [
+        "capcut.apk",
+        "chat.apk",
+        "Netflix.apk"
+    ]
+
     return render_template("apk.html", apk_files=apk_files)
 
-from datetime import date  # <-- IMPORT OBLIGATOIRE
 
 @app.route("/ecom")
 def ecom():
