@@ -765,7 +765,7 @@ def bkapay_retour():
 
     if status == "success":
         flash("Paiement reçu ! Vérification en cours...", "success")
-        return redirect(url_for("paiement_en_cours"))
+        return redirect(url_for("dashboard_pay_ok"))
 
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque", status="failed"))
@@ -791,6 +791,50 @@ def paiement_en_cours():
         return redirect(url_for("dashboard_page"))
     return render_template("paiement_en_cours.html", user=user)
 
+@app.route("/dashboard_pay_ok")
+def dashboard_pay_ok():
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
+        return redirect(url_for("connexion_page"))
+
+    user = db.session.get(User, user_id)
+    if not user:
+        session.clear()
+        flash("Session invalide, veuillez vous reconnecter.", "danger")
+        return redirect(url_for("connexion_page"))
+
+    # Génération du lien de parrainage
+    referral_code = user.username
+    referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
+
+    # ✅ NOUVELLE LOGIQUE UNIQUE :
+    # On accepte uniquement si BKApay a validé un dépôt
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+
+    # ❌ On ne vérifie plus premier_depot ici
+    if not paiement_ok:
+        return redirect(url_for("dashboard_bloque"))
+
+    # 🔹 Stats globales
+    total_users, total_deposits, total_withdrawn = get_global_stats()
+
+    revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
+
+    return render_template(
+        "dashboard.html",
+        user=user,
+        points=user.points or 0,
+        revenu_cumule=revenu_cumule,
+        solde_parrainage=user.solde_parrainage or 0,
+        solde_revenu=user.solde_revenu or 0,
+        total_users=total_users,
+        total_withdrawn_user=user.total_retrait or 0,
+        total_deposits=total_deposits,
+        referral_code=referral_code,
+        referral_link=referral_link,
+        total_withdrawn=total_withdrawn
+    )
 
 @app.route("/chaine")
 def whatsapp_channel():
@@ -813,13 +857,13 @@ def dashboard_page():
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # ✅ Nouvelle logique (BKApay succès)
-    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    # ✅ BKApay validé ?
+    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first() is not None
 
-    # ✅ Ancienne logique (premier dépôt)
-    ancien_ok = (user.premier_depot is True)
+    # ✅ Ancien système premier dépôt ?
+    ancien_ok = bool(user.premier_depot)
 
-    # 🔒 Bloque seulement si les 2 sont faux
+    # 🔒 Bloqué seulement si aucun des deux
     if not paiement_ok and not ancien_ok:
         return redirect(url_for("dashboard_bloque"))
 
