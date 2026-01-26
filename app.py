@@ -708,7 +708,6 @@ def webhook_bkapay():
         # 🔥 Créditer compte
         user.solde_depot = (user.solde_depot or 0) + float(depot.montant)
         user.solde_total = (user.solde_total or 0) + float(depot.montant)
-        user.premier_depot = True
 
         try:
             db.session.commit()
@@ -770,16 +769,15 @@ def bkapay_retour():
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque", status="failed"))
 
+from flask import jsonify
+
 @app.route("/api/check-activation")
 @login_required
 def api_check_activation():
     user = get_logged_in_user()
-
     paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    return jsonify({"activated": bool(paiement_ok)})
 
-    return {
-        "activated": bool(paiement_ok)
-    }
 
 @app.route("/paiement_en_cours")
 @login_required
