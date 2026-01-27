@@ -6,6 +6,7 @@
 <title>Vidéos TikTok - LuminaStar</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
 body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:100vh; color:#fff; overflow-x:hidden; }
@@ -28,12 +29,14 @@ body { background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); min-height:1
 .welcome-holder p { font-size:14px; }
 
 .video-container { margin-top:25px; text-align:center; }
-.video-container iframe { width:100%; max-width:700px; height:400px; border-radius:15px; border:none; }
+#player { width:100%; max-width:700px; height:400px; border-radius:15px; overflow:hidden; margin:0 auto; }
 
 .no-video { font-size:20px; font-weight:600; padding:50px 20px; opacity:0.7; text-align:center; }
 
 footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 </style>
+
+<script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -52,6 +55,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 </div>
 
 <div class="main">
+
     <div class="welcome-holder">
         <h2>Vidéos TikTok</h2>
         <p>Équilibre TikTok : <strong>{{ user.points_tiktok }} pts</strong></p>
@@ -59,12 +63,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
 
     <div class="video-container">
         {% if today == 1 and user.last_tiktok_date != current_date %}
-            <div id="videoBox">
-                <iframe id="tiktokVideo" src="https://www.youtube.com/embed/5xvr6QQ8K9w?autoplay=1" 
-                        title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                </iframe>
-            </div>
+            <div id="player"></div>
 
             <div id="tooEarlyMessage" class="no-video" style="display:none;">
                 ⏳ La vidéo sera disponible <strong>mardi à partir de 08h00</strong>.<br>
@@ -90,7 +89,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     </div>
 
     <footer>
-        2026 © LuminaStar by Nina Academy
+        2026 © LuminaStar by Nina academy
     </footer>
 </div>
 
@@ -110,7 +109,6 @@ overlay.onclick = () => {
 
 {% if today == 1 and user.last_tiktok_date != current_date %}
 
-// Heure d'ouverture : 08h00
 const OPEN_HOUR = 8;
 
 function canPlayNow(){
@@ -119,23 +117,45 @@ function canPlayNow(){
     return hour >= OPEN_HOUR;
 }
 
-let videoBox = document.getElementById("videoBox");
-let tooEarlyMessage = document.getElementById("tooEarlyMessage");
+var player;
 
-if(!canPlayNow()){
-    if(videoBox) videoBox.style.display = "none";
-    if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
-} else {
-    // Créditer les points après que l'utilisateur a fini de regarder (ici on ne peut pas détecter fin exacte sur YouTube)
-    // On suppose que l'utilisateur a regardé après 10s
-    setTimeout(() => {
+function onYouTubeIframeAPIReady() {
+    if(!canPlayNow()){
+        const playerDiv = document.getElementById("player");
+        const tooEarlyMessage = document.getElementById("tooEarlyMessage");
+        if(playerDiv) playerDiv.style.display = "none";
+        if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
+        return;
+    }
+
+    player = new YT.Player('player', {
+        height: '400',
+        width: '100%',
+        videoId: '5xvr6QQ8K9w', // ⬅ ID YouTube Shorts
+        playerVars: {
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            rel: 0,
+            modestbranding: 1
+        },
+        events: {
+            onStateChange: onPlayerStateChange
+        }
+    });
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
         fetch("/tiktok/complete")
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
-            if(videoBox) videoBox.style.display = "none";
-            document.getElementById("successMessage").style.display = "block";
+            if(data.status === "ok"){
+                document.getElementById("successMessage").style.display = "block";
+            }
         });
-    }, 10000); // 10 secondes avant crédit
+    }
 }
 
 {% endif %}
