@@ -761,7 +761,7 @@ def webhook_bkapay():
 def bkapay_retour():
     status = request.args.get("status")
 
-    if status == "success":
+    if status == "valide":
         flash("Paiement reçu ! Vérification en cours...", "success")
         return redirect(url_for("paiement_en_cours"))
 

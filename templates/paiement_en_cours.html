@@ -60,7 +60,7 @@ setInterval(async () => {
         const data = await res.json();
 
         if(data.activated){
-            window.location.href = '/dashboard';  // ✅ BONNE URL
+            window.location.href = '/dashboard_pay_ok';  // ✅ BONNE URL
         }
     }catch(e){
         console.log("Erreur check activation:", e);
