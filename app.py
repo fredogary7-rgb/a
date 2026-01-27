@@ -756,7 +756,6 @@ def webhook_bkapay():
         "status": status
     }), 200
 
-
 @app.route("/paiement/bkapay/retour")
 @login_required
 def bkapay_retour():
@@ -764,10 +763,25 @@ def bkapay_retour():
 
     if status == "success":
         flash("Paiement reçu ! Vérification en cours...", "success")
-        return redirect(url_for("dashboard_pay_ok"))
+        return redirect(url_for("paiement_en_cours"))
 
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque", status="failed"))
+
+@app.route("/paiement_en_cours")
+@login_required
+def paiement_en_cours():
+    user = get_logged_in_user()
+
+    paiement_ok = Depot.query.filter_by(
+        user_name=user.username,
+        statut="valide"
+    ).first()
+
+    if paiement_ok:
+        return redirect(url_for("dashboard_pay_ok"))
+
+    return render_template("paiement_en_cours.html", user=user)
 
 from flask import jsonify
 
@@ -779,24 +793,12 @@ def api_check_activation():
     return jsonify({"activated": bool(paiement_ok)})
 
 
-@app.route("/paiement_en_cours")
-@login_required
-def paiement_en_cours():
-    user = get_logged_in_user()
-    # Vérifie si l'utilisateur a déjà un dépôt validé
-    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
-    if paiement_ok:
-        return redirect(url_for("dashboard_page"))
-    return render_template("paiement_en_cours.html", user=user)
-
 @app.route("/dashboard_pay_ok")
+@login_required
 def dashboard_pay_ok():
-    user_id = session.get("user_id")
-    if not user_id:
-        flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
-        return redirect(url_for("connexion_page"))
+    # ✅ Utilisation de ta logique existante
+    user = get_logged_in_user()
 
-    user = db.session.get(User, user_id)
     if not user:
         session.clear()
         flash("Session invalide, veuillez vous reconnecter.", "danger")
@@ -808,7 +810,10 @@ def dashboard_pay_ok():
 
     # ✅ NOUVELLE LOGIQUE UNIQUE :
     # On accepte uniquement si BKApay a validé un dépôt
-    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
+    paiement_ok = Depot.query.filter_by(
+        user_name=user.username,
+        statut="valide"
+    ).first()
 
     # ❌ On ne vérifie plus premier_depot ici
     if not paiement_ok:
@@ -833,6 +838,7 @@ def dashboard_pay_ok():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
 
 @app.route("/chaine")
 def whatsapp_channel():

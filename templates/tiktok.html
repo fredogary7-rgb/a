@@ -58,16 +58,14 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     </div>
 
     <div class="video-container">
-
         {% if today == 1 and user.last_tiktok_date != current_date %}
             <div id="videoBox">
                 <video id="tiktokVideo" autoplay>
-                    <source src="{{ url_for('static', filename='videos/tik2.mp4') }}" type="video/mp4">
+                    <source src="{{ url_for('static', filename='videos/tik.mp4') }}" type="video/mp4">
                     Votre navigateur ne supporte pas la lecture de vidéos.
                 </video>
             </div>
 
-            <!-- Message avant 8h -->
             <div id="tooEarlyMessage" class="no-video" style="display:none;">
                 ⏳ La vidéo sera disponible <strong>mardi à partir de 08h00</strong>.<br>
                 Revenez à 8h pour gagner 20 points !
@@ -92,7 +90,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     </div>
 
     <footer>
-        2026 © LuminaStar by Nina academy
+        2026 © LuminaStar by Nina Academy
     </footer>
 </div>
 
@@ -112,9 +110,6 @@ overlay.onclick = () => {
 
 {% if today == 1 and user.last_tiktok_date != current_date %}
 
-/* ---------------------------
-   Heure d'ouverture : 08h00
-   --------------------------- */
 const OPEN_HOUR = 8; // 08h00
 
 function canPlayNow(){
@@ -127,18 +122,16 @@ let video = document.getElementById("tiktokVideo");
 let videoBox = document.getElementById("videoBox");
 let tooEarlyMessage = document.getElementById("tooEarlyMessage");
 
-// Si mardi mais avant 8h => on bloque l'accès à la vidéo
 if(!canPlayNow()){
     if(videoBox) videoBox.style.display = "none";
     if(tooEarlyMessage) tooEarlyMessage.style.display = "block";
 } else {
-    // Logique originale (inchangée)
     video.currentTime = 0;
-    video.controls = false; // désactiver barre de contrôle
+    video.controls = false;
 
-    // Empêcher l'avance rapide
+    // Empêcher avance rapide
     video.addEventListener('seeking', function() {
-        if (video.seekingTime !== undefined && video.currentTime > video.seekingTime) {
+        if(video.seekingTime !== undefined && video.currentTime > video.seekingTime){
             video.currentTime = video.seekingTime;
         }
     });
@@ -146,12 +139,12 @@ if(!canPlayNow()){
         video.seekingTime = video.currentTime;
     });
 
-    // Créditer les points à la fin de la vidéo
+    // Créditer les points
     video.addEventListener('ended', () => {
         fetch("/tiktok/complete")
         .then(res => res.json())
         .then(data => {
-            document.getElementById("videoBox").style.display = "none";
+            videoBox.style.display = "none";
             document.getElementById("successMessage").style.display = "block";
         });
     });
