@@ -1,6 +1,3 @@
-# Ignorer toutes les vidéos sauf tik.mp4
-/static/videos/*.mp4
-!static/videos/tik.mp4
 
 # Suivi des APK dans static/uploads/apps
 # On ne veut pas ignorer ce dossier
