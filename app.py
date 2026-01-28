@@ -504,10 +504,6 @@ def get_global_stats():
 # --------------------------------------
 # 1️⃣ Page dashboard_bloque (initiation paiement)
 # --------------------------------------
-from urllib.parse import urlencode
-
-CLE_PUBLIQUE_BKAPAY = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
-
 @app.route("/dashboard_bloque", methods=["GET", "POST"])
 @login_required
 def dashboard_bloque():
@@ -560,6 +556,14 @@ def dashboard_bloque():
         return redirect(payment_url)
 
     return render_template("dashboard_bloque.html", user=user)
+
+
+@app.route("/paiement_success")
+@login_required
+def paiement_success():
+    user = get_logged_in_user()
+    flash("Paiement confirmé avec succès !", "success")
+    return redirect(url_for("dashboard_page"))
 
 import hmac
 import hashlib
@@ -704,8 +708,7 @@ def webhook_bkapay():
             depot.reference = str(transaction_id)
         except:
             pass
-
-        # 🔥 Créditer compte
+Créditer compte
         user.solde_depot = (user.solde_depot or 0) + float(depot.montant)
         user.solde_total = (user.solde_total or 0) + float(depot.montant)
 
@@ -793,6 +796,40 @@ def api_check_activation():
     return jsonify({"activated": bool(paiement_ok)})
 
 
+
+@app.route("/paiement/soleaspay/retour")
+@login_required
+def soleaspay_retour():
+    flash("Paiement en cours de vérification...", "success")
+    return redirect(url_for("paiement_en_cours"))
+
+@app.route("/paiement_en_cours")
+@login_required
+def paiement_en_cours():
+    user = get_logged_in_user()
+
+    paiement_ok = Depot.query.filter_by(
+        user_name=user.username,
+        statut="valide"
+    ).first()
+
+    if paiement_ok:
+        return redirect(url_for("dashboard_pay_ok"))
+
+    return render_template("paiement_en_cours.html", user=user)
+
+@app.route("/api/check-activation")
+@login_required
+def api_check_activation():
+    user = get_logged_in_user()
+    paiement_ok = Depot.query.filter_by(
+        user_name=user.username,
+        statut="valide"
+    ).first()
+
+    return jsonify({"activated": bool(paiement_ok)})
+
+
 @app.route("/dashboard_pay_ok")
 @login_required
 def dashboard_pay_ok():
@@ -838,6 +875,7 @@ def dashboard_pay_ok():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
 
 
 @app.route("/chaine")

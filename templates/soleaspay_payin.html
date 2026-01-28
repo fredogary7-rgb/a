@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Payer avec SoleasPay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #020617, #0f172a);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: #020617;
+            padding: 28px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.4);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-size: 14px;
+            opacity: .85;
+        }
+
+        input, select, button {
+            width: 100%;
+            margin-top: 6px;
+            padding: 13px;
+            border-radius: 10px;
+            border: none;
+            font-size: 15px;
+        }
+
+        input, select {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        button {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform .15s ease;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Paiement SoleasPay</h2>
+
+    <form method="POST">
+
+        <!-- Pays -->
+        <label>Pays</label>
+        <select id="country" name="country" required onchange="updateOperators()">
+            <option value="">Choisir un pays</option>
+            <option value="TG">🇹🇬 Togo</option>
+            <option value="BJ">🇧🇯 Bénin</option>
+            <option value="CI">🇨🇮 Côte d’Ivoire</option>
+            <option value="CM">🇨🇲 Cameroun</option>
+            <option value="BF">🇧🇫 Burkina Faso</option>
+        </select>
+
+        <!-- Opérateur -->
+        <label>Opérateur</label>
+        <select id="operator" name="operator" required onchange="updatePlaceholder()">
+            <option value="">Sélectionner un opérateur</option>
+        </select>
+
+        <!-- Wallet -->
+        <label>Numéro de portefeuille</label>
+        <input type="text" id="wallet" name="wallet" placeholder="Numéro mobile" required>
+
+        <!-- Montant -->
+        <label>Montant (XAF)</label>
+        <input type="number" name="amount" placeholder="1000" required>
+
+        <button type="submit">Payer maintenant</button>
+    </form>
+</div>
+
+<script>
+const operatorsByCountry = {
+    TG: {
+        "T Money TG": "XXXXXXXX"
+    },
+    BJ: {
+        "MTN_BJ": "2296XXXXXXX",
+        "MOOV_BJ": "2299XXXXXXX"
+    },
+    CI: {
+        "MTN_CI": "22505XXXXXXXX",
+        "MOOV_CI": "22501XXXXXXXX",
+        "ORANGE_CI": "22507XXXXXXXX",
+        "WAVE_CI": "22501XXXXXXXX"
+    },
+    CM: {
+        "MTN_CM": "2376XXXXXXXX",
+        "ORANGE_CM": "2376XXXXXXXX"
+    },
+    BF: {
+        "MOOV_BF": "2267XXXXXXX",
+        "ORANGE_BF": "2267XXXXXXX"
+    }
+};
+
+function updateOperators() {
+    const country = document.getElementById("country").value;
+    const operatorSelect = document.getElementById("operator");
+    operatorSelect.innerHTML = '<option value="">Sélectionner un opérateur</option>';
+
+    if (!operatorsByCountry[country]) return;
+
+    for (let op in operatorsByCountry[country]) {
+        const option = document.createElement("option");
+        option.value = op;
+        option.textContent = op.replace("_", " ");
+        operatorSelect.appendChild(option);
+    }
+}
+
+function updatePlaceholder() {
+    const country = document.getElementById("country").value;
+    const operator = document.getElementById("operator").value;
+    const walletInput = document.getElementById("wallet");
+
+    if (operatorsByCountry[country] && operatorsByCountry[country][operator]) {
+        walletInput.placeholder = operatorsByCountry[country][operator];
+    }
+}
+</script>
+
+</body>
+</html>
