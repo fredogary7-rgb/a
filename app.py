@@ -558,16 +558,10 @@ def dashboard_bloque():
     return render_template("dashboard_bloque.html", user=user)
 
 
-@app.route("/paiement_success")
-@login_required
-def paiement_success():
-    user = get_logged_in_user()
-    flash("Paiement confirmé avec succès !", "success")
-    return redirect(url_for("dashboard_page"))
-
 import hmac
 import hashlib
-from flask import request, jsonify
+from flask import request, jsonify, redirect, url_for, flash
+from flask_login import login_required
 
 ACTIVATION_AMOUNT = 3800
 
@@ -580,6 +574,7 @@ def safe_int(x):
 
 @app.route("/api/webhook/bkapay", methods=["POST", "GET"])
 def webhook_bkapay():
+
     # ===============================
     # ✅ GET = test navigateur
     # ===============================
@@ -596,7 +591,7 @@ def webhook_bkapay():
     signature = request.headers.get("X-BKApay-Signature")
     event_header = request.headers.get("X-BKApay-Event")
 
-    print("🔥 WEBHOOK BKAPAY REÇU (POST)")
+    print("🔥 WEBHOOK BKAPAY REÇU")
     print("➡️ Signature:", signature)
     print("➡️ Event header:", event_header)
     print("➡️ Raw payload:", raw_payload)
@@ -606,10 +601,9 @@ def webhook_bkapay():
     # -----------------------
     try:
         if not verify_bkapay_signature(raw_payload, signature):
-            print("❌ Signature invalide")
             return jsonify({"error": "Signature invalide"}), 401
     except Exception as e:
-        print("❌ Erreur verify signature:", e)
+        print("❌ Erreur signature:", e)
         return jsonify({"error": "Erreur verification signature"}), 500
 
     # -----------------------
@@ -624,7 +618,7 @@ def webhook_bkapay():
     print("✅ JSON reçu:", data)
 
     # ===============================
-    # 3️⃣ Récupérer les infos (avec fallback)
+    # 3️⃣ Récupération données
     # ===============================
     event = data.get("event") or event_header or data.get("type")
     status = data.get("status") or data.get("paymentStatus")
@@ -650,7 +644,7 @@ def webhook_bkapay():
     print(f"📌 event={event} | status={status} | tx={transaction_id} | ref={external_reference} | amount={amount_int}")
 
     # ===============================
-    # 4️⃣ Déterminer si paiement OK
+    # 4️⃣ Statuts
     # ===============================
     success_events = ["payment.completed", "payment.success", "payment.succeeded", "payment.paid"]
     success_status = ["completed", "success", "succeeded", "paid"]
@@ -665,14 +659,12 @@ def webhook_bkapay():
     # ✅ PAYMENT SUCCESS
     # ===============================
     if is_success:
-        # 🔥 Montant exact
+
         if amount_int != ACTIVATION_AMOUNT:
-            print(f"❌ Montant invalide {amount_int}, attendu {ACTIVATION_AMOUNT}")
             return jsonify({
                 "error": f"Montant invalide ({amount_int}). Activation uniquement {ACTIVATION_AMOUNT}"
             }), 400
 
-        # 🔥 Trouver dépôt
         depot = None
         if external_reference:
             try:
@@ -681,48 +673,41 @@ def webhook_bkapay():
                 print("❌ Erreur récupération dépôt:", e)
 
         if not depot:
-            print("❌ Dépôt introuvable")
             return jsonify({"error": "Dépôt introuvable"}), 404
 
-        # éviter double traitement
         if depot.statut == "valide":
-            print("ℹ️ Déjà validé")
             return jsonify({"received": True, "message": "Déjà validé"}), 200
 
-        # Vérifier montant dépôt enregistré
         if safe_int(depot.montant) != ACTIVATION_AMOUNT:
-            print("❌ Montant dépôt différent de 3800")
             return jsonify({"error": "Montant dépôt différent de 3800"}), 400
 
-        # 🔥 Trouver user
         user = User.query.filter_by(username=depot.user_name).first()
         if not user:
-            print("❌ Utilisateur introuvable")
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # 🔥 Marquer dépôt validé
+        # 🔥 Valider dépôt
         depot.statut = "valide"
 
-        # si tu as une colonne reference (toi tu as "reference")
         try:
             depot.reference = str(transaction_id)
-        except:
+        except Exception:
             pass
-Créditer compte
-        user.solde_depot = (user.solde_depot or 0) + float(depot.montant)
-        user.solde_total = (user.solde_total or 0) + float(depot.montant)
+
+        # 🔥 Créditer le compte
+        montant = float(depot.montant)
+        user.solde_depot = (user.solde_depot or 0) + montant
+        user.solde_total = (user.solde_total or 0) + montant
 
         try:
             db.session.commit()
-            print(f"✅ Paiement confirmé pour {user.username} (Depot {depot.id})")
         except Exception as e:
             db.session.rollback()
-            print("❌ Erreur commit DB:", e)
-            return jsonify({"error": "Erreur serveur lors de la validation"}), 500
+            print("❌ Erreur DB:", e)
+            return jsonify({"error": "Erreur serveur"}), 500
 
         return jsonify({
             "received": True,
-            "message": "Paiement confirmé : dépôt validé + compte crédité",
+            "message": "Paiement confirmé",
             "depot_id": depot.id,
             "user": user.username
         }), 200
@@ -741,23 +726,22 @@ Créditer compte
                     except:
                         pass
                     db.session.commit()
-                    print(f"❌ Paiement échoué pour dépôt {depot.id}")
             except Exception as e:
                 db.session.rollback()
-                print("❌ Erreur traitement paiement échoué:", e)
+                print("❌ Erreur paiement échoué:", e)
 
         return jsonify({"received": True, "message": "Paiement échoué reçu"}), 200
 
     # ===============================
     # ℹ️ EVENT ignoré
     # ===============================
-    print("ℹ️ Event ignoré (ni success ni failed)")
     return jsonify({
         "received": True,
         "message": "Event ignoré",
         "event": event,
         "status": status
     }), 200
+
 
 @app.route("/paiement/bkapay/retour")
 @login_required
@@ -771,37 +755,6 @@ def bkapay_retour():
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque", status="failed"))
 
-@app.route("/paiement_en_cours")
-@login_required
-def paiement_en_cours():
-    user = get_logged_in_user()
-
-    paiement_ok = Depot.query.filter_by(
-        user_name=user.username,
-        statut="valide"
-    ).first()
-
-    if paiement_ok:
-        return redirect(url_for("dashboard_pay_ok"))
-
-    return render_template("paiement_en_cours.html", user=user)
-
-from flask import jsonify
-
-@app.route("/api/check-activation")
-@login_required
-def api_check_activation():
-    user = get_logged_in_user()
-    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first()
-    return jsonify({"activated": bool(paiement_ok)})
-
-
-
-@app.route("/paiement/soleaspay/retour")
-@login_required
-def soleaspay_retour():
-    flash("Paiement en cours de vérification...", "success")
-    return redirect(url_for("paiement_en_cours"))
 
 @app.route("/paiement_en_cours")
 @login_required
@@ -818,6 +771,7 @@ def paiement_en_cours():
 
     return render_template("paiement_en_cours.html", user=user)
 
+
 @app.route("/api/check-activation")
 @login_required
 def api_check_activation():
@@ -828,7 +782,6 @@ def api_check_activation():
     ).first()
 
     return jsonify({"activated": bool(paiement_ok)})
-
 
 @app.route("/dashboard_pay_ok")
 @login_required
