@@ -69,6 +69,10 @@
       font-weight:600;
       transition:0.25s;
     }
+    .btn.disabled{
+      pointer-events:none;
+      opacity:0.6;
+    }
     .btn:hover{
       background: rgba(255,255,255,0.35);
     }
@@ -94,7 +98,7 @@
       Vérification de l'activation...
     </div>
 
-    <a class="btn" href="{{ url_for('dashboard_bloque') }}">⬅️ Retour</a>
+    <a class="btn" id="backBtn" href="{{ url_for('dashboard_bloque') }}">⬅️ Retour</a>
 
     <div class="small">
       Si ça prend du temps, ne payez pas 2 fois. Patientez quelques secondes.
@@ -102,26 +106,46 @@
   </div>
 
   <script>
+    let alreadyActivated = false;
+
     async function checkActivation(){
+      if (alreadyActivated) return;
+
       try{
-        const res = await fetch("/api/check-activation");
+        const res = await fetch("/api/check-activation", {
+          credentials: "same-origin"
+        });
+
+        if (!res.ok) return;
+
         const data = await res.json();
 
-        if(data.activated === true){
-          document.getElementById("statusText").innerText = "✅ Activation confirmée ! Redirection...";
-          window.location.href = "{{ url_for('dashboard_page') }}";
+        if (data.activated === true){
+          alreadyActivated = true;
+
+          document.getElementById("statusText").innerText =
+            "✅ Activation confirmée ! Redirection...";
+          
+          document.getElementById("backBtn").classList.add("disabled");
+
+          setTimeout(() => {
+            window.location.href = "{{ url_for('dashboard_page') }}";
+          }, 1200);
+
           return;
         }
 
-        document.getElementById("statusText").innerText = "⏳ Paiement reçu, activation en cours...";
+        document.getElementById("statusText").innerText =
+          "⏳ Paiement reçu, activation en cours...";
       }catch(e){
-        document.getElementById("statusText").innerText = "⚠️ Vérification impossible... nouvelle tentative...";
+        document.getElementById("statusText").innerText =
+          "⚠️ Vérification impossible... nouvelle tentative...";
       }
     }
 
-    // check direct + toutes les 2 sec
+    // check immédiat + toutes les 3 sec
     checkActivation();
-    setInterval(checkActivation, 2000);
+    setInterval(checkActivation, 3000);
   </script>
 
 </body>
