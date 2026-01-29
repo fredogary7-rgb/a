@@ -1,16 +1,19 @@
-import sys
 import os
 import re
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone, date
 from functools import wraps
 from urllib.parse import urlencode
+
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, create_engine
+from sqlalchemy import func, create_engine, text
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required, UserMixin
+from flask_migrate import Migrate
 
 # ─── FLASK APP ───────────────────────────────────────────
 app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -19,10 +22,9 @@ app.secret_key = "ma_cle_ultra_secrete"
 # ─── UPLOAD CONFIG ───────────────────────────────────────
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-# Dossiers pour les uploads
 UPLOAD_FOLDER_PROFILE = 'static/uploads/profiles'
 UPLOAD_FOLDER_VLOGS = 'static/vlogs'
-UPLOAD_FOLDER_APPS = os.path.join(os.getcwd(), "static", "uploads", "apps")  # chemin absolu correct
+UPLOAD_FOLDER_APPS = os.path.join(os.getcwd(), "static", "uploads", "apps")
 
 # Création des dossiers si inexistant
 os.makedirs(UPLOAD_FOLDER_PROFILE, exist_ok=True)
@@ -43,47 +45,48 @@ def allowed_file(filename):
 
 # ─── DATABASE CONFIG ─────────────────────────────────────
 DATABASE_URL = "postgresql://neondb_owner:npg_4NUwvZ9BdFAs@ep-ancient-waterfall-absumywn-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+
 engine = create_engine(
     DATABASE_URL,
-    pool_size=10,          # connexions actives
-    max_overflow=20,       # connexions supplémentaires si surcharge
-    pool_timeout=30,       # temps avant erreur
-    pool_recycle=1800,     # recycle pour éviter les timeouts Neon
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30,
+    pool_recycle=1800,
 )
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "pool_pre_ping": True,   # Vérifie si la connexion est encore vivante
-    "pool_recycle": 280,     # Recycle la connexion avant expiration
-    "pool_timeout": 20       # Timeout raisonnable
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "pool_timeout": 20
 }
 
 # ─── INITIALISATION DE LA BASE DE DONNÉES ───────────────
 db = SQLAlchemy(app)
-
-
-from sqlalchemy import text
-from flask_migrate import Migrate
-
 migrate = Migrate(app, db)
 
-@app.cli.command("add-ref-col")
-def add_reference_column():
-    """
-    Ajoute la colonne `reference` à la table depot si elle n'existe pas.
-    Usage: flask --app app.py add-ref-col
-    """
-    with db.engine.connect() as conn:
-        conn.execute(text("""
-            ALTER TABLE depot
-            ADD COLUMN IF NOT EXISTS reference VARCHAR(200);
-        """))
-        conn.commit()
-    print("✅ Colonne 'reference' ajoutée si elle n'existait pas.")
+# ─── FLASK-LOGIN CONFIG ─────────────────────────────────
+from flask_login import LoginManager, UserMixin, current_user
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "connexion_page"  # ta route login
 
-from flask_login import UserMixin
+# Fonction pour charger un utilisateur via Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))  # classique
+
+# Avant chaque requête, on force current_user à utiliser ta session
+@app.before_request
+def load_logged_in_user():
+    from flask import g
+    user_id = session.get("user_id")
+    if user_id:
+        g.logged = User.query.get(user_id)
+    else:
+        g.logged = None
 
 
 class User(db.Model, UserMixin):
@@ -451,6 +454,8 @@ def inscription_page():
 
     return render_template("inscription.html", code_ref=ref_code)
 
+
+
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():
     if request.method == "POST":
@@ -486,6 +491,7 @@ def connexion_page():
 
     # Méthode GET : afficher la page de connexion
     return render_template("connexion.html")
+
 
 @app.route("/logout")
 def logout_page():
@@ -744,7 +750,6 @@ def webhook_bkapay():
 
 
 @app.route("/paiement/bkapay/retour")
-@login_required
 def bkapay_retour():
     status = request.args.get("status")
 
@@ -757,7 +762,6 @@ def bkapay_retour():
 
 
 @app.route("/paiement_en_cours")
-@login_required
 def paiement_en_cours():
     user = get_logged_in_user()
 
@@ -773,7 +777,6 @@ def paiement_en_cours():
 
 
 @app.route("/api/check-activation")
-@login_required
 def api_check_activation():
     user = get_logged_in_user()
     paiement_ok = Depot.query.filter_by(
@@ -784,7 +787,6 @@ def api_check_activation():
     return jsonify({"activated": bool(paiement_ok)})
 
 @app.route("/dashboard_pay_ok")
-@login_required
 def dashboard_pay_ok():
     # ✅ Utilisation de ta logique existante
     user = get_logged_in_user()
@@ -1038,7 +1040,6 @@ def about():
     return render_template("about.html")
 
 @app.route("/mes-retraits")
-@login_required
 def mes_retraits():
     user = get_logged_in_user()
     retraits = Retrait.query.filter_by(phone=user.phone).order_by(Retrait.date.desc()).all()
@@ -1051,7 +1052,6 @@ from datetime import datetime
 from datetime import date
 
 @app.route("/taches/click-jeudi", methods=["GET", "POST"])
-@login_required
 def click_jeudi():
     user = get_logged_in_user()
 
@@ -1086,7 +1086,6 @@ def click_jeudi():
 
 
 @app.route("/whatsapp-number", methods=["POST"])
-@login_required
 def whatsapp_number():
     user = User.query.get(session["user_id"])
 
@@ -1116,7 +1115,6 @@ def whatsapp_number():
     return redirect("/dashboard")
 
 @app.route("/apk")
-@login_required
 def apk_page():
     """
     Retourne la liste des APK disponibles via liens Google Drive.
@@ -1167,7 +1165,6 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 
 @app.route("/profile", methods=["GET", "POST"])
-@login_required
 def profile_page():
     user = get_logged_in_user()
 
@@ -1204,7 +1201,6 @@ def profile_page():
     )
 
 @app.route("/retrait", methods=["GET", "POST"])
-@login_required
 def retrait_page():
     user = get_logged_in_user()
 
@@ -1280,7 +1276,6 @@ def get_team_total(user):
     return total
 
 @app.route("/revenus")
-@login_required
 def revenus_page():
     user = get_logged_in_user()
 
@@ -1310,7 +1305,6 @@ def revenus_page():
     )
 
 @app.route("/points/retrait", methods=["GET", "POST"])
-@login_required
 def retrait_points_page():
     user = get_logged_in_user()
 
@@ -1365,7 +1359,6 @@ def retrait_points_page():
     )
 
 @app.route("/wheel")
-@login_required
 def wheel():
     user = get_logged_in_user()
 
@@ -1380,7 +1373,6 @@ def wheel():
 import random
 
 @app.route("/wheel/spin", methods=["POST"])
-@login_required
 def spin_wheel():
     user = get_logged_in_user()
 
@@ -1412,7 +1404,6 @@ def spin_wheel():
     return jsonify({"status": "success", "reward": reward})
 
 @app.route("/team")
-@login_required
 def team_page():
     user = get_logged_in_user()
 
@@ -1572,7 +1563,6 @@ def admin_deposits():
 
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
-@login_required
 def valider_depot(depot_id):
 
     depot = Depot.query.get_or_404(depot_id)
@@ -1616,7 +1606,6 @@ def valider_depot(depot_id):
     return redirect(url_for("admin_deposits"))
 
 @app.route("/admin/deposits/rejeter/<int:depot_id>")
-@login_required
 def rejeter_depot(depot_id):
     user_admin = get_logged_in_user()
 
@@ -1633,13 +1622,11 @@ def rejeter_depot(depot_id):
     return redirect(url_for("admin_deposits"))
 
 @app.route("/admin/retraits")
-@login_required
 def admin_retraits():
     retraits = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc()).all()
     return render_template("admin_retraits.html", retraits=retraits)
 
 @app.route("/admin/retraits/valider/<int:retrait_id>")
-@login_required
 def valider_retrait(retrait_id):
     user_admin = get_logged_in_user()
 
@@ -1665,7 +1652,6 @@ def valider_retrait(retrait_id):
     return redirect(url_for("admin_retraits"))
 
 @app.route("/admin/retraits/refuser/<int:retrait_id>")
-@login_required
 def refuser_retrait(retrait_id):
     user_admin = get_logged_in_user()
 
@@ -1691,7 +1677,6 @@ def refuser_retrait(retrait_id):
 
 
 @app.route("/taches/questions-lundi", methods=["GET", "POST"])
-@login_required  # ton décorateur perso
 def questions_lundi():
     user = get_logged_in_user()  # récupère l'utilisateur connecté
 
@@ -1739,7 +1724,6 @@ def questions_lundi():
 
 
 @app.route("/admin/users/activer/<username>")
-@login_required
 def admin_activer_user(username):
     admin = get_logged_in_admin()
     if not admin:
@@ -1788,7 +1772,6 @@ def admin_activer_user(username):
 # 🟣 ROUTE TIKTOK
 
 @app.route("/tiktok/complete")
-@login_required
 def tiktok_complete():
     user = get_logged_in_user()
 
@@ -1810,7 +1793,6 @@ def tiktok_complete():
 
 
 @app.route("/tiktok")
-@login_required
 def tiktok_page():
     user = get_logged_in_user()
     today = datetime.today().weekday()  # mardi = 1
@@ -1825,7 +1807,6 @@ def tiktok_page():
 
 
 @app.route("/youtube")
-@login_required
 def youtube_page():
     user = get_logged_in_user()
     today = datetime.today().weekday()  # mercredi = 2
@@ -1839,7 +1820,6 @@ def youtube_page():
     )
 
 @app.route("/youtube/complete")
-@login_required
 def youtube_complete():
     user = get_logged_in_user()
     today = datetime.today().weekday()  # mercredi = 2
@@ -1860,7 +1840,6 @@ def youtube_complete():
 # 🟢 ROUTE INSTAGRAM
 
 @app.route("/instagram")
-@login_required
 def instagram_page():
     user = get_logged_in_user()
     today = datetime.today().weekday()  # jeudi = 3
@@ -1874,7 +1853,6 @@ def instagram_page():
     )
 
 @app.route("/instagram/complete")
-@login_required
 def instagram_complete():
     user = get_logged_in_user()
     today = datetime.today().weekday()  # jeudi = 3
