@@ -600,7 +600,7 @@ def webhook_bkapay():
     amount = data.get("amount")
     description = data.get("description", "")
 
-    # 🔥 Extraire depot.id depuis description
+    # 🔹 Extraction DEPOT_ID
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
@@ -625,6 +625,7 @@ def webhook_bkapay():
         if not depot:
             return jsonify({"error": "Depot introuvable"}), 404
 
+        # 🔐 Anti double traitement
         if depot.statut == "valide":
             return jsonify({"received": True}), 200
 
@@ -632,30 +633,39 @@ def webhook_bkapay():
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        depot.statut = "valide"
-        if hasattr(depot, "transaction_id"):
-            depot.transaction_id = transaction_id
+        # 🔥 VÉRIFIER SI C'EST LE PREMIER DÉPÔT (AVANT)
+        deja_active = Depot.query.filter_by(
+            user_name=user.username,
+            statut="valide"
+        ).count() > 0
 
+        # 🔹 Valider dépôt
+        depot.statut = "valide"
+        depot.transaction_id = transaction_id
+
+        # 🔹 Créditer l'utilisateur
         user.solde_depot += 3800
         user.solde_total += 3800
 
-        premier = not Depot.query.filter_by(
-            user_name=user.username,
-            statut="valide"
-        ).first()
-
-        if premier:
+        # 🔑 ACTIVER LE COMPTE SI PREMIER DÉPÔT
+        if not deja_active:
             user.premier_depot = True
+
             if user.parrain:
                 donner_commission(user.parrain, 3800)
 
         db.session.commit()
-        return jsonify({"received": True, "message": "Activation réussie"}), 200
+
+        return jsonify({
+            "received": True,
+            "message": "Paiement validé et compte activé"
+        }), 200
 
     if event == "payment.failed":
         return jsonify({"received": True, "message": "Paiement échoué"}), 200
 
     return jsonify({"received": True, "message": "Event ignoré"}), 200
+
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
@@ -708,13 +718,9 @@ def dashboard_pay_ok():
 @app.route("/paiement/bkapay/retour")
 def bkapay_retour():
     status = request.args.get("status")
-    transaction_id = request.args.get("transactionId")
-    amount = request.args.get("amount")
 
     if status == "success":
         flash("Paiement reçu ! Activation en cours...", "success")
-
-        # 🔥 IMPORTANT : on attend le webhook
         return redirect(url_for("paiement_en_cours"))
 
     flash("Paiement échoué ou annulé.", "danger")
@@ -729,14 +735,11 @@ def paiement_en_cours():
 
     return render_template("paiement_en_cours.html", user=user)
 
+
 @app.route("/api/check-activation")
 def api_check_activation():
     user = get_logged_in_user()
-    return {
-        "activated": bool(user.premier_depot)
-    }
-
-
+    return {"activated": bool(user.premier_depot)}
 
 
 
