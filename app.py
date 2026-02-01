@@ -715,8 +715,8 @@ def bkapay_retour():
     status = request.args.get("status")
 
     if status == "success":
-        flash("Paiement reçu ! Activation en cours...", "success")
-        return redirect(url_for("paiement_en_cours"))
+        flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
+        return redirect(url_for("dashboard_page"))
 
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque"))
