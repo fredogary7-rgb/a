@@ -584,13 +584,21 @@ def verify_bkapay_signature(raw_payload: bytes, received_signature: str) -> bool
 
     return hmac.compare_digest(expected, received_signature)
 
-
 @app.route("/api/webhook/bkapay", methods=["POST"])
 def webhook_bkapay():
-    raw_payload = request.get_data()
+    raw_payload = request.get_data(as_text=True)
     signature = request.headers.get("X-BKApay-Signature")
 
-    if not verify_bkapay_signature(raw_payload, signature):
+    if not signature:
+        return jsonify({"error": "Signature manquante"}), 401
+
+    expected_signature = hmac.new(
+        BKAPAY_SECRET.encode(),
+        raw_payload.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    if not hmac.compare_digest(expected_signature, signature):
         return jsonify({"error": "Signature invalide"}), 401
 
     try:
@@ -600,11 +608,12 @@ def webhook_bkapay():
 
     event = data.get("event")
     status = data.get("status")
-    transaction_id = data.get("transactionId")
-    amount = data.get("amount")
+    reference = data.get("transactionId")
+    amount = int(data.get("amount", 0))
+    operator = data.get("operator")
     description = data.get("description", "")
 
-    # 🔹 Extraction DEPOT_ID depuis la description
+    # 🔎 Extraire DEPOT_ID depuis la description
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
@@ -612,15 +621,9 @@ def webhook_bkapay():
         except Exception:
             pass
 
-    try:
-        amount_int = int(float(amount))
-    except Exception:
-        amount_int = None
-
-    # ✅ TRAITEMENT DU PAIEMENT RÉUSSI
     if event == "payment.completed" and status == "completed":
 
-        if amount_int != 3800 or not depot_id:
+        if amount != 3800 or not depot_id:
             return jsonify({"error": "Paiement invalide"}), 400
 
         depot = Depot.query.get(depot_id)
@@ -635,18 +638,18 @@ def webhook_bkapay():
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # 🔹 Valider le dépôt
+        # ✅ Valider le dépôt
         depot.statut = "valide"
-        depot.transaction_id = transaction_id
+        depot.reference = reference
+        depot.operator = operator or depot.operator
 
-        # 🔹 Créditer l'utilisateur
+        # 💰 Créditer l'utilisateur
         user.solde_depot += depot.montant
         user.solde_total += depot.montant
 
-        # 🔹 Activer le compte (PREMIER DÉPÔT UNIQUEMENT)
-        if not user_is_activated(user):
+        # 🔑 Activation (ancien + nouveau système)
+        if not user.premier_depot:
             user.premier_depot = True
-
             if user.parrain:
                 donner_commission(user.parrain, depot.montant)
 
@@ -654,15 +657,10 @@ def webhook_bkapay():
 
         return jsonify({
             "received": True,
-            "message": "Paiement validé, compte activé"
+            "message": "Paiement BKApay validé, compte activé"
         }), 200
 
-    # ❌ Paiement échoué
-    if event == "payment.failed":
-        return jsonify({"received": True, "message": "Paiement échoué"}), 200
-
-    # 🔕 Autres events ignorés
-    return jsonify({"received": True, "message": "Event ignoré"}), 200
+    return jsonify({"received": True}), 200
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
@@ -793,11 +791,9 @@ def dashboard_page():
     )
 
 def user_is_activated(user):
-    # 🔹 Ancien système : comptes déjà activés
     if user.premier_depot:
         return True
 
-    # 🔹 Nouveau système : dépôt validé
     return Depot.query.filter_by(
         user_name=user.username,
         statut="valide"
