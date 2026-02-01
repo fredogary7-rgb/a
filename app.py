@@ -201,9 +201,11 @@ class Commission(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Retrait(db.Model):
+    __tablename__ = "retrait"
+
     id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(30))
-    montant = db.Column(db.Float)
+    phone = db.Column(db.String(30), nullable=False)
+    montant = db.Column(db.Float, nullable=False)
     statut = db.Column(db.String(20), default="en_attente")
     date = db.Column(db.DateTime, default=datetime.utcnow)
     payment_method = db.Column(db.String(50))
@@ -518,8 +520,9 @@ CLE_PUBLIQUE_BKAPAY = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
 def dashboard_bloque():
     user = get_logged_in_user()
 
-    if user.premier_depot:
+    if user_is_activated(user):
         return redirect(url_for("dashboard_page"))
+
 
     if request.method == "POST":
         operator = request.form.get("operator")
@@ -581,6 +584,7 @@ def verify_bkapay_signature(raw_payload: bytes, received_signature: str) -> bool
 
     return hmac.compare_digest(expected, received_signature)
 
+
 @app.route("/api/webhook/bkapay", methods=["POST"])
 def webhook_bkapay():
     raw_payload = request.get_data()
@@ -600,7 +604,7 @@ def webhook_bkapay():
     amount = data.get("amount")
     description = data.get("description", "")
 
-    # 🔹 Extraction DEPOT_ID
+    # 🔹 Extraction DEPOT_ID depuis la description
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
@@ -613,13 +617,11 @@ def webhook_bkapay():
     except Exception:
         amount_int = None
 
+    # ✅ TRAITEMENT DU PAIEMENT RÉUSSI
     if event == "payment.completed" and status == "completed":
 
-        if amount_int != 3800:
-            return jsonify({"error": "Montant invalide"}), 400
-
-        if not depot_id:
-            return jsonify({"error": "Depot ID manquant"}), 400
+        if amount_int != 3800 or not depot_id:
+            return jsonify({"error": "Paiement invalide"}), 400
 
         depot = Depot.query.get(depot_id)
         if not depot:
@@ -633,39 +635,34 @@ def webhook_bkapay():
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # 🔥 VÉRIFIER SI C'EST LE PREMIER DÉPÔT (AVANT)
-        deja_active = Depot.query.filter_by(
-            user_name=user.username,
-            statut="valide"
-        ).count() > 0
-
-        # 🔹 Valider dépôt
+        # 🔹 Valider le dépôt
         depot.statut = "valide"
         depot.transaction_id = transaction_id
 
         # 🔹 Créditer l'utilisateur
-        user.solde_depot += 3800
-        user.solde_total += 3800
+        user.solde_depot += depot.montant
+        user.solde_total += depot.montant
 
-        # 🔑 ACTIVER LE COMPTE SI PREMIER DÉPÔT
-        if not deja_active:
+        # 🔹 Activer le compte (PREMIER DÉPÔT UNIQUEMENT)
+        if not user_is_activated(user):
             user.premier_depot = True
 
             if user.parrain:
-                donner_commission(user.parrain, 3800)
+                donner_commission(user.parrain, depot.montant)
 
         db.session.commit()
 
         return jsonify({
             "received": True,
-            "message": "Paiement validé et compte activé"
+            "message": "Paiement validé, compte activé"
         }), 200
 
+    # ❌ Paiement échoué
     if event == "payment.failed":
         return jsonify({"received": True, "message": "Paiement échoué"}), 200
 
+    # 🔕 Autres events ignorés
     return jsonify({"received": True, "message": "Event ignoré"}), 200
-
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
@@ -739,8 +736,7 @@ def paiement_en_cours():
 @app.route("/api/check-activation")
 def api_check_activation():
     user = get_logged_in_user()
-    return {"activated": bool(user.premier_depot)}
-
+    return {"activated": user_is_activated(user)}
 
 
 
@@ -772,7 +768,8 @@ def dashboard_page():
     ancien_ok = bool(user.premier_depot)
 
     # 🔒 Bloqué seulement si aucun des deux
-    if not paiement_ok and not ancien_ok:
+
+    if not user_is_activated(user):
         return redirect(url_for("dashboard_bloque"))
 
     # 🔹 Stats globales
@@ -794,6 +791,18 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
+def user_is_activated(user):
+    # 🔹 Ancien système : comptes déjà activés
+    if user.premier_depot:
+        return True
+
+    # 🔹 Nouveau système : dépôt validé
+    return Depot.query.filter_by(
+        user_name=user.username,
+        statut="valide"
+    ).first() is not None
+
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
@@ -1402,15 +1411,14 @@ def admin_deposits():
 
     users_data = []
     for u in users_paginated.items:
-        # ✅ IMPORTANT : on enlève les calculs downlines (trop lourds)
         users_data.append({
             "username": u.username,
             "email": u.email,
             "phone": u.phone,
             "parrain": u.parrain if u.parrain else "—",
-            "niveau1": "-",   # ou 0
-            "niveau2": "-",   # ou 0
-            "niveau3": "-",   # ou 0
+            "niveau1": "-",
+            "niveau2": "-",
+            "niveau3": "-",
             "date_creation": u.date_creation,
             "premier_depot": bool(u.premier_depot)
         })
@@ -1434,29 +1442,37 @@ def admin_deposits():
 
     depots = (
         Depot.query
-        .filter(Depot.id.in_(db.session.query(subquery.c.last_id)))  # ✅ FIX SQLAlchemy
+        .filter(Depot.id.in_(db.session.query(subquery.c.last_id)))
         .join(User, Depot.user_name == User.username)
         .order_by(User.username.asc(), Depot.date.desc())
         .all()
     )
 
+    # (optionnel mais safe)
     for d in depots:
-        d.username_display = getattr(getattr(d, "user", None), "username", None) or d.phone
+        d.username_display = d.user_name or d.phone
 
     # ==========================
-    # ===== RETRAITS (INCHANGÉ)
+    # ===== RETRAITS (FIX FINAL)
     # ==========================
     retraits_query = (
-        Retrait.query
+        db.session.query(Retrait, User.username)
+        .join(User, Retrait.phone == User.phone)
         .filter(Retrait.statut == "en_attente")
-        .join(User, Retrait.phone == User.phone)  # adapter selon la relation
-        .order_by(User.username.asc(), Retrait.date.desc())
+        .order_by(Retrait.date.desc())
     )
-    retraits_paginated = retraits_query.paginate(page=page, per_page=PER_PAGE, error_out=False)
-    retraits = retraits_paginated.items
 
-    for r in retraits:
-        r.username_display = getattr(getattr(r, "phone_user", None), "username", None) or r.phone
+    retraits_paginated = retraits_query.paginate(
+        page=page,
+        per_page=PER_PAGE,
+        error_out=False
+    )
+
+    # ✅ On renvoie UNIQUEMENT des objets Retrait au template
+    retraits = []
+    for retrait, username in retraits_paginated.items:
+        retrait.username_display = username  # 👈 affichable dans Jinja
+        retraits.append(retrait)
 
     return render_template(
         "admin_deposits.html",
@@ -1471,7 +1487,6 @@ def admin_deposits():
         users_paginated=users_paginated,
         retraits_paginated=retraits_paginated
     )
-
 
 @app.route("/admin/deposits/valider/<int:depot_id>")
 def valider_depot(depot_id):
@@ -1534,8 +1549,25 @@ def rejeter_depot(depot_id):
 
 @app.route("/admin/retraits")
 def admin_retraits():
-    retraits = Retrait.query.filter(Retrait.statut == "en_attente").order_by(Retrait.date.desc()).all()
-    return render_template("admin_retraits.html", retraits=retraits)
+
+    # Récupération avec join
+    retraits_query = (
+        db.session.query(Retrait, User.username)
+        .join(User, User.phone == Retrait.phone)
+        .filter(Retrait.statut == "en_attente")
+        .order_by(Retrait.date.desc())
+    )
+
+    # Liste finale de retraits avec username_display
+    retraits = []
+    for retrait, username in retraits_query.all():
+        retrait.username_display = username  # pour le template
+        retraits.append(retrait)
+
+    return render_template(
+        "admin_retraits.html",
+        retraits=retraits
+    )
 
 @app.route("/admin/retraits/valider/<int:retrait_id>")
 def valider_retrait(retrait_id):
