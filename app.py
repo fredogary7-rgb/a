@@ -725,7 +725,7 @@ def bkapay_retour():
 def paiement_en_cours():
     user = get_logged_in_user()
 
-    if user.premier_depot:
+    if user_is_activated(user):
         return redirect(url_for("dashboard_page"))
 
     return render_template("paiement_en_cours.html", user=user)
@@ -734,9 +734,9 @@ def paiement_en_cours():
 @app.route("/api/check-activation")
 def api_check_activation():
     user = get_logged_in_user()
-    return {"activated": user_is_activated(user)}
-
-
+    return {
+        "activated": user_is_activated(user)
+    }
 
 @app.route("/chaine")
 def whatsapp_channel():
