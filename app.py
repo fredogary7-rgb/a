@@ -725,7 +725,6 @@ def bkapay_retour():
 def paiement_en_cours():
     user = get_logged_in_user()
 
-    if user_is_activated(user):
         return redirect(url_for("dashboard_page"))
 
     return render_template("paiement_en_cours.html", user=user)
