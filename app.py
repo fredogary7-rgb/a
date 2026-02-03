@@ -108,7 +108,7 @@ class User(db.Model, UserMixin):
     lazy='dynamic'
     )
     commission_total = db.Column(db.Float, default=0.0)
-
+    has_seen_pay_ok = db.Column(db.Boolean, default=False)
     # Informations du portefeuille
     wallet_country = db.Column(db.String(50))
     wallet_operator = db.Column(db.String(50))
@@ -664,7 +664,6 @@ def webhook_bkapay():
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
-    # 🔐 Vérification session
     user_id = session.get("user_id")
     if not user_id:
         flash("Vous devez vous connecter pour accéder au dashboard.", "danger")
@@ -676,25 +675,19 @@ def dashboard_pay_ok():
         flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
 
-    # 🔒 Sécurité : accès dashboard seulement si activé
-    if not user.premier_depot:
-        flash("Activation requise pour accéder au dashboard.", "warning")
-        return redirect(url_for("dashboard_bloque"))
+    # ✅ MARQUER DÉFINITIVEMENT L'ACCÈS PAY OK
+    if not user.has_seen_pay_ok:
+        user.has_seen_pay_ok = True
+        db.session.commit()
 
     # 🔗 Lien de parrainage
     referral_code = user.username
-    referral_link = (
-        url_for("inscription_page", _external=True)
-        + f"?ref={referral_code}"
-    )
+    referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # 📊 Stats globales plateforme
+    # 📊 Stats globales
     total_users, total_deposits, total_withdrawn = get_global_stats()
-
-    # 💰 Revenu cumulé utilisateur
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
-    # 🖼️ Rendu du dashboard
     return render_template(
         "dashboard.html",
         user=user,
@@ -716,18 +709,10 @@ def bkapay_retour():
 
     if status == "success":
         flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
-        return redirect(url_for("dashboard_page"))
+        return redirect(url_for("dashboard_pay_ok"))
 
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque"))
-
-@app.route("/paiement/en-cours")
-def paiement_en_cours():
-    user = get_logged_in_user()
-
-        return redirect(url_for("dashboard_page"))
-
-    return render_template("paiement_en_cours.html", user=user)
 
 
 @app.route("/api/check-activation")
@@ -754,24 +739,18 @@ def dashboard_page():
         flash("Session invalide, veuillez vous reconnecter.", "danger")
         return redirect(url_for("connexion_page"))
 
-    # Génération du lien de parrainage
+    # 🔗 Lien de parrainage
     referral_code = user.username
     referral_link = url_for("inscription_page", _external=True) + f"?ref={referral_code}"
 
-    # ✅ BKApay validé ?
-    paiement_ok = Depot.query.filter_by(user_name=user.username, statut="valide").first() is not None
-
-    # ✅ Ancien système premier dépôt ?
-    ancien_ok = bool(user.premier_depot)
-
-    # 🔒 Bloqué seulement si aucun des deux
-
-    if not user_is_activated(user):
+    # 🔒 Bloqué SEULEMENT si :
+    # - pas activé
+    # - ET n'a jamais visité dashboard_pay_ok
+    if not user_is_activated(user) and not user.has_seen_pay_ok:
         return redirect(url_for("dashboard_bloque"))
 
-    # 🔹 Stats globales
+    # 📊 Stats globales
     total_users, total_deposits, total_withdrawn = get_global_stats()
-
     revenu_cumule = (user.solde_parrainage or 0) + (user.solde_revenu or 0)
 
     return render_template(
@@ -788,6 +767,7 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
+
 
 def user_is_activated(user):
     if user.premier_depot:
