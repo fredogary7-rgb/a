@@ -706,14 +706,23 @@ def dashboard_pay_ok():
 @app.route("/paiement/bkapay/retour")
 def bkapay_retour():
     status = request.args.get("status")
+    
+    # 🔐 Récupération de l'utilisateur connecté
+    user = get_logged_in_user()  # Assure-toi que cette fonction retourne l'utilisateur connecté
 
     if status == "success":
         flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
+
+        # ✅ Donner la commission si l'utilisateur a un parrain
+        if user.parrain:
+            donner_commission(user.parrain, 0)  # Le montant n'a plus d'importance
+
+        db.session.commit()
         return redirect(url_for("dashboard_pay_ok"))
 
+    # Paiement échoué ou annulé
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque"))
-
 
 @app.route("/api/check-activation")
 def api_check_activation():
