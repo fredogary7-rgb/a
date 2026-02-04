@@ -308,7 +308,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
     <!-- Profit -->
     <div class="stat-box blue-profit" style="flex:1;">
         <div class="stat-title">Profit</div>
-        <div class="stat-amount">XOF {{ user.solde_revenu }}</div>
+        <div class="stat-amount">XOF {{ "{:,}".format(user.solde_revenu or 0) }}</div>
     </div>
 
 </div>
@@ -363,7 +363,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
         <!-- Commissions Totales -->
         <div class="stat-card orange-box" style="flex:1 1 300px;">
             <div class="stat-title">Solde Actuel</div>
-            <div class="stat-value">{{ solde_parrainage }} XOF</div>
+            <div class="stat-value">{{ "{:,}".format(solde_parrainage or 0) }} XOF</div>
         </div>
 
         <!-- Points des tâches -->
@@ -378,7 +378,7 @@ footer { text-align:center; margin-top:30px; opacity:0.8; font-size:13px; }
         <div class="stat-box lightblue-box" style="flex:1 1 300px;">
             <div>
                 <div class="stat-title">Retraits totaux</div>
-                <div class="stat-amount">XOF {{ total_withdrawn_user }}</div>
+                <div class="stat-amount">XOF {{ "{:,}".format(total_withdrawn_user or 0) }}</div>
             </div>
         </div>
     </div>
