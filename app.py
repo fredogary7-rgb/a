@@ -514,7 +514,7 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
-CLE_PUBLIQUE_BKAPAY = "pk_live_80530c45-25e1-41e6-96b7-5b84e1bd8d3f"
+CLE_PUBLIQUE_BKAPAY = "pk_live_a7a729fb-30b9-411f-b07f-218e698f1876"
 
 @app.route("/dashboard_bloque", methods=["GET", "POST"])
 def dashboard_bloque():
@@ -570,7 +570,7 @@ def dashboard_bloque():
 import hmac
 import hashlib
 
-BKAPAY_SECRET = "cs_66e85344d59a4a2db71c0a05ea4678e1"
+BKAPAY_SECRET = "cs_8580899682044a2abc2d1cf735fc9027"
 
 def verify_bkapay_signature(raw_payload: bytes, received_signature: str) -> bool:
     if not received_signature:
