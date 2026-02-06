@@ -29,18 +29,18 @@ body {background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);min-height:100v
 .info-item span {font-weight:600;}
 .payment-section {background:rgba(255,255,255,0.30);border-radius:18px;padding:18px;margin-top:15px;}
 .payment-section .label {font-weight:600;font-size:14px;}
-.payment-section .value, .payment-section input, .payment-section select {background:#fff;color:#333;padding:10px 12px;border-radius:10px;margin-top:5px;font-size:15px;font-weight:600;border:none;width:100%;}
+.payment-section .value,
+.payment-section input,
+.payment-section select {background:#fff;color:#333;padding:10px 12px;border-radius:10px;margin-top:5px;font-size:15px;font-weight:600;border:none;width:100%;}
 .pay-btn {margin-top:15px;width:100%;background:#ff7a00;color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;cursor:pointer;font-size:17px;transition:.3s;}
 .pay-btn:hover {background:#ffb35a;}
 .pay-btn:disabled {background:rgba(255,255,255,0.4);cursor:not-allowed;}
 footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
 .info-warning {margin-top:10px;color:#ffdd57;font-weight:600;font-size:14px;}
 
-
-/* ===== BOUTON SUPPORT FLOTTANT ===== */
 .support-float{
     position:fixed;
-    bottom:65px; /* juste au-dessus de l'icône profil */
+    bottom:65px;
     right:18px;
     width:50px;
     height:50px;
@@ -53,14 +53,8 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
     font-size:24px;
     cursor:pointer;
     z-index:999;
-    animation: bounce 2s infinite;
+    animation:bounce 2s infinite;
     box-shadow:0 4px 10px rgba(0,0,0,0.3);
-}
-
-.disabled-btn {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
 }
 </style>
 </head>
@@ -83,77 +77,73 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
 
 <div class="main">
 
-    <!-- Info utilisateur -->
     <div class="block">
         <h2>Compte inactif</h2>
         <p>Veuillez effectuer un dépôt pour activer votre compte.</p>
         <p>Utilisez le numéro ci-dessous :</p>
-        <h2 style="font-size:26px;color:#fff;"><b>{{ user.phone }}</b></h2>
+        <h2 style="font-size:26px;"><b>{{ user.phone }}</b></h2>
         <div class="info-item"><span>Nom :</span> {{ user.username }}</div>
         <div class="info-item"><span>Email :</span> {{ user.email }}</div>
     </div>
 
-<!-- BOUTON SUPPORT FLOTTANT -->
-<a href="https://wa.me/22890227179?text=Salut%20LUMINASTAR%20je%20veut%20faire%20une%20réclamation%20" class="support-float" title="Support">
+<a href="https://wa.me/22890227179?text=Salut%20LUMINASTAR%20je%20veut%20faire%20une%20réclamation%20" class="support-float">
     <i class="fa-solid fa-headset"></i>
 </a>
 
-    <!-- Formulaire dépôt -->
-    <div class="block">
-        <h2>Effectuer un dépôt</h2>
+<div class="block">
+    <h2>Effectuer un dépôt</h2>
 
-        {% if user_has_pending_depot %}
-            <p class="info-warning">Vous avez déjà un dépôt en attente. Veuillez attendre la validation avant d'effectuer un nouveau dépôt.</p>
-            <form>
-                <div class="payment-section">
-                    <input type="text" value="{{ user.username }}" class="value" disabled>
-                    <input type="text" value="{{ user.phone }}" class="value" disabled>
-                    <input type="number" value="3800" class="value" disabled>
-                    <input type="text" value="{{ user.country }}" class="value" disabled>
-                    <select class="value" disabled>
-                        <option>MTN Mobile Money</option>
-                    </select>
-                    <button type="submit" class="pay-btn" disabled>Effectuer le paiement</button>
-                </div>
-            </form>
-        {% else %}
-            <form method="POST" action="{{ url_for('dashboard_bloque') }}">
-                <div class="payment-section">
-                    <div class="label">Nom complet</div>
-                    <input type="text" name="fullname" class="value" value="{{ user.username }}" required>
+    {% if user_has_pending_depot %}
+        <p class="info-warning">Vous avez déjà un dépôt en attente. Veuillez attendre la validation avant d'effectuer un nouveau dépôt.</p>
+        <form>
+            <div class="payment-section">
+                <input type="text" value="{{ user.username }}" class="value" disabled>
+                <input type="text" value="{{ user.phone }}" class="value" disabled>
+                <input type="number" value="3800" class="value" disabled>
+                <input type="text" value="{{ user.country }}" class="value" disabled>
+                <select class="value" disabled>
+                    <option>MTN Mobile Money</option>
+                </select>
+                <button type="submit" class="pay-btn" disabled>Effectuer le paiement</button>
+            </div>
+        </form>
+    {% else %}
+        <form method="POST" action="{{ url_for('dashboard_bloque') }}">
+            <div class="payment-section">
+                <div class="label">Nom complet</div>
+                <input type="text" name="fullname" class="value" value="{{ user.username }}" required>
 
-                    <div class="label" style="margin-top:15px;">Numéro de compte / portefeuille</div>
-                    <input type="text" name="phone" class="value" value="{{ user.phone }}" readonly>
+                <div class="label" style="margin-top:15px;">Numéro de compte / portefeuille</div>
+                <input type="text" name="phone" class="value" value="{{ user.phone }}" readonly>
 
-                    <div class="label" style="margin-top:15px;">Montant</div>
-                    <input type="number" name="montant" class="value" value="3800" readonly>
+                <div class="label" style="margin-top:15px;">Montant</div>
+                <input type="number" name="montant" class="value" value="3800" readonly>
 
-                    <div class="label" style="margin-top:15px;">Pays</div>
-                    <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
+                <div class="label" style="margin-top:15px;">Pays</div>
+                <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
 
-                    <div class="label" style="margin-top:15px;">Canal de paiement</div>
-                    <select name="operator" class="value" required>
-                        <option value="MTN Mobile Money">MTN Mobile Money</option>
-                        <option value="MoMo Cameroun">MoMo Cameroun</option>
-                        <option value="Moov Money">Moov Money</option>
-                        <option value="Airtel Money">Airtel Money</option>
-                        <option value="Orange Money">Orange Money</option>
-                        <option value="Yas Togo">Yas Togo</option>
-                        <option value="Nita">Nita</option>
-                        <option value="Wave">Wave</option>
-                    </select>
+                <div class="label" style="margin-top:15px;">Canal de paiement</div>
+                <select name="operator" class="value" required>
+                    <option value="MTN Mobile Money">MTN Mobile Money</option>
+                    <option value="MoMo Cameroun">MoMo Cameroun</option>
+                    <option value="Moov Money">Moov Money</option>
+                    <option value="Airtel Money">Airtel Money</option>
+                    <option value="Orange Money">Orange Money</option>
+                    <option value="Yas Togo">Yas Togo</option>
+                    <option value="Nita">Nita</option>
+                    <option value="Wave">Wave</option>
+                </select>
 
-                    <button type="submit" class="pay-btn disabled-btn" disabled>
-    Effectuer le paiement
-</button>
-                </div>
-            </form>
-        {% endif %}
-    </div>
+                <button type="submit" class="pay-btn">Effectuer le paiement</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
 
-    <footer>
-        2026 © LuminaStar by Nina Academy
-    </footer>
+<footer>
+    2026 © LuminaStar by Nina Academy
+</footer>
+
 </div>
 
 <script>
