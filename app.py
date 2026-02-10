@@ -500,39 +500,101 @@ def connexion_page():
 
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 
+
 SERVICES = {
+
+    # 🇨🇲 CAMEROUN
     "CM": [
-        {"id": 1, "name": "MOMO CM", "description": "MTN MOBILE MONEY CM"},
-        {"id": 2, "name": "OM CM", "description": "ORANGE MONEY CM"}
+        {"id": 1, "name": "MOMO CM", "description": "MTN MOBILE MONEY CAMEROUN"},
+        {"id": 2, "name": "OM CM", "description": "ORANGE MONEY CAMEROUN"},
     ],
+
+    # 🇨🇮 CÔTE D’IVOIRE
     "CI": [
         {"id": 29, "name": "OM CI", "description": "ORANGE MONEY COTE D'IVOIRE"},
         {"id": 30, "name": "MOMO CI", "description": "MTN MONEY COTE D'IVOIRE"},
         {"id": 31, "name": "MOOV CI", "description": "MOOV COTE D'IVOIRE"},
-        {"id": 32, "name": "WAVE CI", "description": "WAVE COTE D'IVOIRE"}
+        {"id": 32, "name": "WAVE CI", "description": "WAVE COTE D'IVOIRE"},
     ],
+
+    # 🇧🇫 BURKINA FASO
     "BF": [
         {"id": 33, "name": "MOOV BF", "description": "MOOV BURKINA FASO"},
-        {"id": 34, "name": "OM BF", "description": "ORANGE MONEY BURKINA FASO"}
+        {"id": 34, "name": "OM BF", "description": "ORANGE MONEY BURKINA FASO"},
     ],
+
+    # 🇧🇯 BENIN
     "BJ": [
         {"id": 35, "name": "MOMO BJ", "description": "MTN MONEY BENIN"},
-        {"id": 36, "name": "MOOV BJ", "description": "MOOV BENIN"}
+        {"id": 36, "name": "MOOV BJ", "description": "MOOV BENIN"},
     ],
+
+    # 🇹🇬 TOGO
     "TG": [
         {"id": 37, "name": "T-MONEY TG", "description": "T-MONEY TOGO"},
-        {"id": 38, "name": "MOOV TG", "description": "MOOV TOGO"}
-    ]
+        {"id": 38, "name": "MOOV TG", "description": "MOOV TOGO"},
+    ],
+
+    # 🇨🇩 CONGO DRC
+    "COD": [
+        {"id": 52, "name": "VODACOM COD", "description": "VODACOM CONGO DRC"},
+        {"id": 53, "name": "AIRTEL COD", "description": "AIRTEL CONGO DRC"},
+        {"id": 54, "name": "ORANGE COD", "description": "ORANGE CONGO DRC"},
+    ],
+
+    # 🇨🇬 CONGO BRAZZAVILLE
+    "COG": [
+        {"id": 55, "name": "AIRTEL COG", "description": "AIRTEL CONGO"},
+        {"id": 56, "name": "MOMO COG", "description": "MTN MOMO CONGO"},
+    ],
+
+    # 🇬🇦 GABON
+    "GAB": [
+        {"id": 57, "name": "AIRTEL GAB", "description": "AIRTEL GABON"},
+    ],
+
+    # 🇺🇬 UGANDA
+    "UGA": [
+        {"id": 58, "name": "AIRTEL UGA", "description": "AIRTEL UGANDA"},
+        {"id": 59, "name": "MOMO UGA", "description": "MTN MOMO UGANDA"},
+    ],
 }
 
 COUNTRY_CODE = {
+    # Cameroun
     "Cameroun": "CM",
-    "Côte d'Ivoire": "CI",
-    "Burkina Faso": "BF",
-    "Bénin": "BJ",
-    "Togo": "TG"
-}
+    "Cameroon": "CM",
 
+    # Côte d'Ivoire
+    "Côte d'Ivoire": "CI",
+    "Cote d Ivoire": "CI",
+    "Ivory Coast": "CI",
+
+    # Burkina Faso
+    "Burkina Faso": "BF",
+
+    # Bénin
+    "Bénin": "BJ",
+    "Benin": "BJ",
+
+    # Togo
+    "Togo": "TG",
+
+    # Congo DRC
+    "Congo DRC": "COD",
+    "RDC": "COD",
+    "République Démocratique du Congo": "COD",
+
+    # Congo Brazzaville
+    "Congo": "COG",
+    "Congo Brazzaville": "COG",
+
+    # Gabon
+    "Gabon": "GAB",
+
+    # Uganda
+    "Uganda": "UGA",
+}
 
 def get_soleaspay_services():
     return SOLEASPAY_SERVICES_JSON
@@ -544,27 +606,26 @@ def dashboard_bloque():
     if user_is_activated(user):
         return redirect(url_for("dashboard_page"))
 
-    # Simule un dépôt pending
-    pending_depot = None
+    pending_depot = Depot.query.filter_by(
+        user_name=user.username,
+        statut="pending"
+    ).first()
+
     user_has_pending_depot = bool(pending_depot)
 
-    # Récupération du code pays
     country_code = COUNTRY_CODE.get(user.country.strip())
     if not country_code:
         flash("Pays non supporté.", "danger")
         return redirect(url_for("dashboard_page"))
 
-    # =========================
-    # POST : paiement
-    # =========================
     if request.method == "POST":
-        operator_name = request.form.get("operator")
-        amount = request.form.get("montant", type=int)
-        fullname = request.form.get("fullname")
-        phone = request.form.get("phone")  # ✅ numéro modifiable
 
-        # 🔒 Vérifications
-        if not operator_name or not amount or not fullname or not phone:
+        fullname = request.form.get("fullname")
+        phone = request.form.get("phone")
+        operator_name = request.form.get("operator")
+        amount = request.form.get("montant", type=float)
+
+        if not all([fullname, phone, operator_name, amount]):
             flash("Tous les champs sont requis.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
@@ -572,33 +633,43 @@ def dashboard_bloque():
             flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔒 Nettoyage numéro
         phone = phone.replace(" ", "").replace("-", "")
-
-        if not phone.isdigit() or len(phone) < 8:
-            flash("Numéro de paiement invalide.", "danger")
+        if not phone.isdigit():
+            flash("Numéro invalide.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔹 Recherche du service SoleasPay
         service = next(
             (s for s in SERVICES[country_code] if s["name"] == operator_name),
             None
         )
 
         if not service:
-            flash("Opérateur non supporté pour votre pays.", "danger")
+            flash("Opérateur non supporté.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔹 Payload SoleasPay
+        # ✅ 1️⃣ CRÉATION DU DÉPÔT AVANT PAIEMENT
+        depot = Depot(
+            user_name=user.username,
+            phone=phone,
+            operator=operator_name,
+            country=user.country,
+            montant=amount,
+            statut="pending",
+            email=user.email
+        )
+        db.session.add(depot)
+        db.session.commit()
+
+        # ✅ 2️⃣ ENVOYER DEPOT_ID À SOLEASPAY
         payload = {
-            "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
+            "wallet": phone,
             "amount": amount,
             "currency": "XOF",
-            "order_id": f"ORD-{int(time.time())}",
-            "description": f"Activation {user.username}",
+            "order_id": f"DEPOT-{depot.id}",
+            "description": f"DEPOT_ID={depot.id}|USER={user.username}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour?status=success",
+            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
             "failureUrl": "https://lumina-stars.com/fail"
         }
 
@@ -618,7 +689,7 @@ def dashboard_bloque():
             )
             result = response.json()
         except Exception as e:
-            flash(f"Erreur de connexion au serveur de paiement : {e}", "danger")
+            flash(f"Erreur SoleasPay : {e}", "danger")
             return redirect(url_for("dashboard_bloque"))
 
         if not result.get("success"):
@@ -628,9 +699,6 @@ def dashboard_bloque():
         flash("Veuillez confirmer le paiement sur votre téléphone.", "info")
         return redirect(url_for("dashboard_bloque"))
 
-    # =========================
-    # GET : affichage page
-    # =========================
     return render_template(
         "dashboard_bloque.html",
         user=user,
@@ -638,6 +706,7 @@ def dashboard_bloque():
         services_by_country=SERVICES,
         country_code=country_code
     )
+
 
 @app.route("/verify", methods=["GET"])
 def verify_payment():
@@ -671,23 +740,18 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
-
-
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
-    try:
-        data = request.get_json()
-    except Exception:
-        return jsonify({"error": "JSON invalide"}), 400
+    data = request.get_json()
 
     status = data.get("status")
     success = data.get("success")
     reference = data.get("reference")
-    amount = int(data.get("amount", 0))
+    amount = float(data.get("amount", 0))
     description = data.get("description", "")
     operator = data.get("service_name")
 
-    # 🔎 Extraire DEPOT_ID depuis description
+    # 🔍 EXTRACTION DEPOT_ID
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
@@ -695,36 +759,40 @@ def webhook_soleaspay():
         except Exception:
             pass
 
-    # ✅ Paiement confirmé
+    if not depot_id:
+        return jsonify({"error": "DEPOT_ID manquant"}), 400
+
+    depot = Depot.query.get(depot_id)
+    if not depot:
+        return jsonify({"error": "Depot introuvable"}), 404
+
+    # 🔐 Anti double webhook
+    if depot.statut == "valide":
+        return jsonify({"received": True}), 200
+
     if success is True and status == "SUCCESS":
 
-        if amount != 3800 or not depot_id:
-            return jsonify({"error": "Paiement invalide"}), 400
-
-        depot = Depot.query.get(depot_id)
-        if not depot:
-            return jsonify({"error": "Depot introuvable"}), 404
-
-        # 🔐 Anti double traitement
-        if depot.statut == "valide":
-            return jsonify({"received": True}), 200
+        if depot.montant != amount:
+            return jsonify({"error": "Montant incorrect"}), 400
 
         user = User.query.filter_by(username=depot.user_name).first()
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # ✅ Valider le dépôt
+        # ✅ VALIDER LE DÉPÔT
         depot.statut = "valide"
         depot.reference = reference
         depot.operator = operator or depot.operator
 
-        # 💰 Créditer l'utilisateur
+        # 💰 Crédit
         user.solde_depot += depot.montant
         user.solde_total += depot.montant
 
-        # 🔑 Activation + commission (LOGIQUE IDENTIQUE)
+        # 🔑 PREMIER DÉPÔT = ACTIVATION
         if not user.premier_depot:
             user.premier_depot = True
+            user.is_active = True
+
             if user.parrain:
                 donner_commission(user.parrain, depot.montant)
 
@@ -732,7 +800,7 @@ def webhook_soleaspay():
 
         return jsonify({
             "received": True,
-            "message": "Paiement SoleasPay validé, compte activé"
+            "message": "Paiement validé, compte activé"
         }), 200
 
     return jsonify({"received": True}), 200
