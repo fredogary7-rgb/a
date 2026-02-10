@@ -1,19 +1,16 @@
-# script_ajout_questions.py
+from app import app, db, Question  # Tout est dans app.py
+from datetime import date
 
-from app import app, db, Question  # Tout est défini dans app.py
+with app.app_context():
+    # Créer les questions
+    q1 = Question(question="Quelle est la capitale du Togo ?", correct_answer="Lomé")
+    q2 = Question(question="Combien font 5 × 6 ?", correct_answer="30")
+    q3 = Question(question="Quelle est la planète la plus proche du soleil ?", correct_answer="Mercure")
+    q4 = Question(question="Combien de continents y a-t-il ?", correct_answer="7")
+    q5 = Question(question="Qui a découvert l'Amérique ?", correct_answer="Christophe Colomb")
 
-with app.app_context():  # Obligatoire pour accéder à la DB en dehors de Flask
-    # Liste des questions
-    questions = [
-        Question(question="Quelle est la capitale de la France ?", correct_answer="Paris"),
-        Question(question="Combien y a-t-il de continents ?", correct_answer="7"),
-        Question(question="Quelle est la couleur du ciel par temps clair ?", correct_answer="Bleu"),
-        Question(question="Combien de jours y a-t-il en février lors d'une année non bissextile ?", correct_answer="28"),
-        Question(question="Qui a écrit 'Les Misérables' ?", correct_answer="Victor Hugo")
-    ]
-
-    # Ajouter les questions à la base
-    db.session.add_all(questions)
+    # Ajouter à la base
+    db.session.add_all([q1, q2, q3, q4, q5])
     db.session.commit()
 
-    print("✅ 5 questions ajoutées avec succès !")
+    print("✅ Questions ajoutées avec succès !")
