@@ -737,6 +737,26 @@ def webhook_soleaspay():
 
     return jsonify({"received": True}), 200
 
+@app.route("/paiement/soleaspay/retour")
+def bkapay_retour():
+    status = request.args.get("status")
+    
+    # 🔐 Récupération de l'utilisateur connecté
+    user = get_logged_in_user()  # Assure-toi que cette fonction retourne l'utilisateur connecté
+
+    if status == "success":
+        flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
+
+        # ✅ Donner la commission si l'utilisateur a un parrain
+        if user.parrain:
+            donner_commission(user.parrain, 0)  # Le montant n'a plus d'importance
+
+        db.session.commit()
+        return redirect(url_for("dashboard_pay_ok"))
+
+    # Paiement échoué ou annulé
+    flash("Paiement échoué ou annulé.", "danger")
+    return redirect(url_for("dashboard_bloque"))
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
@@ -780,20 +800,6 @@ def dashboard_pay_ok():
     )
 
 
-@app.route("/paiement/soleaspay/retour")
-def soleaspay_retour():
-    status = request.args.get("status")
-
-    user = get_logged_in_user()
-
-    if status == "success":
-        flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
-
-        # commission sera donnée AU WEBHOOK (comme BKAPAY)
-        return redirect(url_for("dashboard_pay_ok"))
-
-    flash("Paiement échoué ou annulé.", "danger")
-    return redirect(url_for("dashboard_bloque"))
 
 @app.route("/api/check-activation")
 def api_check_activation():
