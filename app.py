@@ -500,7 +500,6 @@ def connexion_page():
 
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 
-
 SERVICES = {
 
     # 🇨🇲 CAMEROUN
@@ -596,6 +595,7 @@ COUNTRY_CODE = {
     "Uganda": "UGA",
 }
 
+
 def get_soleaspay_services():
     return SOLEASPAY_SERVICES_JSON
 
@@ -606,26 +606,27 @@ def dashboard_bloque():
     if user_is_activated(user):
         return redirect(url_for("dashboard_page"))
 
-    pending_depot = Depot.query.filter_by(
-        user_name=user.username,
-        statut="pending"
-    ).first()
-
+    # Simule un dépôt pending
+    pending_depot = None
     user_has_pending_depot = bool(pending_depot)
 
+    # Récupération du code pays
     country_code = COUNTRY_CODE.get(user.country.strip())
     if not country_code:
         flash("Pays non supporté.", "danger")
         return redirect(url_for("dashboard_page"))
 
+    # =========================
+    # POST : paiement
+    # =========================
     if request.method == "POST":
-
-        fullname = request.form.get("fullname")
-        phone = request.form.get("phone")
         operator_name = request.form.get("operator")
-        amount = request.form.get("montant", type=float)
+        amount = request.form.get("montant", type=int)
+        fullname = request.form.get("fullname")
+        phone = request.form.get("phone")  # ✅ numéro modifiable
 
-        if not all([fullname, phone, operator_name, amount]):
+        # 🔒 Vérifications
+        if not operator_name or not amount or not fullname or not phone:
             flash("Tous les champs sont requis.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
@@ -633,44 +634,34 @@ def dashboard_bloque():
             flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
+        # 🔒 Nettoyage numéro
         phone = phone.replace(" ", "").replace("-", "")
-        if not phone.isdigit():
-            flash("Numéro invalide.", "danger")
+
+        if not phone.isdigit() or len(phone) < 8:
+            flash("Numéro de paiement invalide.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
+        # 🔹 Recherche du service SoleasPay
         service = next(
             (s for s in SERVICES[country_code] if s["name"] == operator_name),
             None
         )
 
         if not service:
-            flash("Opérateur non supporté.", "danger")
+            flash("Opérateur non supporté pour votre pays.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # ✅ 1️⃣ CRÉATION DU DÉPÔT AVANT PAIEMENT
-        depot = Depot(
-            user_name=user.username,
-            phone=phone,
-            operator=operator_name,
-            country=user.country,
-            montant=amount,
-            statut="pending",
-            email=user.email
-        )
-        db.session.add(depot)
-        db.session.commit()
-
-        # ✅ 2️⃣ ENVOYER DEPOT_ID À SOLEASPAY
+        # 🔹 Payload SoleasPay
         payload = {
-            "wallet": phone,
+            "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
             "amount": amount,
             "currency": "XOF",
-            "order_id": f"DEPOT-{depot.id}",
-            "description": f"DEPOT_ID={depot.id}|USER={user.username}",
+            "order_id": f"ORD-{int(time.time())}",
+            "description": f"Activation {user.username}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
-            "failureUrl": "https://lumina-stars.com/fail"
+            "successUrl": "https://example.com/success",
+            "failureUrl": "https://example.com/fail"
         }
 
         headers = {
@@ -689,7 +680,7 @@ def dashboard_bloque():
             )
             result = response.json()
         except Exception as e:
-            flash(f"Erreur SoleasPay : {e}", "danger")
+            flash(f"Erreur de connexion au serveur de paiement : {e}", "danger")
             return redirect(url_for("dashboard_bloque"))
 
         if not result.get("success"):
@@ -699,6 +690,9 @@ def dashboard_bloque():
         flash("Veuillez confirmer le paiement sur votre téléphone.", "info")
         return redirect(url_for("dashboard_bloque"))
 
+    # =========================
+    # GET : affichage page
+    # =========================
     return render_template(
         "dashboard_bloque.html",
         user=user,

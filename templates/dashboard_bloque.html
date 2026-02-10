@@ -72,21 +72,6 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
 <div class="block">
     <h2>Effectuer un dépôt</h2>
 
-    {% if user_has_pending_depot %}
-        <p class="info-warning">Vous avez déjà un dépôt en attente. Veuillez attendre la validation avant d'effectuer un nouveau dépôt.</p>
-        <form>
-            <div class="payment-section">
-                <input type="text" value="{{ user.username }}" class="value" disabled>
-                <input type="text" value="{{ user.phone }}" class="value" disabled>
-                <input type="number" value="3800" class="value" disabled>
-                <input type="text" value="{{ user.country }}" class="value" disabled>
-                <select class="value" disabled>
-                    <option>Choisir un opérateur</option>
-                </select>
-                <button type="submit" class="pay-btn" disabled>Effectuer le paiement</button>
-            </div>
-        </form>
-    {% else %}
         <form method="POST" action="{{ url_for('dashboard_bloque') }}">
             <div class="payment-section">
                 <div class="label">Nom complet</div>
@@ -102,6 +87,7 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
                 <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
 
                 <div class="label" style="margin-top:15px;">Canal de paiement</div>
+
 <select name="operator" class="value" required>
     <option value="">Choisir un opérateur</option>
     {% for service in services_by_country[country_code] %}
@@ -111,7 +97,6 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
                 <button type="submit" class="pay-btn">Effectuer le paiement</button>
             </div>
         </form>
-    {% endif %}
 </div>
 
 <footer>
