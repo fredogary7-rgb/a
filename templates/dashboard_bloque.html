@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Compte Inactif - LuminaStar</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
 * {margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
 body {background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);min-height:100vh;color:#fff;overflow-x:hidden;}
@@ -37,28 +35,9 @@ body {background:linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);min-height:100v
 .pay-btn:disabled {background:rgba(255,255,255,0.4);cursor:not-allowed;}
 footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
 .info-warning {margin-top:10px;color:#ffdd57;font-weight:600;font-size:14px;}
-
-.support-float{
-    position:fixed;
-    bottom:65px;
-    right:18px;
-    width:50px;
-    height:50px;
-    background:#f5c842;
-    color:#000;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-    cursor:pointer;
-    z-index:999;
-    animation:bounce 2s infinite;
-    box-shadow:0 4px 10px rgba(0,0,0,0.3);
-}
+.support-float{position:fixed;bottom:65px;right:18px;width:50px;height:50px;background:#f5c842;color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;z-index:999;animation:bounce 2s infinite;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
 </style>
 </head>
-
 <body>
 
 <div class="overlay" id="overlay"></div>
@@ -102,7 +81,7 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
                 <input type="number" value="3800" class="value" disabled>
                 <input type="text" value="{{ user.country }}" class="value" disabled>
                 <select class="value" disabled>
-                    <option>MTN Mobile Money</option>
+                    <option>Choisir un opérateur</option>
                 </select>
                 <button type="submit" class="pay-btn" disabled>Effectuer le paiement</button>
             </div>
@@ -123,17 +102,12 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
                 <input type="text" name="country" class="value" value="{{ user.country }}" readonly>
 
                 <div class="label" style="margin-top:15px;">Canal de paiement</div>
-                <select name="operator" class="value" required>
-                    <option value="MTN Mobile Money">MTN Mobile Money</option>
-                    <option value="MoMo Cameroun">MoMo Cameroun</option>
-                    <option value="Moov Money">Moov Money</option>
-                    <option value="Airtel Money">Airtel Money</option>
-                    <option value="Orange Money">Orange Money</option>
-                    <option value="Yas Togo">Yas Togo</option>
-                    <option value="Nita">Nita</option>
-                    <option value="Wave">Wave</option>
-                </select>
-
+<select name="operator" class="value" required>
+    <option value="">Choisir un opérateur</option>
+    {% for service in services_by_country[country_code] %}
+        <option value="{{ service.name }}">{{ service.name }}</option>
+    {% endfor %}
+</select>
                 <button type="submit" class="pay-btn">Effectuer le paiement</button>
             </div>
         </form>
@@ -143,8 +117,6 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
 <footer>
     2026 © LuminaStar by Nina Academy
 </footer>
-
-</div>
 
 <script>
 const sidebar = document.getElementById("sidebar");

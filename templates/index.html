@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SoleasPay Pay-In</title>
+</head>
+<body>
+
+<h2>Paiement</h2>
+
+<select id="country" onchange="loadOperators()">
+    <option value="">Pays</option>
+    <option value="TG">Togo</option>
+    <option value="BJ">Bénin</option>
+    <option value="CI">Côte d'Ivoire</option>
+    <option value="BF">Burkina Faso</option>
+    <option value="CM">Cameroun</option>
+</select>
+
+<select id="operator"></select><br><br>
+
+<input id="wallet" placeholder="Numéro Mobile"><br><br>
+<input id="amount" placeholder="Montant"><br><br>
+<input id="payer" placeholder="Nom"><br><br>
+<input id="email" placeholder="Email"><br><br>
+
+<button onclick="pay()">Payer</button>
+
+<script>
+const operators = {
+    TG: ["TMONEY", "MOOV"],
+    BJ: ["MTN", "MOOV"],
+    CI: ["ORANGE", "MTN", "MOOV", "WAVE"],
+    BF: ["MOOV", "ORANGE"],
+    CM: ["MTN", "ORANGE"]
+};
+
+function loadOperators() {
+    let country = document.getElementById("country").value;
+    let opSelect = document.getElementById("operator");
+    opSelect.innerHTML = "";
+
+    operators[country].forEach(op => {
+        let option = document.createElement("option");
+        option.value = op;
+        option.text = op;
+        opSelect.add(option);
+    });
+}
+
+function pay() {
+    fetch("/payin", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            country: country.value,
+            operator: operator.value,
+            wallet: wallet.value,
+            amount: amount.value,
+            payer: payer.value,
+            email: email.value
+        })
+    })
+    .then(r => r.json())
+    .then(d => alert(JSON.stringify(d)))
+}
+</script>
+
+</body>
+</html>

@@ -1,3 +1,5 @@
+import time
+import requests
 import os
 import re
 import sys
@@ -456,6 +458,8 @@ def inscription_page():
 
     return render_template("inscription.html", code_ref=ref_code)
 
+from flask import render_template
+
 
 
 @app.route("/connexion", methods=["GET", "POST"])
@@ -494,6 +498,140 @@ def connexion_page():
     # Méthode GET : afficher la page de connexion
     return render_template("connexion.html")
 
+SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+
+SERVICES = {
+    "CM": [
+        {"id": 1, "name": "MOMO CM", "description": "MTN MOBILE MONEY CM"},
+        {"id": 2, "name": "OM CM", "description": "ORANGE MONEY CM"}
+    ],
+    "CI": [
+        {"id": 29, "name": "OM CI", "description": "ORANGE MONEY COTE D'IVOIRE"},
+        {"id": 30, "name": "MOMO CI", "description": "MTN MONEY COTE D'IVOIRE"},
+        {"id": 31, "name": "MOOV CI", "description": "MOOV COTE D'IVOIRE"},
+        {"id": 32, "name": "WAVE CI", "description": "WAVE COTE D'IVOIRE"}
+    ],
+    "BF": [
+        {"id": 33, "name": "MOOV BF", "description": "MOOV BURKINA FASO"},
+        {"id": 34, "name": "OM BF", "description": "ORANGE MONEY BURKINA FASO"}
+    ],
+    "BJ": [
+        {"id": 35, "name": "MOMO BJ", "description": "MTN MONEY BENIN"},
+        {"id": 36, "name": "MOOV BJ", "description": "MOOV BENIN"}
+    ],
+    "TG": [
+        {"id": 37, "name": "T-MONEY TG", "description": "T-MONEY TOGO"},
+        {"id": 38, "name": "MOOV TG", "description": "MOOV TOGO"}
+    ]
+}
+
+COUNTRY_CODE = {
+    "Cameroun": "CM",
+    "Côte d'Ivoire": "CI",
+    "Burkina Faso": "BF",
+    "Bénin": "BJ",
+    "Togo": "TG"
+}
+
+
+def get_soleaspay_services():
+    return SOLEASPAY_SERVICES_JSON
+
+@app.route("/dashboard_bloque", methods=["GET", "POST"])
+def dashboard_bloque():
+    user = get_logged_in_user()
+
+    if user_is_activated(user):
+        return redirect(url_for("dashboard_page"))
+
+    # Simule un dépôt pending
+    pending_depot = None
+    user_has_pending_depot = bool(pending_depot)
+
+    # Récupération du code pays
+    country_code = COUNTRY_CODE.get(user.country.strip())
+    if not country_code:
+        flash("Pays non supporté.", "danger")
+        return redirect(url_for("dashboard_page"))
+
+    if request.method == "POST":
+        operator_name = request.form.get("operator")
+        amount = request.form.get("montant", type=int)
+        fullname = request.form.get("fullname")
+
+        if not operator_name or not amount or not fullname:
+            flash("Tous les champs sont requis.", "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        if amount != 3800:
+            flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        # 🔹 Recherche du service correspondant
+        service = next((s for s in SERVICES[country_code] if s["name"] == operator_name), None)
+        if not service:
+            flash("Opérateur non supporté pour votre pays.", "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        # 🔹 Prépare le payload pour SoleasPay
+        payload = {
+            "wallet": user.phone,
+            "amount": amount,
+            "currency": "XOF",
+            "order_id": f"ORD-{int(time.time())}",
+            "description": f"Activation {user.username}",
+            "payer": fullname,
+            "payerEmail": user.email,
+            "successUrl": "https://example.com/success",
+            "failureUrl": "https://example.com/fail"
+        }
+
+        headers = {
+            "x-api-key": SOLEAS_API_KEY,
+            "operation": "2",
+            "service": str(service["id"]),
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.post(
+                "https://soleaspay.com/api/agent/bills/v3",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            result = response.json()
+        except Exception as e:
+            flash(f"Erreur de connexion au serveur de paiement : {e}", "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        if not result.get("success"):
+            flash(result.get("message", "Erreur paiement"), "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        flash("Veuillez confirmer le paiement sur votre téléphone.", "info")
+        return redirect(url_for("dashboard_bloque"))
+
+    return render_template(
+        "dashboard_bloque.html",
+        user=user,
+        user_has_pending_depot=user_has_pending_depot,
+        services_by_country=SERVICES,
+        country_code=country_code
+    )
+
+@app.route("/verify", methods=["GET"])
+def verify_payment():
+    order_id = request.args.get("orderId")
+    pay_id = request.args.get("payId")
+    headers = {
+        "x-api-key": API_KEY
+    }
+    url = f"https://soleaspay.com/api/agent/verif-pay?orderId={order_id}&payId={pay_id}"
+    response = requests.get(url, headers=headers)
+    return jsonify(response.json())
+
+
 
 @app.route("/logout")
 def logout_page():
@@ -514,106 +652,23 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
-CLE_PUBLIQUE_BKAPAY = "pk_live_a7a729fb-30b9-411f-b07f-218e698f1876"
-
-@app.route("/dashboard_bloque", methods=["GET", "POST"])
-def dashboard_bloque():
-    user = get_logged_in_user()
-
-    if user_is_activated(user):
-        return redirect(url_for("dashboard_page"))
 
 
-    if request.method == "POST":
-        operator = request.form.get("operator")
-        montant = request.form.get("montant", type=int)
-        fullname = request.form.get("fullname")
-
-        if not operator or not montant or not fullname:
-            flash("Tous les champs sont requis.", "danger")
-            return redirect(url_for("dashboard_bloque"))
-
-        if montant != 3800:
-            flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
-            return redirect(url_for("dashboard_bloque"))
-
-        depot = Depot(
-            user_name=user.username,
-            email=user.email,
-            phone=user.phone,
-            operator=operator,
-            country=user.country,
-            montant=montant,
-            statut="pending"
-        )
-        db.session.add(depot)
-        db.session.commit()
-
-        callback_url = url_for("bkapay_retour", _external=True)
-
-        # ✅ depot.id encodé dans description (OFFICIEL)
-        params = {
-            "amount": 3800,
-            "description": f"ACTIVATION|DEPOT_ID={depot.id}|USER={user.username}",
-            "callback": callback_url
-        }
-
-        payment_url = (
-            f"https://bkapay.com/api-pay/{CLE_PUBLIQUE_BKAPAY}?"
-            + urlencode(params)
-        )
-
-        return redirect(payment_url)
-
-    return render_template("dashboard_bloque.html", user=user)
-
-import hmac
-import hashlib
-
-BKAPAY_SECRET = "cs_8580899682044a2abc2d1cf735fc9027"
-
-def verify_bkapay_signature(raw_payload: bytes, received_signature: str) -> bool:
-    if not received_signature:
-        return False
-
-    expected = hmac.new(
-        BKAPAY_SECRET.encode(),
-        raw_payload,
-        hashlib.sha256
-    ).hexdigest()
-
-    return hmac.compare_digest(expected, received_signature)
-
-@app.route("/api/webhook/bkapay", methods=["POST"])
-def webhook_bkapay():
-    raw_payload = request.get_data(as_text=True)
-    signature = request.headers.get("X-BKApay-Signature")
-
-    if not signature:
-        return jsonify({"error": "Signature manquante"}), 401
-
-    expected_signature = hmac.new(
-        BKAPAY_SECRET.encode(),
-        raw_payload.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(expected_signature, signature):
-        return jsonify({"error": "Signature invalide"}), 401
-
+@app.route("/api/webhook/soleaspay", methods=["POST"])
+def webhook_soleaspay():
     try:
-        data = json.loads(raw_payload)
+        data = request.get_json()
     except Exception:
         return jsonify({"error": "JSON invalide"}), 400
 
-    event = data.get("event")
     status = data.get("status")
-    reference = data.get("transactionId")
+    success = data.get("success")
+    reference = data.get("reference")
     amount = int(data.get("amount", 0))
-    operator = data.get("operator")
     description = data.get("description", "")
+    operator = data.get("service_name")
 
-    # 🔎 Extraire DEPOT_ID depuis la description
+    # 🔎 Extraire DEPOT_ID depuis description
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
@@ -621,7 +676,8 @@ def webhook_bkapay():
         except Exception:
             pass
 
-    if event == "payment.completed" and status == "completed":
+    # ✅ Paiement confirmé
+    if success is True and status == "SUCCESS":
 
         if amount != 3800 or not depot_id:
             return jsonify({"error": "Paiement invalide"}), 400
@@ -647,7 +703,7 @@ def webhook_bkapay():
         user.solde_depot += depot.montant
         user.solde_total += depot.montant
 
-        # 🔑 Activation (ancien + nouveau système)
+        # 🔑 Activation + commission (LOGIQUE IDENTIQUE)
         if not user.premier_depot:
             user.premier_depot = True
             if user.parrain:
@@ -657,10 +713,11 @@ def webhook_bkapay():
 
         return jsonify({
             "received": True,
-            "message": "Paiement BKApay validé, compte activé"
+            "message": "Paiement SoleasPay validé, compte activé"
         }), 200
 
     return jsonify({"received": True}), 200
+
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
@@ -703,24 +760,19 @@ def dashboard_pay_ok():
         referral_link=referral_link
     )
 
-@app.route("/paiement/bkapay/retour")
-def bkapay_retour():
+
+@app.route("/paiement/soleaspay/retour")
+def soleaspay_retour():
     status = request.args.get("status")
-    
-    # 🔐 Récupération de l'utilisateur connecté
-    user = get_logged_in_user()  # Assure-toi que cette fonction retourne l'utilisateur connecté
+
+    user = get_logged_in_user()
 
     if status == "success":
         flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
 
-        # ✅ Donner la commission si l'utilisateur a un parrain
-        if user.parrain:
-            donner_commission(user.parrain, 0)  # Le montant n'a plus d'importance
-
-        db.session.commit()
+        # commission sera donnée AU WEBHOOK (comme BKAPAY)
         return redirect(url_for("dashboard_pay_ok"))
 
-    # Paiement échoué ou annulé
     flash("Paiement échoué ou annulé.", "danger")
     return redirect(url_for("dashboard_bloque"))
 
