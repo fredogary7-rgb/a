@@ -554,12 +554,17 @@ def dashboard_bloque():
         flash("Pays non supporté.", "danger")
         return redirect(url_for("dashboard_page"))
 
+    # =========================
+    # POST : paiement
+    # =========================
     if request.method == "POST":
         operator_name = request.form.get("operator")
         amount = request.form.get("montant", type=int)
         fullname = request.form.get("fullname")
+        phone = request.form.get("phone")  # ✅ numéro modifiable
 
-        if not operator_name or not amount or not fullname:
+        # 🔒 Vérifications
+        if not operator_name or not amount or not fullname or not phone:
             flash("Tous les champs sont requis.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
@@ -567,15 +572,26 @@ def dashboard_bloque():
             flash("Le montant d'activation est exactement 3800 FCFA.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔹 Recherche du service correspondant
-        service = next((s for s in SERVICES[country_code] if s["name"] == operator_name), None)
+        # 🔒 Nettoyage numéro
+        phone = phone.replace(" ", "").replace("-", "")
+
+        if not phone.isdigit() or len(phone) < 8:
+            flash("Numéro de paiement invalide.", "danger")
+            return redirect(url_for("dashboard_bloque"))
+
+        # 🔹 Recherche du service SoleasPay
+        service = next(
+            (s for s in SERVICES[country_code] if s["name"] == operator_name),
+            None
+        )
+
         if not service:
             flash("Opérateur non supporté pour votre pays.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔹 Prépare le payload pour SoleasPay
+        # 🔹 Payload SoleasPay
         payload = {
-            "wallet": user.phone,
+            "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
             "amount": amount,
             "currency": "XOF",
             "order_id": f"ORD-{int(time.time())}",
@@ -612,6 +628,9 @@ def dashboard_bloque():
         flash("Veuillez confirmer le paiement sur votre téléphone.", "info")
         return redirect(url_for("dashboard_bloque"))
 
+    # =========================
+    # GET : affichage page
+    # =========================
     return render_template(
         "dashboard_bloque.html",
         user=user,
