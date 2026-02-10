@@ -598,8 +598,8 @@ def dashboard_bloque():
             "description": f"Activation {user.username}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://example.com/success",
-            "failureUrl": "https://example.com/fail"
+            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour?status=success",
+            "failureUrl": "https://lumina-stars.com/fail"
         }
 
         headers = {
