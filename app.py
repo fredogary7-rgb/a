@@ -674,7 +674,7 @@ def dashboard_bloque():
             "payer": fullname,
             "payerEmail": user.email,
             "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
-            "failureUrl": "https://lumina-stars.com"
+            "failureUrl": "https://lumina-stars/dashboard_bloque.com"
         }
 
         headers = {
