@@ -673,8 +673,8 @@ def dashboard_bloque():
             "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://example.com/success",
-            "failureUrl": "https://example.com/fail"
+            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
+            "failureUrl": "https://lumina-stars.com"
         }
 
         headers = {
@@ -811,11 +811,23 @@ def webhook_soleaspay():
     # Cas paiement échoué ou autre status
     return jsonify({"received": True, "message": "Paiement non validé"}), 200
 
-
 @app.route("/paiement/soleaspay/retour")
-def soleaspay_retour():
-    flash("Paiement en cours de traitement. Votre compte sera activé automatiquement.", "info")
-    return redirect(url_for("dashboard_pay_ok"))
+def bkapay_retour():
+    status = request.args.get("status")
+
+    # 🔐 Récupération de l'utilisateur connecté
+    user = get_logged_in_user()  # Assure-toi que cette fonction retourne l'utilisateur connecté
+
+    if status == "success":
+        flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
+
+        # ✅ Donner la commission si l'utilisateur a un parrain
+        if user.parrain:
+            donner_commission(user.parrain, 0)  # Le montant n'a plus d'importance
+
+        db.session.commit()
+        return redirect(url_for("dashboard_pay_ok"))
+
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
