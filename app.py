@@ -651,13 +651,26 @@ def dashboard_bloque():
             flash("Opérateur non supporté pour votre pays.", "danger")
             return redirect(url_for("dashboard_bloque"))
 
-        # 🔹 Payload SoleasPay
+        # 🔹 Création du dépôt AVANT paiement avec toutes les infos obligatoires
+        new_depot = Depot(
+            user_name=user.username,
+            phone=phone,
+            operator=operator_name,  # ✅ maintenant obligatoire
+            country=country_code,    # ✅ maintenant obligatoire
+            montant=amount,
+            statut="en_attente",
+            email=user.email
+        )
+        db.session.add(new_depot)
+        db.session.commit()
+
+        # 🔹 Payload SoleasPay avec DEPOT_ID
         payload = {
             "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
             "amount": amount,
             "currency": "XOF",
-            "order_id": f"ORD-{int(time.time())}",
-            "description": f"Activation {user.username}",
+            "order_id": f"ORD-{new_depot.id}",
+            "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
             "successUrl": "https://example.com/success",
@@ -701,7 +714,6 @@ def dashboard_bloque():
         country_code=country_code
     )
 
-
 @app.route("/verify", methods=["GET"])
 def verify_payment():
     order_id = request.args.get("orderId")
@@ -743,15 +755,14 @@ def webhook_soleaspay():
     reference = data.get("reference")
     amount = float(data.get("amount", 0))
     description = data.get("description", "")
-    operator = data.get("service_name")
 
-    # 🔍 EXTRACTION DEPOT_ID
+    # 🔍 Extraire DEPOT_ID
     depot_id = None
     if "DEPOT_ID=" in description:
         try:
-            depot_id = int(description.split("DEPOT_ID=")[1].split("|")[0])
-        except Exception:
-            pass
+            depot_id = int(description.split("DEPOT_ID=")[1])
+        except ValueError:
+            return jsonify({"error": "DEPOT_ID invalide"}), 400
 
     if not depot_id:
         return jsonify({"error": "DEPOT_ID manquant"}), 400
@@ -760,9 +771,9 @@ def webhook_soleaspay():
     if not depot:
         return jsonify({"error": "Depot introuvable"}), 404
 
-    # 🔐 Anti double webhook
+    # 🔐 Anti double validation
     if depot.statut == "valide":
-        return jsonify({"received": True}), 200
+        return jsonify({"received": True, "message": "Déjà validé"}), 200
 
     if success is True and status == "SUCCESS":
 
@@ -773,20 +784,20 @@ def webhook_soleaspay():
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # ✅ VALIDER LE DÉPÔT
+        # ✅ Validation du dépôt
         depot.statut = "valide"
         depot.reference = reference
-        depot.operator = operator or depot.operator
 
-        # 💰 Crédit
+        # 🔹 Mise à jour des soldes
         user.solde_depot += depot.montant
         user.solde_total += depot.montant
 
-        # 🔑 PREMIER DÉPÔT = ACTIVATION
-        if not user.premier_depot:
-            user.premier_depot = True
+        # 🔑 Activation du compte si pas déjà actif
+        if not user.is_active:
             user.is_active = True
+            user.premier_depot = True
 
+            # 🎁 Commission UNIQUE au parrain
             if user.parrain:
                 donner_commission(user.parrain, depot.montant)
 
@@ -794,30 +805,16 @@ def webhook_soleaspay():
 
         return jsonify({
             "received": True,
-            "message": "Paiement validé, compte activé"
+            "message": "Compte activé et dépôt validé"
         }), 200
 
-    return jsonify({"received": True}), 200
+    # Cas paiement échoué ou autre status
+    return jsonify({"received": True, "message": "Paiement non validé"}), 200
+
 
 @app.route("/paiement/soleaspay/retour")
-def bkapay_retour():
-    status = request.args.get("status")
-    
-    # 🔐 Récupération de l'utilisateur connecté
-    user = get_logged_in_user()  # Assure-toi que cette fonction retourne l'utilisateur connecté
-
-    if status == "success":
-        flash("Paiement reçu ! Votre compte sera activé automatiquement.", "success")
-
-        # ✅ Donner la commission si l'utilisateur a un parrain
-        if user.parrain:
-            donner_commission(user.parrain, 0)  # Le montant n'a plus d'importance
-
-        db.session.commit()
-        return redirect(url_for("dashboard_pay_ok"))
-
-    # Paiement échoué ou annulé
-    flash("Paiement échoué ou annulé.", "danger")
+def soleaspay_retour():
+    flash("Paiement en cours de traitement. Votre compte sera activé automatiquement.", "info")
     return redirect(url_for("dashboard_bloque"))
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
@@ -915,7 +912,6 @@ def dashboard_page():
         referral_link=referral_link,
         total_withdrawn=total_withdrawn
     )
-
 
 def user_is_activated(user):
     if user.premier_depot:
