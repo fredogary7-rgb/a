@@ -871,6 +871,7 @@ def api_check_activation():
 def whatsapp_channel():
     return render_template("chaine.html")
 
+
 @app.route("/dashboard")
 def dashboard_page():
     user_id = session.get("user_id")
