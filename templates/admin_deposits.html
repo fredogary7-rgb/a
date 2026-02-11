@@ -321,7 +321,7 @@ h3{
                     <td class="status-{{ d.statut }}">{{ d.statut }}</td>
                     <td>{{ d.date.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td>
-                        {% if d.statut == 'pending' %}
+                        {% if d.statut == 'en_attente' %}
                             <div class="action-buttons">
                                 <a href="{{ url_for('rejeter_depot', depot_id=d.id) }}">
                                     <button class="refuser">Rejeter</button>
