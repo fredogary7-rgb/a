@@ -1567,7 +1567,7 @@ def admin_deposits():
     subquery = (
         db.session.query(func.max(Depot.id).label("last_id"))
         .join(User, Depot.user_name == User.username)
-        .filter(Depot.statut == "pending", User.premier_depot == False)
+        .filter(Depot.statut == "en_attente", User.premier_depot == False)
         .group_by(Depot.phone)
         .subquery()
     )
