@@ -815,7 +815,7 @@ def webhook_soleaspay():
 @app.route("/paiement/soleaspay/retour")
 def soleaspay_retour():
     flash("Paiement en cours de traitement. Votre compte sera activé automatiquement.", "info")
-    return redirect(url_for("dashboard_bloque"))
+    return redirect(url_for("dashboard_pay_ok"))
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
