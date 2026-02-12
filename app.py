@@ -828,6 +828,9 @@ def bkapay_retour():
         db.session.commit()
         return redirect(url_for("dashboard_pay_ok"))
 
+    # Paiement échoué ou annulé
+    flash("Paiement échoué ou annulé.", "danger")
+    return redirect(url_for("dashboard_bloque"))
 
 @app.route("/dashboard/pay/ok", methods=["GET"])
 def dashboard_pay_ok():
