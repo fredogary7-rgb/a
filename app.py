@@ -673,8 +673,8 @@ def dashboard_bloque():
             "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
-            "failureUrl": "https://lumina-stars/dashboard_bloque.com"
+            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour?status=success",
+            "failureUrl": "https://lumina-stars.com/dashboard_bloque"
         }
 
         headers = {
