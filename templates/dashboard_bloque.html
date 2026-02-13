@@ -99,6 +99,8 @@ footer {text-align:center;margin-top:30px;opacity:.8;font-size:13px;}
         </form>
 </div>
 
+<!-- ... ton HTML existant jusqu'au footer ... -->
+
 <footer>
     2026 © LuminaStar by Nina Academy
 </footer>
@@ -110,6 +112,52 @@ const menuToggle = document.getElementById("menuToggle");
 
 menuToggle.onclick = () => { sidebar.classList.add("active"); overlay.classList.add("active"); };
 overlay.onclick = () => { sidebar.classList.remove("active"); overlay.classList.remove("active"); };
+
+// === Script paiement SoleasPay ===
+document.querySelector("form").addEventListener("submit", function(e){
+    e.preventDefault(); // Empêche le submit classique
+
+    const fullname = this.fullname.value;
+    const phone = this.phone.value;
+    const montant = this.montant.value;
+    const country = this.country.value;
+    const operator = this.operator.value;
+
+    const payload = {
+        portefeuille: phone,
+        montant: parseFloat(montant),
+        devise: "XAF",
+        order_id: "order_" + Date.now(),
+        description: `DEPOT_ID={{ pending_depot.id if pending_depot else '0' }}`,
+        payeur: fullname,
+        payerEmail: "{{ user.email }}",
+        successUrl: "https://lumina-stars.com/paiement/soleaspay/retour",
+        failureUrl: "https://lumina-stars.com/dashboard_bloque"
+    };
+
+    fetch("https://soleaspay.com/api/agent/bills/V3", {
+        method: "POST",
+        headers: {
+            "x-api-key": "J-Wyr6-69ATKTWGSxk8st1BaZOo7qp_wc2w-AJAFU6P",
+            "operation": "2",
+            "service": "2",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data && data.payment_url){
+            window.location.href = data.payment_url; // Redirection vers le paiement
+        } else {
+            alert("Erreur lors de l'initiation du paiement.");
+        }
+    })
+    .catch(err => {
+        console.error("Erreur paiement:", err);
+        alert("Impossible de lancer le paiement. Réessayez plus tard.");
+    });
+});
 </script>
 
 </body>
