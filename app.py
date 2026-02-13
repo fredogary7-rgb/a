@@ -499,6 +499,7 @@ def connexion_page():
     return render_template("connexion.html")
 
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+SOLEAS_WEBHOOK_SECRET = "bh8UL1WRNEAenTdIiauks-0642_3zl8H9i9M32hQjMk"
 
 SERVICES = {
 
@@ -674,7 +675,7 @@ def dashboard_bloque():
             "payer": fullname,
             "payerEmail": user.email,
             "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour?status=success",
-            "failureUrl": "https://lumina-stars.com/dashboard_bloque"
+            "failureUrl": "https://lumina-stars.com/paiement/soleaspay/retour?status=success",
         }
 
         headers = {
@@ -746,18 +747,44 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
+# ⚠️ À mettre en haut de ton app.py
+
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
-    data = request.get_json()
+
+    # =========================
+    # 🔐 1. Vérification clé secrète
+    # =========================
+    received_key = request.headers.get("x-api-key")
+
+    if not received_key or received_key != SOLEAS_WEBHOOK_SECRET:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # =========================
+    # 📦 2. Sécurisation JSON
+    # =========================
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
 
     status = data.get("status")
     success = data.get("success")
     reference = data.get("reference")
-    amount = float(data.get("amount", 0))
+
+    # Sécurisation montant
+    try:
+        amount = int(float(data.get("amount", 0)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Montant invalide"}), 400
+
     description = data.get("description", "")
 
-    # 🔍 Extraire DEPOT_ID
+    # =========================
+    # 🔍 Extraction DEPOT_ID
+    # =========================
     depot_id = None
+
     if "DEPOT_ID=" in description:
         try:
             depot_id = int(description.split("DEPOT_ID=")[1])
@@ -768,48 +795,58 @@ def webhook_soleaspay():
         return jsonify({"error": "DEPOT_ID manquant"}), 400
 
     depot = Depot.query.get(depot_id)
+
     if not depot:
         return jsonify({"error": "Depot introuvable"}), 404
 
+    # =========================
     # 🔐 Anti double validation
+    # =========================
     if depot.statut == "valide":
         return jsonify({"received": True, "message": "Déjà validé"}), 200
 
+    # =========================
+    # ✅ Validation paiement
+    # =========================
     if success is True and status == "SUCCESS":
 
-        if depot.montant != amount:
+        if int(depot.montant) != amount:
             return jsonify({"error": "Montant incorrect"}), 400
 
         user = User.query.filter_by(username=depot.user_name).first()
+
         if not user:
             return jsonify({"error": "Utilisateur introuvable"}), 404
 
-        # ✅ Validation du dépôt
-        depot.statut = "valide"
-        depot.reference = reference
+        try:
+            depot.statut = "valide"
+            depot.reference = reference
 
-        # 🔹 Mise à jour des soldes
-        user.solde_depot += depot.montant
-        user.solde_total += depot.montant
+            user.solde_depot += depot.montant
+            user.solde_total += depot.montant
 
-        # 🔑 Activation du compte si pas déjà actif
-        if not user.is_active:
-            user.is_active = True
-            user.premier_depot = True
+            if not user.is_active:
+                user.is_active = True
+                user.premier_depot = True
 
-            # 🎁 Commission UNIQUE au parrain
-            if user.parrain:
-                donner_commission(user.parrain, depot.montant)
+                if user.parrain:
+                    donner_commission(user.parrain, depot.montant)
 
-        db.session.commit()
+            db.session.commit()
+
+        except Exception:
+            db.session.rollback()
+            return jsonify({"error": "Erreur serveur"}), 500
 
         return jsonify({
             "received": True,
             "message": "Compte activé et dépôt validé"
         }), 200
 
-    # Cas paiement échoué ou autre status
-    return jsonify({"received": True, "message": "Paiement non validé"}), 200
+    return jsonify({
+        "received": True,
+        "message": "Paiement non validé"
+    }), 200
 
 @app.route("/paiement/soleaspay/retour")
 def bkapay_retour():
