@@ -1068,7 +1068,7 @@ def admin_parrainage():
     if "admin_id" not in session:
         return redirect(url_for("admin_login"))
 
-    users = User.query.all()
+    users = User.query.order_by(User.username.asc()).all()
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
