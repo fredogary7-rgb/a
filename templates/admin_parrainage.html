@@ -192,13 +192,12 @@ const table = document.getElementById('usersTable');
 const rows = table.getElementsByTagName('tr');
 
 searchBox.addEventListener('input', function() {
-    const filter = this.value.toLowerCase();
+    const filter = this.value.toLowerCase().trim();
 
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 1; i < rows.length; i++) { 
         const username = rows[i].cells[0].innerText.toLowerCase();
-        const parrain = rows[i].cells[2].innerText.toLowerCase();
 
-        if (username.includes(filter) || parrain.includes(filter)) {
+        if (username.includes(filter)) {
             rows[i].style.display = '';
         } else {
             rows[i].style.display = 'none';
