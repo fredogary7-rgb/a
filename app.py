@@ -1072,6 +1072,7 @@ def admin_parrainage():
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
+        nouveau_username = (request.form.get("username") or "").strip().lower()
         nouveau_parrain = (request.form.get("parrain") or "").strip().lower()
         nouveau_phone = (request.form.get("phone") or "").strip()
 
@@ -1081,26 +1082,54 @@ def admin_parrainage():
             flash("Utilisateur introuvable.", "danger")
             return redirect(url_for("admin_parrainage"))
 
-        # ✅ Modifier le phone (avec vérification unicité)
-        if nouveau_phone and nouveau_phone != user.phone:
-            phone_existe = User.query.filter(User.phone == nouveau_phone, User.id != user.id).first()
-            if phone_existe:
-                flash(f"Le numéro '{nouveau_phone}' est déjà utilisé par un autre utilisateur.", "danger")
+        # ✅ Modifier USERNAME
+        if nouveau_username and nouveau_username != user.username:
+
+            # Vérification format (lettres minuscules + chiffres seulement)
+            if not nouveau_username.isalnum() or not nouveau_username.islower():
+                flash("Le username doit contenir uniquement lettres minuscules et chiffres.", "danger")
                 return redirect(url_for("admin_parrainage"))
+
+            # Vérification unicité
+            username_existe = User.query.filter(
+                User.username == nouveau_username,
+                User.id != user.id
+            ).first()
+
+            if username_existe:
+                flash("Ce username est déjà utilisé.", "danger")
+                return redirect(url_for("admin_parrainage"))
+
+            ancien_username = user.username
+            user.username = nouveau_username
+
+            # 🔥 Mettre à jour tous ceux qui ont cet ancien username comme parrain
+            filleuls = User.query.filter_by(parrain=ancien_username).all()
+            for f in filleuls:
+                f.parrain = nouveau_username
+
+        # ✅ Modifier PHONE
+        if nouveau_phone and nouveau_phone != user.phone:
+            phone_existe = User.query.filter(
+                User.phone == nouveau_phone,
+                User.id != user.id
+            ).first()
+
+            if phone_existe:
+                flash("Numéro déjà utilisé.", "danger")
+                return redirect(url_for("admin_parrainage"))
+
             user.phone = nouveau_phone
 
-        # ✅ Modifier le parrain (optionnel)
-        # Si champ vide => on enlève le parrain
+        # ✅ Modifier PARRAIN
         if nouveau_parrain == "":
             user.parrain = None
         else:
-            # Vérifier que le parrain existe
             parrain_user = User.query.filter_by(username=nouveau_parrain).first()
             if not parrain_user:
-                flash("Parrain invalide : ce username n'existe pas.", "danger")
+                flash("Parrain invalide.", "danger")
                 return redirect(url_for("admin_parrainage"))
 
-            # éviter parrainage sur soi-même
             if nouveau_parrain == user.username:
                 flash("Un utilisateur ne peut pas être son propre parrain.", "danger")
                 return redirect(url_for("admin_parrainage"))
