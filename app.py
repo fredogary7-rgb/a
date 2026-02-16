@@ -460,7 +460,17 @@ def inscription_page():
 
 from flask import render_template
 
+@app.route("/admin/fix_parrain")
+def fix_parrain():
+    ancien = "aaaa"
+    nouveau = "amen"
 
+    users = User.query.filter_by(parrain=ancien).all()
+    for u in users:
+        u.parrain = nouveau
+
+    db.session.commit()
+    return "Parrain mis à jour avec succès"
 
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():
@@ -674,7 +684,7 @@ def dashboard_bloque():
             "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/paiement/soleaspay/retour",
+            "successUrl": "https://lumina-stars.com/dashboard_pay_ok",
             "failureUrl": "https://lumina-stars.com/dashboard_bloque",
         }
 
