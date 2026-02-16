@@ -508,6 +508,23 @@ def connexion_page():
     # Méthode GET : afficher la page de connexion
     return render_template("connexion.html")
 
+
+@app.route("/admin/reset_password/<username>")
+def reset_password(username):
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        return "Utilisateur introuvable"
+
+    from werkzeug.security import generate_password_hash
+
+    nouveau_mdp = "so123456"
+    user.password = generate_password_hash(nouveau_mdp)
+
+    db.session.commit()
+
+    return f"Mot de passe réinitialisé pour {username} : {nouveau_mdp}"
+
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 SOLEAS_WEBHOOK_SECRET = "bh8UL1WRNEAenTdIiauks-0642_3zl8H9i9M32hQjMk"
 
