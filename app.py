@@ -518,7 +518,7 @@ def reset_password(username):
 
     from werkzeug.security import generate_password_hash
 
-    nouveau_mdp = "so123456"
+    nouveau_mdp = "ingrd123"
     user.password = generate_password_hash(nouveau_mdp)
 
     db.session.commit()
@@ -701,7 +701,7 @@ def dashboard_bloque():
             "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
-            "successUrl": "https://lumina-stars.com/dashboard_pay_ok",
+            "successUrl": "https://lumina-stars.com/dashboard/pay/ok",
             "failureUrl": "https://lumina-stars.com/dashboard_bloque",
         }
 
