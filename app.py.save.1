@@ -377,10 +377,11 @@ def init_db():
     print("✅ Base de données initialisée avec succès !")
 
 
+
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
     ref_code = request.args.get("ref", "").strip().lower()
-    session.pop("username_exists", None)
+    session.pop('username_exists', None)
 
     if request.method == "POST":
         username = request.form.get("username", "").strip().lower()
@@ -391,49 +392,40 @@ def inscription_page():
         confirm = request.form.get("confirm_password", "").strip()
         parrain_code = (request.form.get("parrain", "") or ref_code).strip().lower()
 
-        errors = []
-
-        # 🔒 Vérifications de base
+        # 🔒 Vérifications
         if not all([username, email, country, phone, password, confirm]):
-            errors.append("Tous les champs sont obligatoires.")
+            flash("Tous les champs sont obligatoires.", "danger")
+            return render_template("inscription.html", code_ref=ref_code)
 
-        if username and not re.fullmatch(r"[a-z0-9]+", username):
-            errors.append("Nom d'utilisateur invalide : lettres & chiffres uniquement.")
+        if not re.fullmatch(r"[a-z0-9]+", username):
+            flash("Nom d'utilisateur invalide : lettres & chiffres uniquement.", "danger")
+            return render_template("inscription.html", code_ref=ref_code)
 
-        if password and confirm and password != confirm:
-            errors.append("Les mots de passe ne correspondent pas.")
+        if password != confirm:
+            flash("Les mots de passe ne correspondent pas.", "danger")
+            return render_template("inscription.html", code_ref=ref_code)
 
-        # 🔎 Vérification doublons en UNE requête
-        if username and email and phone:
-            existing_users = User.query.filter(
-                (User.username == username) |
-                (User.email == email) |
-                (User.phone == phone)
-            ).all()
+        if User.query.filter_by(username=username).first():
+            flash(f"Nom d'utilisateur '{username}' existe déjà, veuillez ajouter 3 chiffres.", "danger")
+            session['username_exists'] = True
+            return render_template("inscription.html", code_ref=ref_code)
 
-            for user in existing_users:
-                if user.username == username:
-                    errors.append(f"Nom d'utilisateur '{username}' existe déjà, veuillez ajouter 3 chiffres.")
-                    session["username_exists"] = True
-                if user.email == email:
-                    errors.append("Cet email est déjà utilisé.")
-                if user.phone == phone:
-                    errors.append("Ce numéro est déjà enregistré.")
+        if User.query.filter_by(email=email).first():
+            flash("Cet email est déjà utilisé.", "danger")
+            return render_template("inscription.html", code_ref=ref_code)
 
-        # 🔗 Vérification parrainage
+        if User.query.filter_by(phone=phone).first():
+            flash("Ce numéro est déjà enregistré.", "danger")
+            return render_template("inscription.html", code_ref=ref_code)
+
+        # 🔗 Parrainage
         parrain_user = None
         if parrain_code:
             parrain_user = User.query.filter_by(username=parrain_code).first()
             if not parrain_user:
-                errors.append("Code parrain invalide.")
+                flash("Code parrain invalide.", "danger")
+                return render_template("inscription.html", code_ref=ref_code)
 
-        # 🚨 S'il y a des erreurs
-        if errors:
-            for error in errors:
-                flash(error, "danger")
-            return render_template("inscription.html", code_ref=ref_code)
-
-        # ✅ Création utilisateur
         try:
             new_user = User(
                 uid=str(uuid.uuid4()),
@@ -453,6 +445,7 @@ def inscription_page():
             db.session.add(new_user)
             db.session.commit()
 
+            # ✅ CONNEXION VIA SESSION (ancienne logique)
             session["user_id"] = new_user.id
 
             flash("Inscription réussie !", "success")
@@ -464,7 +457,6 @@ def inscription_page():
             return render_template("inscription.html", code_ref=ref_code)
 
     return render_template("inscription.html", code_ref=ref_code)
-
 
 from flask import render_template
 
@@ -702,7 +694,7 @@ def dashboard_bloque():
 
         # 🔹 Payload SoleasPay avec DEPOT_ID
         payload = {
-            "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
+            "wallet": phone,
             "amount": amount,
             "currency": "XOF",
             "order_id": f"ORD-{new_depot.id}",
