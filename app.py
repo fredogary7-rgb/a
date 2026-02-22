@@ -1470,9 +1470,9 @@ def retrait_points_page():
         (user.points_spin or 0) +
         (user.points_games or 0)
     )
-    tranches = total_points // 100
+    tranches = total_points // 500
     montant_xof = tranches * 500
-    points_utilisables = tranches * 100
+    points_utilisables = tranches * 500
     retrait_min = 3500
 
     if request.method == "POST":
