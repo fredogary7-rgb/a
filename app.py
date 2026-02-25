@@ -784,8 +784,7 @@ from urllib.parse import urlencode
 
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
-
-    # 🔐 Vérification signature
+    # 🔐 Vérification signature x-private-key
     received_key = request.headers.get("x-private-key")
     if not received_key or received_key != SOLEAS_WEBHOOK_SECRET:
         return jsonify({"error": "Unauthorized"}), 403
@@ -803,24 +802,32 @@ def webhook_soleaspay():
     reference = details.get("reference")
     external_reference = details.get("external_reference")
 
+    # 🔢 Vérification montant
     try:
         amount = int(float(details.get("amount", 0)))
-    except:
+    except (TypeError, ValueError):
         return jsonify({"error": "Invalid amount"}), 400
 
+    # 🔎 Vérification external_reference
     if not external_reference or not external_reference.startswith("ORD-"):
         return jsonify({"error": "Invalid external_reference"}), 400
 
-    depot_id = int(external_reference.replace("ORD-", ""))
-    depot = Depot.query.get(depot_id)
+    try:
+        depot_id = int(external_reference.replace("ORD-", ""))
+    except ValueError:
+        return jsonify({"error": "Invalid depot_id"}), 400
 
+    depot = Depot.query.get(depot_id)
     if not depot:
         return jsonify({"error": "Depot not found"}), 404
 
+    # Anti double validation
     if depot.statut == "valide":
         return jsonify({"received": True}), 200
 
+    # ============================
     # ✅ SUCCESS
+    # ============================
     if success is True and status == "SUCCESS":
 
         if int(depot.montant) != amount:
@@ -830,23 +837,40 @@ def webhook_soleaspay():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        depot.statut = "valide"
-        depot.reference = reference
+        try:
+            # 🔹 Mise à jour du dépôt
+            depot.statut = "valide"
+            depot.reference = reference
 
-        user.solde_depot += depot.montant
-        user.solde_total += depot.montant
+            # 🔹 Mise à jour du solde utilisateur
+            user.solde_depot += depot.montant
+            user.solde_total += depot.montant
 
-        if not user.premier_depot:
-            user.premier_depot = True
+            # 🔹 Premier dépôt = donner commissions
+            if not user.premier_depot:
+                user.premier_depot = True
+                if user.parrain:
+                    donner_commission(user.parrain, depot.montant)
 
-        user.has_seen_pay_ok = True
+            user.has_seen_pay_ok = True
 
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print("Erreur lors du traitement du webhook:", e)
+            return jsonify({"error": "Server error"}), 500
 
+    # ============================
     # ❌ FAILURE
+    # ============================
     elif success is False:
-        depot.statut = "echoue"
-        db.session.commit()
+        try:
+            depot.statut = "echoue"
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print("Erreur lors du traitement échec:", e)
+            return jsonify({"error": "Server error"}), 500
 
     return jsonify({"received": True}), 200
 
