@@ -534,7 +534,7 @@ def reset_password(username):
     return f"Mot de passe réinitialisé pour {username} : {nouveau_mdp}"
 
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
-SOLEAS_WEBHOOK_SECRET = "bh8UL1WRNEAenTdIiauks-0642_3zl8H9i9M32hQjMk"
+SOLEAS_WEBHOOK_SECRET = "b78bda2e7056939d81220e1b8e65754212427513eb54d869397bae55df27d751017fe89b7af309e23bbd69df7f458ff805956c34ea8a18bf77bb314bb7ce1f4f"
 
 SERVICES = {
 
@@ -782,97 +782,69 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
-# ⚠️ À mettre en haut de ton app.py
-
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
 
-    # 🔐 Vérification clé secrète
-    received_key = request.headers.get("x-api-key")
+    # 🔐 Vérification signature
+    received_key = request.headers.get("x-private-key")
     if not received_key or received_key != SOLEAS_WEBHOOK_SECRET:
         return jsonify({"error": "Unauthorized"}), 403
 
-    data = request.get_json(silent=True)
-
+    data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    print("WEBHOOK REÇU :", data)
+    print("WEBHOOK REÇU:", data)
 
-    succes = data.get("succès")
-    statut = data.get("statut")
+    success = data.get("success")
+    status = data.get("status")
+    details = data.get("data", {})
 
-    # Si requête invalide
-    if succes is False and not data.get("données"):
-        return jsonify({"received": True}), 200
-
-    donnees = data.get("données", {})
-
-    reference = donnees.get("référence")
-    external_reference = donnees.get("external_reference")
+    reference = details.get("reference")
+    external_reference = details.get("external_reference")
 
     try:
-        amount = int(float(donnees.get("montant", 0)))
-    except (TypeError, ValueError):
-        return jsonify({"error": "Montant invalide"}), 400
+        amount = int(float(details.get("amount", 0)))
+    except:
+        return jsonify({"error": "Invalid amount"}), 400
 
-    # 🔎 Récupération DEPOT_ID depuis external_reference
     if not external_reference or not external_reference.startswith("ORD-"):
-        return jsonify({"error": "external_reference invalide"}), 400
+        return jsonify({"error": "Invalid external_reference"}), 400
 
-    try:
-        depot_id = int(external_reference.replace("ORD-", ""))
-    except ValueError:
-        return jsonify({"error": "DEPOT_ID invalide"}), 400
-
+    depot_id = int(external_reference.replace("ORD-", ""))
     depot = Depot.query.get(depot_id)
 
     if not depot:
-        return jsonify({"error": "Depot introuvable"}), 404
+        return jsonify({"error": "Depot not found"}), 404
 
-    # Anti double validation
     if depot.statut == "valide":
         return jsonify({"received": True}), 200
 
-    # ============================
-    # ✅ CAS SUCCÈS PAIEMENT
-    # ============================
-    if succes is True and statut != "ÉCHEC":
+    # ✅ SUCCESS
+    if success is True and status == "SUCCESS":
 
         if int(depot.montant) != amount:
-            return jsonify({"error": "Montant incorrect"}), 400
+            return jsonify({"error": "Wrong amount"}), 400
 
         user = User.query.filter_by(username=depot.user_name).first()
-
         if not user:
-            return jsonify({"error": "Utilisateur introuvable"}), 404
+            return jsonify({"error": "User not found"}), 404
 
-        try:
-            depot.statut = "valide"
-            depot.reference = reference
+        depot.statut = "valide"
+        depot.reference = reference
 
-            user.solde_depot += depot.montant
-            user.solde_total += depot.montant
+        user.solde_depot += depot.montant
+        user.solde_total += depot.montant
 
-            # Premier dépôt
-            if not user.premier_depot:
-                user.premier_depot = True
-                if user.parrain:
-                    donner_commission(user.parrain, depot.montant)
+        if not user.premier_depot:
+            user.premier_depot = True
 
-            # Autoriser page succès
-            user.has_seen_pay_ok = True
+        user.has_seen_pay_ok = True
 
-            db.session.commit()
+        db.session.commit()
 
-        except Exception:
-            db.session.rollback()
-            return jsonify({"error": "Erreur serveur"}), 500
-
-    # ============================
-    # ❌ CAS ÉCHEC
-    # ============================
-    if succes is False and statut == "ÉCHEC":
+    # ❌ FAILURE
+    elif success is False:
         depot.statut = "echoue"
         db.session.commit()
 
