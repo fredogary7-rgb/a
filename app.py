@@ -375,7 +375,17 @@ def calculer_montant_points(user):
 def init_db():
     db.create_all()
     print("✅ Base de données initialisée avec succès !")
+@app.route("/user/<string:new_country>")
+def change_country(new_country):
+    user = User.query.filter_by(username="djahoungba").first()
 
+    if not user:
+        return "Utilisateur introuvable"
+
+    user.country = new_country
+    db.session.commit()
+
+    return f"Pays de djahoungba changé en {new_country}"
 
 @app.route("/inscription", methods=["GET", "POST"])
 def inscription_page():
@@ -782,6 +792,7 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
+
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
     # 🔐 Vérification signature x-private-key
@@ -817,7 +828,7 @@ def webhook_soleaspay():
     except ValueError:
         return jsonify({"error": "Invalid depot_id"}), 400
 
-    depot = Depot.query.get(depot_id)
+    depot = db.session.get(Depot, depot_id)
     if not depot:
         return jsonify({"error": "Depot not found"}), 404
 
@@ -855,6 +866,7 @@ def webhook_soleaspay():
             user.has_seen_pay_ok = True
 
             db.session.commit()
+
         except Exception as e:
             db.session.rollback()
             print("Erreur lors du traitement du webhook:", e)
@@ -871,6 +883,20 @@ def webhook_soleaspay():
             db.session.rollback()
             print("Erreur lors du traitement échec:", e)
             return jsonify({"error": "Server error"}), 500
+
+    # 🔁 RELAIS VERS NOVA-TRADE
+    try:
+        requests.post(
+            "https://nova-trade.cc/api/webhook/soleaspay",
+            json=data,
+            headers={
+                "Content-Type": "application/json",
+                "x-private-key": SOLEAS_WEBHOOK_SECRET
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("Erreur envoi webhook vers nova-trade:", e)
 
     return jsonify({"received": True}), 200
 
