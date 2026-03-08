@@ -544,7 +544,7 @@ def reset_password(username):
     return f"Mot de passe réinitialisé pour {username} : {nouveau_mdp}"
 
 SOLEAS_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
-SOLEAS_WEBHOOK_SECRET = "db454f24ebbf355dd5ed2826eb421416c43aed0a3959488d3f7a7dc9580506a26790415400c1f3068e4a68da54e3e0b5d24db0f6cdab0892222b50ae1d62f24e"
+SOLEAS_WEBHOOK_SECRET = "68d10fd510819cfa30fe0ffa2fe759fcdeff3158f3b8f37ea3128c3cd8957a9696922d54fb6f46ef10617ead7b1db57e8fd32eb2fa58b148e4ae825ddb7ffcea"
 
 SERVICES = {
 
