@@ -715,8 +715,8 @@ def dashboard_bloque():
             "wallet": phone,  # ✅ NUMÉRO SAISI PAR L’UTILISATEUR
             "amount": amount,
             "currency": "XOF",
-            "order_id": f"ORD-{new_depot.id}",
-            "description": f"Activation {user.username} DEPOT_ID={new_depot.id}",
+            "order_id": f"LUM-{new_depot.id}",
+            "description": f"Activation Lumina {user.username} DEPOT_ID={new_depot.id}",
             "payer": fullname,
             "payerEmail": user.email,
             "successUrl": "https://lumina-stars.com/dashboard/pay/ok",
@@ -792,113 +792,95 @@ def get_global_stats():
 # --------------------------------------
 from urllib.parse import urlencode
 
+import requests
 
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
-    # 🔐 Vérification signature x-private-key
+
     received_key = request.headers.get("x-private-key")
-    if not received_key or received_key != SOLEAS_WEBHOOK_SECRET:
+    if received_key != SOLEAS_WEBHOOK_SECRET:
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()
+
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    print("WEBHOOK REÇU:", data)
-
-    success = data.get("success")
-    status = data.get("status")
     details = data.get("data", {})
-
-    reference = details.get("reference")
     external_reference = details.get("external_reference")
 
-    # 🔢 Vérification montant
-    try:
-        amount = int(float(details.get("amount", 0)))
-    except (TypeError, ValueError):
-        return jsonify({"error": "Invalid amount"}), 400
+    if not external_reference:
+        return jsonify({"error": "No reference"}), 400
 
-    # 🔎 Vérification external_reference
-    if not external_reference or not external_reference.startswith("ORD-"):
-        return jsonify({"error": "Invalid external_reference"}), 400
+    print("WEBHOOK REÇU :", external_reference)
 
-    try:
-        depot_id = int(external_reference.replace("ORD-", ""))
-    except ValueError:
-        return jsonify({"error": "Invalid depot_id"}), 400
+    # ======================
+    # PAIEMENT LUMINA
+    # ======================
 
-    depot = db.session.get(Depot, depot_id)
-    if not depot:
-        return jsonify({"error": "Depot not found"}), 404
+    if external_reference.startswith("LUM-"):
 
-    # Anti double validation
-    if depot.statut == "valide":
-        return jsonify({"received": True}), 200
+        depot_id = int(external_reference.replace("LUM-", ""))
 
-    # ============================
-    # ✅ SUCCESS
-    # ============================
-    if success is True and status == "SUCCESS":
+        depot = db.session.get(Depot, depot_id)
 
-        if int(depot.montant) != amount:
-            return jsonify({"error": "Wrong amount"}), 400
+        if not depot:
+            return jsonify({"error": "Depot not found"}), 404
 
-        user = User.query.filter_by(username=depot.user_name).first()
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+        if depot.statut == "valide":
+            return jsonify({"received": True})
 
-        try:
-            # 🔹 Mise à jour du dépôt
+        success = data.get("success")
+        status = data.get("status")
+
+        if success and status == "SUCCESS":
+
+            amount = int(float(details.get("amount", 0)))
+
+            if int(depot.montant) != amount:
+                return jsonify({"error": "Wrong amount"}), 400
+
+            user = User.query.filter_by(username=depot.user_name).first()
+
             depot.statut = "valide"
-            depot.reference = reference
+            depot.reference = details.get("reference")
 
-            # 🔹 Mise à jour du solde utilisateur
             user.solde_depot += depot.montant
             user.solde_total += depot.montant
 
-            # 🔹 Premier dépôt = donner commissions
             if not user.premier_depot:
                 user.premier_depot = True
                 if user.parrain:
                     donner_commission(user.parrain, depot.montant)
 
-            user.has_seen_pay_ok = True
-
             db.session.commit()
 
-        except Exception as e:
-            db.session.rollback()
-            print("Erreur lors du traitement du webhook:", e)
-            return jsonify({"error": "Server error"}), 500
-
-    # ============================
-    # ❌ FAILURE
-    # ============================
-    elif success is False:
-        try:
+        elif success is False:
             depot.statut = "echoue"
             db.session.commit()
+
+    # ======================
+    # PAIEMENT NOVA
+    # ======================
+
+    elif external_reference.startswith("NOVA-"):
+
+        try:
+            requests.post(
+                "https://nova-trade.cc/api/webhook/soleaspay",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-private-key": SOLEAS_WEBHOOK_SECRET
+                },
+                timeout=10
+            )
+
         except Exception as e:
-            db.session.rollback()
-            print("Erreur lors du traitement échec:", e)
-            return jsonify({"error": "Server error"}), 500
+            print("Erreur envoi webhook NOVA :", e)
 
-    # 🔁 RELAIS VERS NOVA-TRADE
-    try:
-        requests.post(
-            "https://nova-trade.cc/api/webhook/soleaspay",
-            json=data,
-            headers={
-                "Content-Type": "application/json",
-                "x-private-key": SOLEAS_WEBHOOK_SECRET
-            },
-            timeout=10
-        )
-    except Exception as e:
-        print("Erreur envoi webhook vers nova-trade:", e)
+    return jsonify({"received": True})
 
-    return jsonify({"received": True}), 200
 
 @app.route("/paiement/soleaspay/retour")
 def bkapay_retour():
