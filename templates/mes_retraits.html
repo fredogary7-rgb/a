@@ -42,7 +42,7 @@ footer { text-align:center; margin-top:25px; font-size:13px; opacity:.8; }
             <td>{{ r.date.strftime('%d/%m/%Y %H:%M') }}</td>
 
             <td>
-                {% if r.statut == "validé" %}
+                {% if r.statut == "successful" %}
                     <span class="status ok">Validé</span>
                 {% elif r.statut == "refusé" %}
                     <span class="status no">Refusé</span>
