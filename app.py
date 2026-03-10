@@ -527,6 +527,21 @@ def fix_parrain():
     db.session.commit()
     return "Parrain mis à jour avec succès"
 
+@app.route("/admin/credit_user/<username>/<int:montant>")
+def credit_user(username, montant):
+
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        return "Utilisateur introuvable"
+
+    user.solde_revenu += montant
+    user.solde_parrainage += montant
+
+    db.session.commit()
+
+    return f"{montant} XOF ajouté au compte de {username}"
+
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():
     if request.method == "POST":
@@ -563,6 +578,36 @@ def connexion_page():
     # Méthode GET : afficher la page de connexion
     return render_template("connexion.html")
 
+
+
+PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
+
+def obtenir_token():
+    url = "https://soleaspay.com/api/action/auth"
+
+    payload = {
+        "public_apikey": PUBLIC_API_KEY,
+        "private_secretkey": PRIVATE_SECRET_KEY
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        data = response.json()
+
+        token = data.get("access_token")   # ✅ CORRECTION ICI
+
+        if not token:
+            return None, data
+
+        return token, None
+
+    except Exception as e:
+        return None, str(e)
 
 @app.route("/admin/reset_password/<username>")
 def reset_password(username):
