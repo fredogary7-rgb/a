@@ -1,136 +1,388 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retrait</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        /* Style LuminaStar conservé */
-        body { font-family:'Poppins',sans-serif; background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199); color:#fff; margin:0; padding:20px; min-height:100vh; }
-        .container { max-width:550px; margin:0 auto; }
-        
-        .page-header { text-align:center; margin-bottom:25px; }
-        .page-header h1 { font-size:24px; font-weight:700; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retrait</title>
 
-        .main-card { background:rgba(0,0,0,0.4); padding:30px; border-radius:25px; border:1px solid rgba(255,255,255,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.1); margin-bottom:25px; }
-        h2 { font-size:18px; margin-bottom:20px; text-align:center; }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        .notice { background:rgba(255,255,255,0.1); border-left:4px solid #fff; padding:15px; border-radius:12px; font-size:13px; margin-bottom:20px; }
-        
-        label { display:block; margin-bottom:8px; font-size:13px; font-weight:600; margin-left:5px; }
-        input, select, button { width:100%; padding:14px 15px; border-radius:15px; border:none; margin-bottom:20px; font-size:14px; outline:none; }
-        input, select { background:rgba(255,255,255,0.9); color:#333; }
-        
-        button { background:linear-gradient(to right,#1dd75f,#65ff3f); color:#fff; font-weight:700; cursor:pointer; transition:0.3s; box-shadow:0 4px 15px rgba(29, 215, 95, 0.3); }
-        button:hover { transform:translateY(-2px); filter:brightness(1.1); }
+<style>
 
-        .flash { padding:12px 15px; border-radius:12px; font-size:13px; margin-bottom:15px; }
-        .flash.success { background:rgba(34,197,94,0.3); color:#fff; }
-        .flash.danger { background:rgba(239,68,68,0.3); color:#fff; }
+body{
+font-family:'Poppins',sans-serif;
+background: linear-gradient(135deg,#ff7eb3,#ff758c,#ffb199);
+color:#fff;
+margin:0;
+padding:20px;
+min-height:100vh;
+}
 
-        /* Calendrier LuminaStar conservé */
-        .schedule-card { background:linear-gradient(to bottom right,#ffe5d3,#ffdcd2); border-radius:25px; padding:25px; color:#444; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .schedule-card h3 { font-size:17px; font-weight:700; margin-bottom:20px; color:#1e293b; }
-        .schedule-item { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.8); border-radius:18px; padding:12px 15px; margin-bottom:12px; }
-        .schedule-left { display:flex; align-items:center; gap:12px; }
-        .schedule-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; }
-        .icon-gray{background:#94a3b8;} .icon-tiktok{background:#ff2d55;} .icon-youtube{background:#ff0000;} .icon-ads{background:#ffb300;} .icon-instagram{background:#8a3ab9;}
-        .schedule-text strong { display:block; font-size:13px; color:#334155; }
-        .schedule-text span { font-size:11px; color:#94a3b8; }
-        .schedule-day { padding:5px 12px; border-radius:10px; font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; }
+.container{
+max-width:550px;
+margin:0 auto;
+}
 
-        footer { text-align:center; margin-top:40px; padding-bottom:20px; opacity:0.8; font-size:12px; }
-    </style>
+.page-header{
+text-align:center;
+margin-bottom:25px;
+}
+
+.page-header h1{
+font-size:24px;
+font-weight:700;
+color:#fff;
+text-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+
+.main-card{
+background:rgba(0,0,0,0.4);
+padding:30px;
+border-radius:25px;
+border:1px solid rgba(255,255,255,0.2);
+box-shadow:0 10px 30px rgba(0,0,0,0.1);
+margin-bottom:25px;
+}
+
+h2{
+font-size:18px;
+margin-bottom:20px;
+text-align:center;
+}
+
+.notice{
+background:rgba(255,255,255,0.1);
+border-left:4px solid #fff;
+padding:15px;
+border-radius:12px;
+font-size:13px;
+margin-bottom:20px;
+}
+
+label{
+display:block;
+margin-bottom:8px;
+font-size:13px;
+font-weight:600;
+margin-left:5px;
+}
+
+input,select,button{
+width:100%;
+padding:14px 15px;
+border-radius:15px;
+border:none;
+margin-bottom:20px;
+font-size:14px;
+outline:none;
+}
+
+input,select{
+background:rgba(255,255,255,0.9);
+color:#333;
+}
+
+button{
+background:linear-gradient(to right,#1dd75f,#65ff3f);
+color:#fff;
+font-weight:700;
+cursor:pointer;
+transition:0.3s;
+box-shadow:0 4px 15px rgba(29,215,95,0.3);
+}
+
+button:hover{
+transform:translateY(-2px);
+filter:brightness(1.1);
+}
+
+.flash{
+padding:12px 15px;
+border-radius:12px;
+font-size:13px;
+margin-bottom:15px;
+}
+
+.flash.success{
+background:rgba(34,197,94,0.3);
+color:#fff;
+}
+
+.flash.danger{
+background:rgba(239,68,68,0.3);
+color:#fff;
+}
+
+/* Calendrier */
+
+.schedule-card{
+background:linear-gradient(to bottom right,#ffe5d3,#ffdcd2);
+border-radius:25px;
+padding:25px;
+color:#444;
+box-shadow:0 10px 20px rgba(0,0,0,0.1);
+}
+
+.schedule-card h3{
+font-size:17px;
+font-weight:700;
+margin-bottom:20px;
+color:#1e293b;
+}
+
+.schedule-item{
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:rgba(255,255,255,0.8);
+border-radius:18px;
+padding:12px 15px;
+margin-bottom:12px;
+}
+
+.schedule-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.schedule-icon{
+width:40px;
+height:40px;
+border-radius:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+color:#fff;
+font-size:16px;
+}
+
+.icon-gray{background:#94a3b8;}
+.icon-tiktok{background:#ff2d55;}
+.icon-youtube{background:#ff0000;}
+.icon-ads{background:#ffb300;}
+.icon-instagram{background:#8a3ab9;}
+
+.schedule-text strong{
+display:block;
+font-size:13px;
+color:#334155;
+}
+
+.schedule-text span{
+font-size:11px;
+color:#94a3b8;
+}
+
+.schedule-day{
+padding:5px 12px;
+border-radius:10px;
+font-size:11px;
+font-weight:700;
+background:#f1f5f9;
+color:#475569;
+}
+
+footer{
+text-align:center;
+margin-top:40px;
+padding-bottom:20px;
+opacity:0.8;
+font-size:12px;
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <div class="page-header">
-        <h1>Luminastar Retrait</h1>
-    </div>
 
-    <div class="main-card">
-        <h2>Demande de retrait</h2>
+<div class="page-header">
+<h1>Luminastar Retrait</h1>
+</div>
+
+<div class="main-card">
+
+<h2>Demande de retrait</h2>
 
 <div class="notice">
-    <i class="fa fa-info-circle"></i> <strong>Avis important :</strong><br>
-    Retrait vers le numéro enregistré sur votre compte :<br>
-    <div style="margin-top: 10px;">
-        <input type="text" value="{{ user.phone }}" readonly 
-               style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-weight: bold; padding: 10px; border-radius: 8px; width: 100%; cursor: not-allowed;">
-    </div>
-    <small style="opacity: 0.8;">Si ce numéro est incorrect, veuillez contacter le support.</small>
+<i class="fa fa-info-circle"></i>
+<strong>Avis important :</strong><br>
+
+Retrait vers le numéro enregistré sur votre compte :
+
+<div style="margin-top:10px;">
+<input type="text"
+value="{{ user.phone }}"
+readonly
+style="background:rgba(255,255,255,0.1);
+border:1px solid rgba(255,255,255,0.3);
+color:#fff;
+font-weight:bold;
+padding:10px;
+border-radius:8px;
+width:100%;
+cursor:not-allowed;">
+</div>
+
+<small style="opacity:0.8;">
+Si ce numéro est incorrect, veuillez contacter le support.
+</small>
+
 </div>
 
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
 
-        <form method="POST">
-            <label for="payment_method">Mode de paiement</label>
-            <select name="payment_method" id="payment_method" required>
-                <option value="" disabled selected>Choisissez un mode</option>
-                {% for service in services %}
-                <option value="{{ service.id }}">{{ service.name }} - {{ service.description }}</option>
-                {% endfor %}
-            </select>
+<div class="flash {{ category }}">
+{{ message }}
+</div>
 
-            <label for="montant">Montant (XOF)</label>
-            <input type="number" name="montant" id="montant" min="1" max="{{ stats.commissions_total }}" placeholder="Ex: 5000" required>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-            <button type="submit">Confirmer le retrait</button>
-        </form>
-    </div>
 
-    <div class="schedule-card">
-        <h3>Calendrier des Tâches</h3>
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
-                <div class="schedule-text"><strong>Quiz Culture</strong><span>08h00</span></div>
-            </div>
-            <div class="schedule-day">Lundi</div>
-        </div>
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
-                <div class="schedule-text"><strong>Vidéos TikTok</strong><span>08h00</span></div>
-            </div>
-            <div class="schedule-day">Mardi</div>
-        </div>
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
-                <div class="schedule-text"><strong>Vidéos YouTube</strong><span>08h00</span></div>
-            </div>
-            <div class="schedule-day">Mercredi</div>
-        </div>
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-ads"><i class="fa fa-bullhorn"></i></div>
-                <div class="schedule-text"><strong>Clics Pubs</strong><span>08h00</span></div>
-            </div>
-            <div class="schedule-day">Jeudi</div>
-        </div>
-        <div class="schedule-item">
-            <div class="schedule-left">
-                <div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
-                <div class="schedule-text"><strong>Vidéos Instagram</strong><span>08h00</span></div>
-            </div>
-            <div class="schedule-day">Vendredi</div>
-        </div>
-    </div>
+<form method="POST">
 
-    <footer>2026 © Luminaster • Propulsion par l'excellence</footer>
+<label for="payment_method">Mode de paiement</label>
+
+<select name="payment_method" id="payment_method" required>
+
+<option value="" disabled selected>
+Choisissez un mode
+</option>
+
+{% for service in services %}
+
+<option value="{{ service.id }}">
+{{ service.name }} - {{ service.description }}
+</option>
+
+{% endfor %}
+
+</select>
+
+
+<label for="montant">Montant (XOF)</label>
+
+<input
+type="number"
+name="montant"
+id="montant"
+min="4000"
+max="{{ stats.commissions_total if stats.commissions_total < 50000 else 50000 }}"
+placeholder="Min : 4000 - Max : 50000"
+required>
+
+<small style="opacity:0.8;display:block;margin-top:-15px;margin-bottom:15px;">
+Retrait minimum : 4000 XOF • Retrait maximum : 50000 XOF • Frais : 500 XOF
+</small>
+
+
+<button type="submit">
+Confirmer le retrait
+</button>
+
+</form>
+
+</div>
+
+
+<div class="schedule-card">
+
+<h3>Calendrier des Tâches</h3>
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-gray">
+<i class="fa fa-question"></i>
+</div>
+<div class="schedule-text">
+<strong>Quiz Culture</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">
+Lundi
+</div>
+</div>
+
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-tiktok">
+<i class="fab fa-tiktok"></i>
+</div>
+<div class="schedule-text">
+<strong>Vidéos TikTok</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">
+Mardi
+</div>
+</div>
+
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-youtube">
+<i class="fab fa-youtube"></i>
+</div>
+<div class="schedule-text">
+<strong>Vidéos YouTube</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">
+Mercredi
+</div>
+</div>
+
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-ads">
+<i class="fa fa-bullhorn"></i>
+</div>
+<div class="schedule-text">
+<strong>Clics Pubs</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">
+Jeudi
+</div>
+</div>
+
+
+<div class="schedule-item">
+<div class="schedule-left">
+<div class="schedule-icon icon-instagram">
+<i class="fab fa-instagram"></i>
+</div>
+<div class="schedule-text">
+<strong>Vidéos Instagram</strong>
+<span>08h00</span>
+</div>
+</div>
+<div class="schedule-day">
+Vendredi
+</div>
+</div>
+
+</div>
+
+<footer>
+2026 © Luminaster • Propulsion par l'excellence
+</footer>
+
 </div>
 
 </body>
 </html>
-

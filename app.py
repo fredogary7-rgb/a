@@ -1441,13 +1441,13 @@ def profile_page():
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 
-
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
 
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
+    MAX_RETRAIT = 50000
     FRAIS = 500
 
     stats = {
@@ -1467,8 +1467,14 @@ def retrait_page():
             flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
 
+        # minimum
         if montant < MIN_RETRAIT:
             flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
+            return redirect(url_for("retrait_page"))
+
+        # 🔴 maximum
+        if montant > MAX_RETRAIT:
+            flash(f"Le montant maximum de retrait est de {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
         montant_total = montant + FRAIS
@@ -1489,7 +1495,6 @@ def retrait_page():
         # appel API SoleasPay
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
 
-        # vérifier la réponse
         if not response:
             flash("Erreur connexion API SoleasPay.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1525,6 +1530,7 @@ def retrait_page():
         stats=stats,
         services=services
     )
+
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs
