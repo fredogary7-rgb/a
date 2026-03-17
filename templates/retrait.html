@@ -32,7 +32,6 @@ margin-bottom:25px;
 .page-header h1{
 font-size:24px;
 font-weight:700;
-color:#fff;
 text-shadow:0 2px 4px rgba(0,0,0,0.2);
 }
 
@@ -106,12 +105,10 @@ margin-bottom:15px;
 
 .flash.success{
 background:rgba(34,197,94,0.3);
-color:#fff;
 }
 
 .flash.danger{
 background:rgba(239,68,68,0.3);
-color:#fff;
 }
 
 /* Calendrier */
@@ -207,84 +204,30 @@ font-size:12px;
 
 <h2>Demande de retrait</h2>
 
-<div class="notice">
-<i class="fa fa-info-circle"></i>
-<strong>Avis important :</strong><br>
-
-Veuillez entrer le numéro sur lequel vous souhaitez recevoir votre retrait :
-
-<label for="phone" style="margin-top:10px;">Numéro de retrait</label>
-
-<input type="text"
-name="phone"
-id="phone"
-placeholder="Ex: 90123456"
-required>
-
-<small style="opacity:0.8;">
-Assurez-vous que le numéro est correct avant de valider.
-</small>
-
-</div>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-{% for category, message in messages %}
-
-<div class="flash {{ category }}">
-{{ message }}
-</div>
-
-{% endfor %}
-{% endif %}
-{% endwith %}
-
-
 <form method="POST">
+    <label for="phone">Numéro de retrait</label>
+    <input type="text" name="phone" id="phone" placeholder="Ex: 90123456" required>
 
-<label for="payment_method">Mode de paiement</label>
+    <label for="payment_method">Mode de paiement</label>
+    <select name="payment_method" id="payment_method" required>
+        <option value="" disabled selected>Choisissez un mode</option>
+        {% for service in services %}
+        <option value="{{ service.id }}">{{ service.name }} - {{ service.description }}</option>
+        {% endfor %}
+    </select>
 
-<select name="payment_method" id="payment_method" required>
+    <label for="montant">Montant (XOF)</label>
+    <input type="number" name="montant" id="montant" 
+           min="4000" 
+           max="{{ stats.commissions_total if stats.commissions_total < 50000 else 50000 }}"
+           placeholder="Min : 4000 - Max : 50000" required>
 
-<option value="" disabled selected>
-Choisissez un mode
-</option>
+    <small>Retrait minimum : 4000 XOF • Retrait maximum : 50000 XOF • Frais : 500 XOF</small>
 
-{% for service in services %}
-
-<option value="{{ service.id }}">
-{{ service.name }} - {{ service.description }}
-</option>
-
-{% endfor %}
-
-</select>
-
-
-<label for="montant">Montant (XOF)</label>
-
-<input
-type="number"
-name="montant"
-id="montant"
-min="4000"
-max="{{ stats.commissions_total if stats.commissions_total < 50000 else 50000 }}"
-placeholder="Min : 4000 - Max : 50000"
-required>
-
-<small style="opacity:0.8;display:block;margin-top:-15px;margin-bottom:15px;">
-Retrait minimum : 4000 XOF • Retrait maximum : 50000 XOF • Frais : 500 XOF
-</small>
-
-
-<button type="submit">
-Confirmer le retrait
-</button>
-
+    <button type="submit">Confirmer le retrait</button>
 </form>
 
 </div>
-
 
 <div class="schedule-card">
 
@@ -292,81 +235,42 @@ Confirmer le retrait
 
 <div class="schedule-item">
 <div class="schedule-left">
-<div class="schedule-icon icon-gray">
-<i class="fa fa-question"></i>
+<div class="schedule-icon icon-gray"><i class="fa fa-question"></i></div>
+<div class="schedule-text"><strong>Quiz Culture</strong><span>08h00</span></div>
 </div>
-<div class="schedule-text">
-<strong>Quiz Culture</strong>
-<span>08h00</span>
+<div class="schedule-day">Lundi</div>
 </div>
-</div>
-<div class="schedule-day">
-Lundi
-</div>
-</div>
-
 
 <div class="schedule-item">
 <div class="schedule-left">
-<div class="schedule-icon icon-tiktok">
-<i class="fab fa-tiktok"></i>
+<div class="schedule-icon icon-tiktok"><i class="fab fa-tiktok"></i></div>
+<div class="schedule-text"><strong>Vidéos TikTok</strong><span>08h00</span></div>
 </div>
-<div class="schedule-text">
-<strong>Vidéos TikTok</strong>
-<span>08h00</span>
+<div class="schedule-day">Mardi</div>
 </div>
-</div>
-<div class="schedule-day">
-Mardi
-</div>
-</div>
-
 
 <div class="schedule-item">
 <div class="schedule-left">
-<div class="schedule-icon icon-youtube">
-<i class="fab fa-youtube"></i>
+<div class="schedule-icon icon-youtube"><i class="fab fa-youtube"></i></div>
+<div class="schedule-text"><strong>Vidéos YouTube</strong><span>08h00</span></div>
 </div>
-<div class="schedule-text">
-<strong>Vidéos YouTube</strong>
-<span>08h00</span>
+<div class="schedule-day">Mercredi</div>
 </div>
-</div>
-<div class="schedule-day">
-Mercredi
-</div>
-</div>
-
 
 <div class="schedule-item">
 <div class="schedule-left">
-<div class="schedule-icon icon-ads">
-<i class="fa fa-bullhorn"></i>
+<div class="schedule-icon icon-ads"><i class="fa fa-bullhorn"></i></div>
+<div class="schedule-text"><strong>Clics Pubs</strong><span>08h00</span></div>
 </div>
-<div class="schedule-text">
-<strong>Clics Pubs</strong>
-<span>08h00</span>
+<div class="schedule-day">Jeudi</div>
 </div>
-</div>
-<div class="schedule-day">
-Jeudi
-</div>
-</div>
-
 
 <div class="schedule-item">
 <div class="schedule-left">
-<div class="schedule-icon icon-instagram">
-<i class="fab fa-instagram"></i>
+<div class="schedule-icon icon-instagram"><i class="fab fa-instagram"></i></div>
+<div class="schedule-text"><strong>Vidéos Instagram</strong><span>08h00</span></div>
 </div>
-<div class="schedule-text">
-<strong>Vidéos Instagram</strong>
-<span>08h00</span>
-</div>
-</div>
-<div class="schedule-day">
-Vendredi
-</div>
+<div class="schedule-day">Vendredi</div>
 </div>
 
 </div>

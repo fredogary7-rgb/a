@@ -535,7 +535,7 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage -= montant
+    user.solde_parrainage += montant
 
     db.session.commit()
 
@@ -1304,9 +1304,7 @@ def about():
 def mes_retraits():
     user = get_logged_in_user()
     retraits = Retrait.query.filter_by(phone=user.phone).order_by(Retrait.date.desc()).all()
-
     return render_template("mes_retraits.html", retraits=retraits, user=user)
-
 
 from datetime import datetime
 
@@ -1467,42 +1465,32 @@ PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
-
     user = get_logged_in_user()
 
     MIN_RETRAIT = 4000
     MAX_RETRAIT = 50000
     FRAIS = 500
 
-    stats = {
-        "commissions_total": float(user.solde_parrainage or 0)
-    }
+    stats = {"commissions_total": float(user.solde_parrainage or 0)}
 
     # récupérer les services selon le pays
     country_code = COUNTRY_CODE.get(user.country)
     services = SERVICES.get(country_code, [])
 
     if request.method == "POST":
-
         montant = float(request.form.get("montant", 0))
         service_id = int(request.form.get("payment_method"))
-        wallet = request.form.get("phone")  # ✅ nouveau
+        wallet = request.form.get("phone")  # numéro saisi par l'utilisateur
 
-        # 🔒 vérification numéro
-        if not wallet or len(wallet) < 8:
-            flash("Veuillez entrer un numéro valide.", "danger")
-            return redirect(url_for("retrait_page"))
-
+        # validations
         if montant <= 0:
             flash("Veuillez saisir un montant valide.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # minimum
         if montant < MIN_RETRAIT:
             flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # maximum
         if montant > MAX_RETRAIT:
             flash(f"Le montant maximum de retrait est de {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1514,11 +1502,12 @@ def retrait_page():
             return redirect(url_for("retrait_page"))
 
         # sécurité : vérifier que le service appartient au pays
-        valid_services = [s["id"] for s in services]
-
-        if service_id not in valid_services:
+        service = next((s for s in services if s["id"] == service_id), None)
+        if not service:
             flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_page"))
+
+        service_name = service["name"]
 
         # appel API SoleasPay
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
@@ -1535,10 +1524,11 @@ def retrait_page():
         nouveau_retrait = Retrait(
             montant=montant,
             frais=FRAIS,
-            payment_method=service_id,
+            payment_method=service_name,
             statut="successful",
-            phone=wallet,  # ✅ on enregistre le numéro saisi
-            pays=user.country
+            phone=wallet,  # on enregistre le numéro saisi
+            pays=user.country,
+            date=datetime.utcnow()
         )
 
         db.session.add(nouveau_retrait)
@@ -1549,15 +1539,10 @@ def retrait_page():
         db.session.commit()
 
         flash(f"Retrait de {montant} XOF envoyé avec succès.", "success")
+        return redirect(url_for("mes_retraits"))
 
-        return redirect(url_for("dashboard_page"))
+    return render_template("retrait.html", user=user, stats=stats, services=services)
 
-    return render_template(
-        "retrait.html",
-        user=user,
-        stats=stats,
-        services=services
-    )
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs

@@ -27,40 +27,41 @@ footer { text-align:center; margin-top:25px; font-size:13px; opacity:.8; }
 <h2><i class="fa fa-history"></i> Historique de mes retraits</h2>
 
 <div class="table-box">
-    <table>
-        <tr>
-            <th>Montant</th>
-            <th>Méthode</th>
-            <th>Date</th>
-            <th>Statut</th>
-        </tr>
 
-        {% for r in retraits %}
-        <tr>
-            <td>{{ r.montant }} XOF</td>
-            <td>{{ r.payment_method }}</td>
-            <td>{{ r.date.strftime('%d/%m/%Y %H:%M') }}</td>
+<table>
+    <tr>
+        <th>Montant</th>
+        <th>Méthode</th>
+        <th>Date</th>
+        <th>Statut</th>
+    </tr>
 
-            <td>
-                {% if r.statut == "successful" %}
-                    <span class="status ok">Validé</span>
-                {% elif r.statut == "refusé" %}
-                    <span class="status no">Refusé</span>
-                {% else %}
-                    <span class="status wait">validé</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
+    {% for r in retraits %}
+    <tr>
+        <td>{{ r.montant }} XOF</td>
+        <td>{{ r.payment_method }}</td>
+        <td>{{ r.date.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+            {% if r.statut == "successful" %}
+            <span class="status ok">Validé</span>
+            {% elif r.statut == "refusé" %}
+            <span class="status no">Refusé</span>
+            {% else %}
+            <span class="status wait">En attente</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
 
-        {% if retraits|length == 0 %}
-        <tr>
-            <td colspan="4" style="text-align:center; padding:20px; opacity:.8;">
-                Aucun retrait effectué pour le moment.
-            </td>
-        </tr>
-        {% endif %}
-    </table>
+    {% if retraits|length == 0 %}
+    <tr>
+        <td colspan="4" style="text-align:center; padding:20px; opacity:.8;">
+            Aucun retrait effectué pour le moment.
+        </td>
+    </tr>
+    {% endif %}
+</table>
+
 </div>
 
 <footer>2026 © LuminaStar by Nina Academy</footer>
