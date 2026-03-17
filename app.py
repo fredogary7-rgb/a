@@ -517,8 +517,8 @@ from flask import render_template
 
 @app.route("/admin/fix_parrain")
 def fix_parrain():
-    ancien = "aaaa"
-    nouveau = "amen"
+    ancien = "1xthom14"
+    nouveau = "leaderfiacre"
 
     users = User.query.filter_by(parrain=ancien).all()
     for u in users:
@@ -607,6 +607,31 @@ def obtenir_token():
 
     except Exception as e:
         return None, str(e)
+
+from sqlalchemy import text
+from datetime import datetime, timezone
+
+@app.route("/admin/rename_user_complete/<old_username>/<new_username>")
+def rename_user_complete(old_username, new_username):
+    # 1️⃣ Vérifier l'utilisateur existe
+    user = User.query.filter_by(username=old_username).first()
+    if not user:
+        return f"Utilisateur {old_username} non trouvé.", 404
+
+    # 2️⃣ Mettre à jour tous les dépôts pour le nouvel username
+    db.session.execute(
+        text("UPDATE depot SET user_name = :new WHERE user_name = :old"),
+        {"new": new_username, "old": old_username}
+    )
+
+    # 3️⃣ Mettre à jour l'utilisateur
+    user.username = new_username
+    user.date_update = datetime.now(timezone.utc)
+
+    # 4️⃣ Commit final
+    db.session.commit()
+
+    return f"Nom d'utilisateur {old_username} changé en {new_username} avec succès."
 
 @app.route("/admin/reset_password/<username>")
 def reset_password(username):
@@ -1461,6 +1486,12 @@ def retrait_page():
 
         montant = float(request.form.get("montant", 0))
         service_id = int(request.form.get("payment_method"))
+        wallet = request.form.get("phone")  # ✅ nouveau
+
+        # 🔒 vérification numéro
+        if not wallet or len(wallet) < 8:
+            flash("Veuillez entrer un numéro valide.", "danger")
+            return redirect(url_for("retrait_page"))
 
         if montant <= 0:
             flash("Veuillez saisir un montant valide.", "danger")
@@ -1471,7 +1502,7 @@ def retrait_page():
             flash(f"Le montant minimum de retrait est de {MIN_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
 
-        # 🔴 maximum
+        # maximum
         if montant > MAX_RETRAIT:
             flash(f"Le montant maximum de retrait est de {MAX_RETRAIT} XOF.", "danger")
             return redirect(url_for("retrait_page"))
@@ -1488,8 +1519,6 @@ def retrait_page():
         if service_id not in valid_services:
             flash("Service de paiement invalide.", "danger")
             return redirect(url_for("retrait_page"))
-
-        wallet = user.phone
 
         # appel API SoleasPay
         response = envoyer_retrait_soleaspay(service_id, wallet, montant)
@@ -1508,7 +1537,7 @@ def retrait_page():
             frais=FRAIS,
             payment_method=service_id,
             statut="successful",
-            phone=user.phone,
+            phone=wallet,  # ✅ on enregistre le numéro saisi
             pays=user.country
         )
 
@@ -1529,7 +1558,6 @@ def retrait_page():
         stats=stats,
         services=services
     )
-
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs

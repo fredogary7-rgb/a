@@ -211,28 +211,21 @@ font-size:12px;
 <i class="fa fa-info-circle"></i>
 <strong>Avis important :</strong><br>
 
-Retrait vers le numéro enregistré sur votre compte :
+Veuillez entrer le numéro sur lequel vous souhaitez recevoir votre retrait :
 
-<div style="margin-top:10px;">
+<label for="phone" style="margin-top:10px;">Numéro de retrait</label>
+
 <input type="text"
-value="{{ user.phone }}"
-required
-style="background:rgba(255,255,255,0.1);
-border:1px solid rgba(255,255,255,0.3);
-color:#fff;
-font-weight:bold;
-padding:10px;
-border-radius:8px;
-width:100%;
-cursor:not-allowed;">
-</div>
+name="phone"
+id="phone"
+placeholder="Ex: 90123456"
+required>
 
 <small style="opacity:0.8;">
-Si ce numéro est incorrect, veuillez contacter le support.
+Assurez-vous que le numéro est correct avant de valider.
 </small>
 
 </div>
-
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
