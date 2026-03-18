@@ -156,43 +156,40 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"<User {self.username} | {self.phone}>"
 
-# ==============================
-# 📦 MODELS
-# ==============================
 class Depot(db.Model):
     __tablename__ = "depot"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # 🔗 Lien vers l'utilisateur via username (nom d'utilisateur)
+    # 🔁 Ancien système
     user_name = db.Column(
         db.String(50),
         db.ForeignKey("user.username", ondelete="CASCADE"),
-        nullable=False
+        nullable=True
     )
 
-    # 📱 Informations utilisateur
-    phone = db.Column(db.String(30), nullable=False)
+    # 🆕 Nouveau système
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=True
+    )
 
-    # 🛠 Informations paiement
+    # ✅ TRÈS IMPORTANT : préciser foreign_keys
+    user = db.relationship(
+        "User",
+        backref="depots",
+        foreign_keys=[user_id]  # 👈 ICI la correction
+    )
+
+    phone = db.Column(db.String(30), nullable=False)
     operator = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
-
-    # 💰 Montant déposé
     montant = db.Column(db.Float, nullable=False)
-
-    # 🔖 Référence transaction
     reference = db.Column(db.String(200), nullable=True)
-
-    # 📌 Statut du dépôt
     statut = db.Column(db.String(20), default="pending")
-
     email = db.Column(db.String(120), nullable=True)
-    # ⏱ Date création
     date = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Depot {self.id} | User: {self.user_name} | Montant: {self.montant}>"
 
 class Commission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -206,6 +203,8 @@ class Retrait(db.Model):
     __tablename__ = "retrait"
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=True)  # ✅ NOUVELLE COLONNE
+
     phone = db.Column(db.String(30), nullable=False)
     montant = db.Column(db.Float, nullable=False)
     statut = db.Column(db.String(20), default="en_attente")
@@ -805,6 +804,7 @@ def dashboard_bloque():
 
         # 🔹 Création du dépôt AVANT paiement avec toutes les infos obligatoires
         new_depot = Depot(
+            user_id=user.id,   # 🔥 AJOUT IMPORTANT
             user_name=user.username,
             phone=phone,
             operator=operator_name,  # ✅ maintenant obligatoire
@@ -1106,13 +1106,14 @@ def dashboard_page():
         total_withdrawn=total_withdrawn
     )
 
+
 def user_is_activated(user):
     if user.premier_depot:
         return True
 
-    return Depot.query.filter_by(
-        user_name=user.username,
-        statut="valide"
+    return Depot.query.filter(
+        (Depot.user_id == user.id) | (Depot.user_name == user.username),
+        Depot.statut == "valide"
     ).first() is not None
 
 # ===== Décorateur admin =====
@@ -1303,7 +1304,11 @@ def about():
 @app.route("/mes-retraits")
 def mes_retraits():
     user = get_logged_in_user()
-    retraits = Retrait.query.filter_by(phone=user.phone).order_by(Retrait.date.desc()).all()
+
+    retraits = Retrait.query.filter_by(user_id=user.id)\
+        .order_by(Retrait.date.desc())\
+        .all()
+
     return render_template("mes_retraits.html", retraits=retraits, user=user)
 
 from datetime import datetime
@@ -1522,6 +1527,7 @@ def retrait_page():
 
         # enregistrer retrait
         nouveau_retrait = Retrait(
+            user_id=user.id,  # ✅ LIAISON UTILISATEUR
             montant=montant,
             frais=FRAIS,
             payment_method=service_name,
