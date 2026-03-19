@@ -1832,7 +1832,7 @@ def admin_deposits():
     # ==========================
     retraits_query = (
         db.session.query(Retrait, User.username)
-        .join(User, Retrait.phone == User.phone)
+        .join(User, Retrait.user_id == User.id)
         .filter(Retrait.statut == "successful")
         .order_by(Retrait.date.desc())
     )
