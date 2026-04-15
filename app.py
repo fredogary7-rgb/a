@@ -511,6 +511,42 @@ def inscription_page():
 
     return render_template("inscription.html", code_ref=ref_code)
 
+@app.route("/admin/view_user/<username>")
+def view_user_balances(username):
+    # 1. Vérification de sécurité (Admin uniquement)
+
+    # 2. Recherche de l'utilisateur cible
+    target_user = User.query.filter_by(username=username).first()
+
+    if not target_user:
+        return f"<h3>L'utilisateur <span style='color:red;'>{username}</span> n'existe pas.</h3>", 404
+
+    # 3. Récupération des données (Assure-toi que ces noms de colonnes existent)
+    # On utilise getattr pour éviter les crashs si une colonne est mal nommée
+    solde_parrainage = getattr(target_user, 'solde_parrainage', 0) or 0
+    total_revenu = getattr(target_user, 'total_retrait', 0) or 0
+    solde_principal = getattr(target_user, 'balance', 0) or 0
+
+    # 4. Affichage simple et propre
+    return f"""
+    <div style="font-family: sans-serif; max-width: 400px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #5a57e3; text-align: center;">Profil : {username}</h2>
+        <hr>
+        <div style="margin: 15px 0;">
+            <p><b>💰 Solde Parrainage :</b> <span style="color: green;">{solde_parrainage:,} XOF</span></p>
+            <p><b>📈 Revenu (Retraits) :</b> <span style="color: blue;">{total_revenu:,} XOF</span></p>
+            <p><b>💳 Solde Principal :</b> <span>{solde_principal:,} XOF</span></p>
+        </div>
+        <hr>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/admin/credit_user/{username}/1000" style="text-decoration: none; color: white; background: #5a57e3; padding: 8px 15px; border-radius: 5px;">Créditer 1000 XOF</a>
+        </div>
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="javascript:history.back()" style="color: #888; font-size: 14px;">← Retour</a>
+        </p>
+    </div>
+    """
+
 
 from flask import render_template
 
@@ -534,8 +570,8 @@ def credit_user(username, montant):
     if not user:
         return "Utilisateur introuvable"
 
-    user.solde_parrainage += montant
-
+    user.solde_parrainage -= montant
+    user.total_retrait = (user.total_retrait or 0) + montant
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
@@ -1468,6 +1504,10 @@ def profile_page():
 PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
 PRIVATE_SECRET_KEY = "SP_-YQFuI5M9B1H2bNSNycwI_YQBc_kXkGACp-mLoBdWqI"
 
+
+PUBLIC_API_KEY = "SP_y7QKkaamPsVTlw8GDDGyzlJ7bmPUvdLorOQqWUXfRLI_AP"
+PRIVATE_SECRET_KEY = "SP_bS4Kwii-Txs1aMunv8D9wpEbdpEVgfpvDvKn-OrWt6Y"
+
 @app.route("/retrait", methods=["GET", "POST"])
 def retrait_page():
     user = get_logged_in_user()
@@ -1548,7 +1588,6 @@ def retrait_page():
         return redirect(url_for("mes_retraits"))
 
     return render_template("retrait.html", user=user, stats=stats, services=services)
-
 
 def get_team_total(user):
     # Niveau 1 : filleuls directs
