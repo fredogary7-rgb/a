@@ -406,6 +406,31 @@ def envoyer_retrait_soleaspay(service_id, wallet, montant):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
+@app.route("/attribution/delier_leaderbrice")
+@login_required
+def delier_filleuls_brice():
+    # Sécurité : Seul l'administrateur peut faire cette action massive
+
+    # 1. On cherche tous les utilisateurs qui ont 'leaderbrice01' comme parrain
+    # mais on EXCLUT 'amen1' pour qu'il reste son filleul
+    filleuls_a_delier = User.query.filter(
+        User.parrain == "leaderbrice01",
+        User.username != "amen1"
+    ).all()
+
+    total_delies = 0
+
+    # 2. On retire le parrain en remettant le champ à None
+    for user in filleuls_a_delier:
+        user.parrain = None
+        total_delies += 1
+
+    # 3. On sauvegarde les modifications dans la base de données
+    if total_delies > 0:
+        db.session.commit()
+
+    return f"Opération réussie ! {total_delies} utilisateurs ont été déliés de leaderbrice01. Seul 'amen1' est resté."
+
 
 @app.cli.command("init-db")
 def init_db():
@@ -511,6 +536,31 @@ def inscription_page():
 
     return render_template("inscription.html", code_ref=ref_code)
 
+@app.route("/admin/restreindre_comptes")
+@login_required
+def restreindre_comptes_specifiques():
+    # Sécurité : Seul l'administrateur a le droit de bannir
+
+    # Liste des usernames à restreindre
+    comptes_a_bloquer = ["leaderbrice01", "amen1", "oroumat"]
+
+    # On récupère les utilisateurs correspondants dans la base de données
+    utilisateurs = User.query.filter(User.username.in_(comptes_a_bloquer)).all()
+
+    total_bloques = 0
+
+    # On passe leur statut is_banned à True
+    for user in utilisateurs:
+        user.is_banned = True
+        total_bloques += 1
+
+    # Sauvegarde définitive dans la base de données
+    if total_bloques > 0:
+        db.session.commit()
+
+    return f"Opération réussie ! {total_bloques} comptes ont été restreints avec succès ({', '.join([u.username for u in utilisateurs])})."
+
+
 @app.route("/admin/view_user/<username>")
 def view_user_balances(username):
     # 1. Vérification de sécurité (Admin uniquement)
@@ -575,6 +625,85 @@ def credit_user(username, montant):
     db.session.commit()
 
     return f"{montant} XOF ajouté au compte de {username}"
+
+@app.route("/admin/reseau/leaderbrice")
+@login_required
+def reseau_leader_brice():
+    # 1. On cherche le leader par son username "leaderbrice01"
+    leader = User.query.filter_by(username="leaderbrice01").first()
+    
+    if not leader:
+        return "L'utilisateur 'leaderbrice01' n'existe pas dans la base de données.", 404
+
+    # --- NIVEAU 1 : Filleuls directs ---
+    # On utilise ta relation 'downlines' définie dans ton modèle
+    niveau1 = leader.downlines.all()
+
+    # --- NIVEAU 2 : Filleuls des filleuls ---
+    niveau2 = []
+    if niveau1:
+        # On récupère tous les usernames du niveau 1
+        usernames_n1 = [u.username for u in niveau1 if u.username]
+        if usernames_n1:
+            # On cherche tous les utilisateurs dont le parrain est dans le niveau 1
+            niveau2 = User.query.filter(User.parrain.in_(usernames_n1)).all()
+
+    # --- NIVEAU 3 : Filleuls du niveau 2 ---
+    niveau3 = []
+    if niveau2:
+        # On récupère tous les usernames du niveau 2
+        usernames_n2 = [u.username for u in niveau2 if u.username]
+        if usernames_n2:
+            # On cherche tous les utilisateurs dont le parrain est dans le niveau 2
+            niveau3 = User.query.filter(User.parrain.in_(usernames_n2)).all()
+
+    # Calcul des statistiques exactes pour l'affichage
+    stats = {
+        "total_filleuls": len(niveau1) + len(niveau2) + len(niveau3),
+        "total_n1": len(niveau1),
+        "total_n2": len(niveau2),
+        "total_n3": len(niveau3)
+    }
+
+    return render_template(
+        "admin_reseau.html",
+        leader=leader,
+        niveau1=niveau1,
+        niveau2=niveau2,
+        niveau3=niveau3,
+        stats=stats
+    )
+
+@app.route("/attribution/leaderbrice")
+@login_required
+def attribuer_orphelins_a_brice():
+    # On garde la sécurité pour vérifier que tu es bien Admin
+
+    # On récupère le compte de leaderbrice01
+    leader = User.query.filter_by(username="leaderbrice01").first()
+    if not leader:
+        return "L'utilisateur 'leaderbrice01' n'existe pas. Impossible de lui attribuer des filleuls.", 404
+
+    # On cherche tous les utilisateurs sans parrain (en excluant leaderbrice01 lui-même)
+    orphelins = User.query.filter(
+        (User.parrain == None) | (User.parrain == ""),
+        User.username != "leaderbrice01"
+    ).all()
+
+    total_attribues = 0
+
+    # Attribution massive
+    for user in orphelins:
+        user.parrain = leader.username
+        total_attribues += 1
+
+    # Sauvegarde dans la base de données
+    if total_attribues > 0:
+        db.session.commit()
+
+    return f"Succès ! {total_attribues} utilisateurs (actifs et inactifs) ont été rattachés à leaderbrice01."
+
+
 
 @app.route("/connexion", methods=["GET", "POST"])
 def connexion_page():

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réseau de leaderbrice01 - NovaGroup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f4f7fe; color: #333; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        .header-card { background: #5a57e3; color: white; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
+        /* Grille réajustée sur 2 colonnes pour Niveau 1 et Niveau 2 uniquement */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        .stat-box { background: rgba(255,255,255,0.15); padding: 10px; border-radius: 12px; font-size: 12px; }
+        .stat-box div { font-size: 18px; font-weight: bold; }
+
+        .level-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px 0; display: flex; align-items: center; gap: 8px; }
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; color: white; font-weight: bold; }
+        .b-n1 { background: #10b981; }
+        .b-n2 { background: #3b82f6; }
+
+        .user-item { background: white; padding: 12px 15px; border-radius: 15px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
+        .user-info h4 { margin: 0; font-size: 14px; color: #1e293b; }
+        .user-info small { color: #64748b; font-size: 11px; }
+        .solde-badge { font-size: 13px; font-weight: bold; color: #10b981; }
+        .empty { font-size: 12px; color: #94a3b8; text-align: center; padding: 10px; background: #e2e8f0; border-radius: 10px; border: 1px dashed #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header-card">
+        <h3><i class="fa-solid fa-crown"></i> Arbre de Parrainage</h3>
+        <p style="font-size: 13px; opacity: 0.9;">Généalogie de : <strong>{{ leader.username }}</strong></p>
+        
+        <div class="stats-grid">
+            <div class="stat-box"><div>{{ stats.total_n1 }}</div>Niveau 1</div>
+            <div class="stat-box"><div>{{ stats.total_n2 }}</div>Niveau 2</div>
+        </div>
+    </div>
+
+    <div class="level-title">
+        <span class="badge b-n1">N1</span> Filleuls Directs ({{ stats.total_n1 }})
+    </div>
+    {% if niveau1 %}
+        {% for u in niveau1 %}
+        <div class="user-item">
+            <div class="user-info">
+                <h4>{{ u.username }}</h4>
+                <small><i class="fa-solid fa-phone"></i> {{ u.phone }} | Pays: {{ u.country or 'Non spécifié' }}</small>
+            </div>
+            <div class="solde-badge">{{ "{:,.0f}".format(u.solde_total or 0).replace(',', ' ') }} XOF</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">Aucun filleul direct au niveau 1.</div>
+    {% endif %}
+
+    <div class="level-title">
+        <span class="badge b-n2">N2</span> Filleuls de Niveau 2 ({{ stats.total_n2 }})
+    </div>
+    {% if niveau2 %}
+        {% for u in niveau2 %}
+        <div class="user-item">
+            <div class="user-info">
+                <h4>{{ u.username }}</h4>
+                <small><i class="fa-solid fa-user"></i> Invité par: <strong>{{ u.parrain }}</strong></small>
+            </div>
+            <div class="solde-badge">{{ "{:,.0f}".format(u.solde_total or 0).replace(',', ' ') }} XOF</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">Aucun membre au niveau 2.</div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+
