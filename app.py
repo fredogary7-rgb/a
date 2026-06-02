@@ -1273,14 +1273,18 @@ def dashboard_page():
 
 
 def user_is_activated(user):
+
+    if not user:
+        return False
+
     if user.premier_depot:
         return True
 
     return Depot.query.filter(
-        (Depot.user_id == user.id) | (Depot.user_name == user.username),
+        (Depot.user_id == user.id) |
+        (Depot.user_name == user.username),
         Depot.statut == "valide"
     ).first() is not None
-
 # ===== Décorateur admin =====
 def admin_required(f):
     @wraps(f)
