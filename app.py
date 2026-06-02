@@ -1068,6 +1068,12 @@ import requests
 @app.route("/api/webhook/soleaspay", methods=["POST"])
 def webhook_soleaspay():
 
+    print("=" * 50)
+    print("WEBHOOK RECU")
+    print("HEADERS:", dict(request.headers))
+    print("JSON:", request.get_json())
+    print("=" * 50)
+
     received_key = request.headers.get("x-private-key")
     if received_key != SOLEAS_WEBHOOK_SECRET:
         return jsonify({"error": "Unauthorized"}), 403
