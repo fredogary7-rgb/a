@@ -1119,6 +1119,9 @@ def webhook_soleaspay():
 
             user = User.query.filter_by(username=depot.user_name).first()
 
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
             depot.statut = "valide"
             depot.reference = details.get("reference")
 
@@ -1143,7 +1146,7 @@ def webhook_soleaspay():
     elif external_reference.startswith("NOVA-"):
 
         try:
-            requests.post(
+            response = requests.post(
                 "https://nova-trade.cc/api/webhook/soleaspay",
                 json=data,
                 headers={
@@ -1153,11 +1156,37 @@ def webhook_soleaspay():
                 timeout=10
             )
 
+            print("Webhook NOVA envoyé :", response.status_code)
+
         except Exception as e:
             print("Erreur envoi webhook NOVA :", e)
 
-    return jsonify({"received": True})
+    # ======================
+    # PAIEMENT E
+    # ======================
 
+    elif external_reference.startswith("W-"):
+
+        try:
+            response = requests.post(
+                "https://web-production-cc50ad.up.railway.app/api/webhook/soleaspay",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-private-key": SOLEAS_WEBHOOK_SECRET
+                },
+                timeout=10
+            )
+
+            print("Webhook E envoyé :", response.status_code)
+
+        except Exception as e:
+            print("Erreur envoi webhook E :", e)
+
+    else:
+        print("Préfixe inconnu :", external_reference)
+
+    return jsonify({"received": True})
 
 @app.route("/paiement/soleaspay/retour")
 def bkapay_retour():
