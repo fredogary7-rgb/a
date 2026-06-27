@@ -1085,6 +1085,31 @@ def webhook_soleaspay():
 
     details = data.get("data", {})
     external_reference = details.get("external_reference")
+    operation = details.get("operation")
+
+    # ======================
+    # RETRAITS (Projet E)
+    # ======================
+
+    if operation == "WITHDRAW":
+
+        try:
+            response = requests.post(
+                "https://web-production-cc50ad.up.railway.app/api/webhook/soleaspay",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-private-key": SOLEAS_WEBHOOK_SECRET
+                },
+                timeout=10
+            )
+
+            print("Webhook RETRAIT envoyé :", response.status_code)
+
+        except Exception as e:
+            print("Erreur webhook RETRAIT :", e)
+
+        return jsonify({"received": True})
 
     if not external_reference:
         return jsonify({"error": "No reference"}), 400
@@ -1162,10 +1187,10 @@ def webhook_soleaspay():
             print("Erreur envoi webhook NOVA :", e)
 
     # ======================
-    # PAIEMENT E
+    # PAIEMENT E (dépôts éventuels)
     # ======================
 
-    elif external_reference.startswith("W-"):
+    elif external_reference.startswith("E-"):
 
         try:
             response = requests.post(
