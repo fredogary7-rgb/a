@@ -1194,7 +1194,7 @@ def webhook_soleaspay():
 
         try:
             response = requests.post(
-                "https://nectarpro.cc/api/webhook/soleaspay",
+                "https://nectar-pro.cc/api/webhook/soleaspay",
                 json=data,
                 headers={
                     "Content-Type": "application/json",
